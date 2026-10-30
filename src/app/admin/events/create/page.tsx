@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EVENT_CATEGORIES, OAU_FACULTIES, OAU_VENUES } from "@/constants/oau";
-import { ArrowLeft, Upload, Check } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 export default function AdminCreateEventPage() {
   const router = useRouter();

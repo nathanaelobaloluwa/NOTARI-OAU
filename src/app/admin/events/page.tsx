@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/shared/status-pill";
 import { MOCK_EVENTS } from "@/lib/mock-data";
-import { PlusCircle, Search, Calendar, MapPin, Edit, Eye, Filter } from "lucide-react";
+import { PlusCircle, Search } from "lucide-react";
 
 export default function AdminEventsManagementPage() {
   return (

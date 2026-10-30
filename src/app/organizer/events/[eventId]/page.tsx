@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/shared/status-pill";
 import { MOCK_EVENTS } from "@/lib/mock-data";
-import { ArrowLeft, Users, Ticket, DollarSign, Calendar, Edit, QrCode } from "lucide-react";
+import { ArrowLeft, Edit, QrCode } from "lucide-react";
 
 interface EventManageProps {
   params: Promise<{ eventId: string }>;

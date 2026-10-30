@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NotariLogo } from "./notari-logo";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Calendar, User, Shield, Sparkles } from "lucide-react";
+import { Menu, X, User, Shield, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [

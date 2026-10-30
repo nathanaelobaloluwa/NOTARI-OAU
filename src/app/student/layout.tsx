@@ -10,7 +10,6 @@ import {
   Ticket,
   History,
   Bookmark,
-  User,
   Settings,
   LogOut,
   Bell,

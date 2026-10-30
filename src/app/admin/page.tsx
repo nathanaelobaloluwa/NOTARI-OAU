@@ -3,11 +3,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { StatusPill } from "@/components/shared/status-pill";
 import {
   MOCK_EVENTS,
-  MOCK_ADMIN_METRICS,
   MOCK_RECENT_ACTIVITY,
 } from "@/lib/mock-data";
 import {
@@ -15,7 +13,6 @@ import {
   CalendarCheck2,
   Ticket,
   CircleDollarSign,
-  PlusCircle,
   Users,
   ShieldCheck,
   Eye,

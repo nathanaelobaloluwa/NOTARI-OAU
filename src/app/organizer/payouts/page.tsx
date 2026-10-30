@@ -1,7 +1,7 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { DollarSign, ArrowUpRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 
 export default function OrganizerPayoutsPage() {
   return (

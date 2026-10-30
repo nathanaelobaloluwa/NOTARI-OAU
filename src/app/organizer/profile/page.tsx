@@ -2,7 +2,7 @@ import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Building, Mail, Phone, Globe, ShieldCheck } from "lucide-react";
+import { Building, Mail, Phone, ShieldCheck } from "lucide-react";
 
 export default function OrganizerProfilePage() {
   return (

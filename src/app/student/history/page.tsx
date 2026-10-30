@@ -1,7 +1,7 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, CheckCircle2, MapPin } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 
 export default function StudentHistoryPage() {
   const attendedEvents = [

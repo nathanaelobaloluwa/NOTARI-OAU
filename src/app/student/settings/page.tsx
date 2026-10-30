@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { User, Mail, Shield, Bell, Key, Smartphone, Check } from "lucide-react";
+import { User, Mail, Shield, Bell, Key, Check } from "lucide-react";
 
 export default function StudentSettingsPage() {
   const [name, setName] = useState("Adeola Johnson");

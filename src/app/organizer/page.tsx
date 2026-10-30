@@ -10,10 +10,7 @@ import {
   DollarSign,
   Clock,
   PlusCircle,
-  FileText,
-  Users,
   BarChart,
-  ArrowRight,
   TrendingUp,
 } from "lucide-react";
 

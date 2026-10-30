@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { apiSuccess, apiError, handleApiError } from "@/lib/utils/api-response";
+import { apiSuccess, handleApiError } from "@/lib/utils/api-response";
 import { createEventSchema, eventFilterSchema } from "@/validators/event";
 import { MOCK_EVENTS } from "@/lib/mock-data";
 

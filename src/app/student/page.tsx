@@ -10,11 +10,9 @@ import {
   Ticket,
   CheckCircle2,
   Bookmark,
-  ArrowRight,
   Compass,
   User,
   Clock,
-  Sparkles,
   ChevronRight,
 } from "lucide-react";
 

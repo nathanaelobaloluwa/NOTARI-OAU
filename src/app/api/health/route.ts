@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { apiSuccess } from "@/lib/utils/api-response";
 
 export async function GET() {

@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MOCK_EVENTS } from "@/lib/mock-data";
-import { Bookmark, Calendar, MapPin, Trash2 } from "lucide-react";
+import { Calendar, MapPin, Trash2 } from "lucide-react";
 
 export default function StudentSavedEventsPage() {
   const savedEvents = MOCK_EVENTS.slice(3, 6);

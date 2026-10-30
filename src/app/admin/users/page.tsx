@@ -1,7 +1,6 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { StatusPill } from "@/components/shared/status-pill";
 
 export default function AdminUsersPage() {
   const users = [

@@ -1,20 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EVENT_CATEGORIES, OAU_FACULTIES, OAU_VENUES } from "@/constants/oau";
 import {
-  Calendar,
-  Clock,
-  MapPin,
   Upload,
   ArrowRight,
-  ArrowLeft,
-  CheckCircle2,
   DollarSign,
 } from "lucide-react";
 import { cn } from "@/lib/utils";

@@ -1,12 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import Image from "next/image";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/shared/status-pill";
 import { MOCK_STUDENT_TICKETS } from "@/lib/mock-data";
-import { Calendar, MapPin, QrCode, Download, Share2, X, CheckCircle2 } from "lucide-react";
+import { Calendar, MapPin, QrCode, Download, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function StudentTicketsPage() {

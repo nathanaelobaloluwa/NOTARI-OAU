@@ -4,7 +4,6 @@ import Image from "next/image";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { StatusPill } from "@/components/shared/status-pill";
 import { MOCK_EVENTS } from "@/lib/mock-data";
 import { Calendar, MapPin, Search } from "lucide-react";
 

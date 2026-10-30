@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { EVENT_CATEGORIES, EVENT_STATUS, OAU_FACULTIES, OAU_VENUES } from "@/constants/oau";
+import { EVENT_CATEGORIES, EVENT_STATUS, OAU_FACULTIES } from "@/constants/oau";
 
 export const ticketTierSchema = z.object({
   name: z.string().min(1, "Tier name is required"),

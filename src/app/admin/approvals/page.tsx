@@ -2,7 +2,7 @@ import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, X, Shield, Clock } from "lucide-react";
+import { Check, X, Clock } from "lucide-react";
 
 export default function AdminApprovalsPage() {
   const pendingApprovals = [

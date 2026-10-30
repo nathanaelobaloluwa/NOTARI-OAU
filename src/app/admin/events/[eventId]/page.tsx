@@ -3,10 +3,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { StatusPill } from "@/components/shared/status-pill";
 import { MOCK_EVENTS } from "@/lib/mock-data";
-import { ArrowLeft, Calendar, MapPin, Users, Upload, Trash2, Check, X } from "lucide-react";
+import { ArrowLeft, Upload, Trash2, Check } from "lucide-react";
 
 interface AdminEventDetailProps {
   params: Promise<{ eventId: string }>;

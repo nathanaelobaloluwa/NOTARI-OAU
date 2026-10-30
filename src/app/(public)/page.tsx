@@ -2,7 +2,7 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StatusPill } from "@/components/shared/status-pill";
 import { MOCK_EVENTS } from "@/lib/mock-data";
@@ -11,12 +11,9 @@ import {
   Search,
   Calendar,
   MapPin,
-  Users,
   ArrowRight,
   Sparkles,
-  Ticket,
   ChevronRight,
-  Filter,
 } from "lucide-react";
 
 export default function HomePage() {

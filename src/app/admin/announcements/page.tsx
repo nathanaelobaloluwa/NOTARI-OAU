@@ -1,7 +1,7 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Megaphone } from "lucide-react";
+import { PlusCircle } from "lucide-react";
 import { StatusPill } from "@/components/shared/status-pill";
 
 export default function AdminAnnouncementsPage() {

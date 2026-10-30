@@ -1,7 +1,7 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, TrendingUp, Calendar, Ticket, DollarSign, Users } from "lucide-react";
+import { Download } from "lucide-react";
 
 export default function AdminReportsPage() {
   return (

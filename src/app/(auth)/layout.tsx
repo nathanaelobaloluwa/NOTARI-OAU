@@ -1,7 +1,6 @@
 import React from "react";
-import Image from "next/image";
 import { NotariLogo } from "@/components/shared/notari-logo";
-import { Calendar, Ticket, CheckCircle2, Users } from "lucide-react";
+import { Calendar, Ticket, Users } from "lucide-react";
 
 export default function AuthLayout({
   children,

@@ -1,7 +1,6 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { notFound } from "next/navigation";
 import { MOCK_EVENTS } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -11,7 +10,6 @@ import {
   Calendar,
   Clock,
   MapPin,
-  Share2,
   CheckCircle2,
   User,
   Ticket,

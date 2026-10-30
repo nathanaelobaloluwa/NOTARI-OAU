@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { StatusPill } from "@/components/shared/status-pill";
 import { MOCK_EVENTS } from "@/lib/mock-data";
 import { EVENT_CATEGORIES, OAU_FACULTIES } from "@/constants/oau";
-import { Search, Calendar, MapPin, Filter, ArrowRight } from "lucide-react";
+import { Search, Calendar, MapPin, ArrowRight } from "lucide-react";
 
 export default function EventsPage() {
   return (

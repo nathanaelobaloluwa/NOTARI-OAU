@@ -2,7 +2,7 @@ import React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Shield, Sparkles, Ticket, Users, CheckCircle2 } from "lucide-react";
+import { Shield, Ticket, Users } from "lucide-react";
 
 export default function AboutPage() {
   return (

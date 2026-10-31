@@ -142,7 +142,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
             </div>
 
             <div className="space-y-2.5">
-              <Link href="/login" className="w-full block">
+              <Link href={`/login?callbackUrl=/events/${event.slug}`} className="w-full block">
                 <Button className="w-full h-12 rounded-xl text-base font-semibold shadow-md gap-2">
                   <Ticket className="w-5 h-5" />
                   <span>Reserve Your Spot</span>
@@ -184,7 +184,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
               {event.isFree ? "Free" : `₦${event.price.toLocaleString()}`}
             </span>
           </div>
-          <Link href="/login" className="flex-1 max-w-[220px]">
+          <Link href={`/login?callbackUrl=/events/${event.slug}`} className="flex-1 max-w-[220px]">
             <Button className="w-full h-11 rounded-xl text-xs sm:text-sm font-semibold shadow-md gap-2">
               <Ticket className="w-4 h-4" />
               <span>Reserve Spot</span>

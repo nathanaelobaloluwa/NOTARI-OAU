@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { NotariLogo } from "@/components/shared/notari-logo";
 import { StudentBottomNav } from "@/components/student/student-bottom-nav";
 import {
@@ -36,7 +36,17 @@ export default function StudentLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const { data: session } = useSession();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  const studentName = session?.user?.name || "Adeola Johnson";
+  const studentInitials =
+    studentName
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "AJ";
 
   return (
     <div className="min-h-screen bg-notari-bg flex">
@@ -74,10 +84,10 @@ export default function StudentLayout({
         <div className="pt-4 border-t border-slate-100 space-y-3">
           <div className="flex items-center gap-3 px-2">
             <div className="w-10 h-10 rounded-full bg-indigo-100 text-notari-primary flex items-center justify-center font-bold text-sm">
-              AJ
+              {studentInitials}
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="text-xs font-bold text-notari-dark truncate">Adeola Johnson</span>
+              <span className="text-xs font-bold text-notari-dark truncate">{studentName}</span>
               <span className="text-[11px] text-slate-400 truncate">Student • OAU</span>
             </div>
           </div>
@@ -122,7 +132,7 @@ export default function StudentLayout({
               <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-indigo-600" />
             </button>
             <div className="w-8 h-8 rounded-full bg-indigo-100 text-notari-primary flex items-center justify-center font-bold text-xs">
-              AJ
+              {studentInitials}
             </div>
           </div>
         </header>

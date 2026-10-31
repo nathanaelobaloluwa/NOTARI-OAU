@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useSession } from "next-auth/react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/shared/status-pill";
@@ -9,6 +10,8 @@ import { Calendar, MapPin, QrCode, Download, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function StudentTicketsPage() {
+  const { data: session } = useSession();
+  const attendeeName = session?.user?.name || "Adeola Johnson";
   const [tab, setTab] = useState<"upcoming" | "past" | "all">("upcoming");
   const [selectedTicket, setSelectedTicket] = useState<(typeof MOCK_STUDENT_TICKETS)[0] | null>(null);
 
@@ -127,7 +130,7 @@ export default function StudentTicketsPage() {
             <div className="space-y-1.5 text-xs text-slate-600 pt-2 border-t border-slate-100">
               <div className="flex justify-between">
                 <span>Attendee:</span>
-                <span className="font-semibold text-notari-dark">Adeola Johnson</span>
+                <span className="font-semibold text-notari-dark">{attendeeName}</span>
               </div>
               <div className="flex justify-between">
                 <span>Venue:</span>

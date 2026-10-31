@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { NotariLogo } from "@/components/shared/notari-logo";
 import { OrganizerBottomNav } from "@/components/organizer/organizer-bottom-nav";
 import {
@@ -43,7 +43,17 @@ export default function OrganizerLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const { data: session } = useSession();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  const orgName = session?.user?.name || "Campus Org";
+  const orgInitials =
+    orgName
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "CO";
 
   return (
     <div className="min-h-screen bg-notari-bg flex">
@@ -81,10 +91,10 @@ export default function OrganizerLayout({
         <div className="pt-4 border-t border-slate-100 space-y-3">
           <div className="flex items-center gap-3 px-2">
             <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">
-              CO
+              {orgInitials}
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="text-xs font-bold text-notari-dark truncate">Campus Org</span>
+              <span className="text-xs font-bold text-notari-dark truncate">{orgName}</span>
               <span className="text-[11px] text-emerald-600 font-semibold truncate">Verified Organizer</span>
             </div>
           </div>
@@ -131,7 +141,7 @@ export default function OrganizerLayout({
               <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-purple-600" />
             </button>
             <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-xs">
-              CO
+              {orgInitials}
             </div>
           </div>
         </header>

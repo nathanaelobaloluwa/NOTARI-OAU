@@ -7,6 +7,7 @@ import { StatusPill } from "@/components/shared/status-pill";
 import {
   MOCK_EVENTS,
   MOCK_RECENT_ACTIVITY,
+  MOCK_ADMIN_METRICS,
 } from "@/lib/mock-data";
 import {
   Calendar,
@@ -119,7 +120,7 @@ export default function AdminDashboardPage() {
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-100 text-[10px] font-bold text-blue-600">
-                    5
+                    {MOCK_ADMIN_METRICS.pendingApprovals}
                   </span>
                   <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
                 </div>

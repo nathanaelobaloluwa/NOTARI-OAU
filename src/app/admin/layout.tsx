@@ -3,9 +3,10 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { NotariLogo } from "@/components/shared/notari-logo";
 import { AdminBottomNav } from "@/components/admin/admin-bottom-nav";
+import { MOCK_PENDING_APPROVALS } from "@/lib/mock-data";
 import {
   LayoutDashboard,
   Calendar,
@@ -28,10 +29,17 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+const pendingApprovalsCount = MOCK_PENDING_APPROVALS.length;
+
 const ADMIN_NAV_ITEMS = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { name: "Events", href: "/admin/events", icon: Calendar },
-  { name: "Approvals", href: "/admin/approvals", icon: CheckSquare, badge: "5" },
+  {
+    name: "Approvals",
+    href: "/admin/approvals",
+    icon: CheckSquare,
+    badge: pendingApprovalsCount > 0 ? String(pendingApprovalsCount) : undefined,
+  },
   { name: "Bookings", href: "/admin/bookings", icon: Ticket },
   { name: "Attendees", href: "/admin/attendees", icon: Users },
   { name: "Organizers", href: "/admin/organizers", icon: Building },
@@ -47,7 +55,17 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const { data: session } = useSession();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const adminName = session?.user?.name || "Admin";
+  const adminInitials =
+    adminName
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "AD";
 
   return (
     <div className="min-h-screen bg-[#F5F7FC] flex">
@@ -100,10 +118,10 @@ export default function AdminLayout({
           <div className="flex items-center justify-between px-2">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs ring-2 ring-blue-400/20">
-                AD
+                {adminInitials}
               </div>
               <div className="flex flex-col min-w-0">
-                <span className="text-xs font-bold text-white truncate">Admin</span>
+                <span className="text-xs font-bold text-white truncate">{adminName}</span>
                 <span className="text-[10px] text-slate-400 truncate">Super Administrator</span>
               </div>
             </div>
@@ -146,13 +164,17 @@ export default function AdminLayout({
 
           {/* Top Right Utilities */}
           <div className="flex items-center gap-4">
-            {/* Notification Bell with Badge 5 */}
-            <button className="relative p-2.5 rounded-xl text-slate-500 hover:bg-slate-100 transition-colors">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white shadow-xs">
-                5
-              </span>
-            </button>
+            {/* Notification Bell with Dynamic Pending Approvals Badge */}
+            <Link href="/admin/approvals">
+              <button className="relative p-2.5 rounded-xl text-slate-500 hover:bg-slate-100 transition-colors cursor-pointer">
+                <Bell className="w-5 h-5" />
+                {pendingApprovalsCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white shadow-xs">
+                    {pendingApprovalsCount}
+                  </span>
+                )}
+              </button>
+            </Link>
 
             {/* Dark / Light Toggle */}
             <button className="p-2 rounded-xl text-slate-500 hover:bg-slate-100 transition-colors">
@@ -167,10 +189,10 @@ export default function AdminLayout({
             {/* Admin Avatar */}
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs ring-2 ring-blue-500/20">
-                AD
+                {adminInitials}
               </div>
               <div className="hidden sm:flex flex-col text-left">
-                <span className="text-xs font-bold text-notari-dark">Admin</span>
+                <span className="text-xs font-bold text-notari-dark">{adminName}</span>
                 <span className="text-[10px] text-slate-400">Super Administrator</span>
               </div>
             </div>
@@ -243,7 +265,7 @@ export default function AdminLayout({
         </main>
 
         {/* Mobile Fixed Bottom Navigation */}
-        <AdminBottomNav onOpenMenu={() => setMobileMenuOpen(true)} pendingApprovalsCount={5} />
+        <AdminBottomNav onOpenMenu={() => setMobileMenuOpen(true)} pendingApprovalsCount={pendingApprovalsCount} />
       </div>
     </div>
   );

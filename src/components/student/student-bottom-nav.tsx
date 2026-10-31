@@ -51,7 +51,8 @@ export function StudentBottomNav() {
         {STUDENT_BOTTOM_NAV_ITEMS.map((item) => {
           const isActive = item.exact
             ? pathname === item.href
-            : pathname.startsWith(item.href);
+            : pathname.startsWith(item.href) ||
+              (item.href === "/student/my-events" && pathname === "/student/events");
           const Icon = item.icon;
 
           return (

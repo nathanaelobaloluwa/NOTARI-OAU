@@ -11,7 +11,7 @@ interface AdminBottomNavProps {
   pendingApprovalsCount?: number;
 }
 
-export function AdminBottomNav({ onOpenMenu, pendingApprovalsCount = 5 }: AdminBottomNavProps) {
+export function AdminBottomNav({ onOpenMenu, pendingApprovalsCount = 0 }: AdminBottomNavProps) {
   const pathname = usePathname();
 
   const navItems = [

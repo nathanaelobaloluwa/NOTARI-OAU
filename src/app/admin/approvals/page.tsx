@@ -2,35 +2,11 @@ import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { MOCK_PENDING_APPROVALS } from "@/lib/mock-data";
 import { Check, X, Clock } from "lucide-react";
 
 export default function AdminApprovalsPage() {
-  const pendingApprovals = [
-    {
-      id: "app-1",
-      type: "Organizer Application",
-      applicant: "Tech Innovation Club OAU",
-      submittedBy: "Bamidele Adebayo (CSC/2020/0912)",
-      faculty: "Faculty of Science",
-      time: "2 hours ago",
-    },
-    {
-      id: "app-2",
-      type: "Event Submission",
-      applicant: "Robotics & Embedded Systems Workshop",
-      submittedBy: "OAU Engineering Faculty",
-      faculty: "Faculty of Technology",
-      time: "3 hours ago",
-    },
-    {
-      id: "app-3",
-      type: "Organizer Application",
-      applicant: "OAU Literary & Debating Society",
-      submittedBy: "Kehinde Alao (LAW/2021/0312)",
-      faculty: "Faculty of Law",
-      time: "1 day ago",
-    },
-  ];
+  const pendingApprovals = MOCK_PENDING_APPROVALS;
 
   return (
     <div className="space-y-6">

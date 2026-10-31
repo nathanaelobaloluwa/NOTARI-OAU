@@ -35,8 +35,17 @@ export const registerSchema = z.object({
     .min(8, "Password must be at least 8 characters")
     .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
     .regex(/[0-9]/, "Password must contain at least one number"),
-  role: z.enum([USER_ROLES.STUDENT, USER_ROLES.ORGANIZER]).default(USER_ROLES.STUDENT),
-  matricNumber: z.string().optional(),
+  role: z.literal(USER_ROLES.STUDENT).default(USER_ROLES.STUDENT),
+  matricNumber: z
+    .string()
+    .trim()
+    .optional()
+    .refine(
+      (val) => !val || /^[A-Za-z0-9/_-]{4,20}$/.test(val),
+      {
+        message: "Invalid matriculation number format (e.g., CSC/2021/042)",
+      }
+    ),
   faculty: z.string().optional(),
   department: z.string().optional(),
 });

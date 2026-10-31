@@ -1,7 +1,10 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import bcrypt from "bcryptjs";
 import { authConfig } from "./auth.config";
 import { loginSchema } from "@/validators/auth";
+import { connectToDatabase } from "@/lib/database/mongoose";
+import { User } from "@/models/User";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -18,32 +21,35 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        // Scaffold authentication foundation
-        // Note: Full database verification and password hashing will be activated in authentication phase
-        const { email } = parsed.data;
+        const { email, password } = parsed.data;
+        const normalizedEmail = email.toLowerCase().trim();
 
-        // Illustrative fallback for dev scaffolding:
-        if (email.includes("admin")) {
+        try {
+          await connectToDatabase();
+
+          // Query MongoDB user with password hash explicitly selected
+          const user = await User.findOne({ email: normalizedEmail }).select("+password");
+          if (!user || !user.password) {
+            return null;
+          }
+
+          // Verify submitted password against stored bcrypt hash
+          const isPasswordValid = await bcrypt.compare(password, user.password);
+          if (!isPasswordValid) {
+            return null;
+          }
+
+          // Return genuine authenticated user payload derived strictly from MongoDB
           return {
-            id: "admin-scaffold-id",
-            name: "Super Administrator",
-            email: email,
-            role: "admin",
+            id: user._id.toString(),
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            image: user.image,
           };
-        } else if (email.includes("org")) {
-          return {
-            id: "organizer-scaffold-id",
-            name: "Campus Org",
-            email: email,
-            role: "organizer",
-          };
-        } else {
-          return {
-            id: "student-scaffold-id",
-            name: "Adeola Johnson",
-            email: email,
-            role: "student",
-          };
+        } catch (error) {
+          console.error("❌ Authentication authorization error:", error);
+          return null;
         }
       },
     }),

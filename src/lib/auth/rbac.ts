@@ -9,14 +9,14 @@ export interface AuthenticatedUser {
 }
 
 export class AuthorizationError extends Error {
-  constructor(message = "Unauthorized access") {
+  constructor(message = "Authentication required. Please log in.") {
     super(message);
     this.name = "AuthorizationError";
   }
 }
 
 export class ForbiddenError extends Error {
-  constructor(message = "You do not have permission to perform this action") {
+  constructor(message = "Access denied. Insufficient permissions.") {
     super(message);
     this.name = "ForbiddenError";
   }
@@ -29,7 +29,7 @@ export async function requireAuth(): Promise<AuthenticatedUser> {
   const session = await auth();
 
   if (!session?.user?.id) {
-    throw new AuthorizationError("Authentication required");
+    throw new AuthorizationError("Authentication required. Please log in.");
   }
 
   return {
@@ -41,14 +41,14 @@ export async function requireAuth(): Promise<AuthenticatedUser> {
 }
 
 /**
- * Requires specific user role (e.g. 'admin' or 'organizer')
+ * Requires specific user role(s)
  */
 export async function requireRole(allowedRoles: UserRole[]): Promise<AuthenticatedUser> {
   const user = await requireAuth();
 
   if (!allowedRoles.includes(user.role)) {
     throw new ForbiddenError(
-      `Access denied. Required roles: ${allowedRoles.join(", ")}. Your role: ${user.role}`
+      `Access denied. Required role: ${allowedRoles.join(" or ")}. Your role: ${user.role}`
     );
   }
 
@@ -66,7 +66,14 @@ export async function requireAdmin(): Promise<AuthenticatedUser> {
  * Requires Organizer permissions
  */
 export async function requireOrganizer(): Promise<AuthenticatedUser> {
-  return requireRole([USER_ROLES.ORGANIZER, USER_ROLES.ADMIN]);
+  return requireRole([USER_ROLES.ORGANIZER]);
+}
+
+/**
+ * Requires Student permissions
+ */
+export async function requireStudent(): Promise<AuthenticatedUser> {
+  return requireRole([USER_ROLES.STUDENT]);
 }
 
 /**

@@ -1,4 +1,5 @@
 import type { NextAuthConfig } from "next-auth";
+import { USER_ROLES, UserRole } from "@/constants/roles";
 
 export const authConfig: NextAuthConfig = {
   pages: {
@@ -11,24 +12,62 @@ export const authConfig: NextAuthConfig = {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
       const pathname = nextUrl.pathname;
+      const role = (auth?.user as { role?: string })?.role as UserRole | undefined;
 
-      // Student routes protection
+      // 1. Student routes protection: Only student role
       if (pathname.startsWith("/student")) {
-        return isLoggedIn;
+        if (!isLoggedIn) return false;
+        if (role !== USER_ROLES.STUDENT) {
+          if (role === USER_ROLES.ORGANIZER) {
+            return Response.redirect(new URL("/organizer", nextUrl));
+          }
+          if (role === USER_ROLES.ADMIN) {
+            return Response.redirect(new URL("/admin", nextUrl));
+          }
+          return false;
+        }
+        return true;
       }
 
-      // Organizer routes protection
+      // 2. Organizer routes protection: Only organizer role
       if (pathname.startsWith("/organizer")) {
         if (!isLoggedIn) return false;
-        const role = (auth.user as { role?: string })?.role;
-        return role === "organizer" || role === "admin";
+        if (role !== USER_ROLES.ORGANIZER) {
+          if (role === USER_ROLES.STUDENT) {
+            return Response.redirect(new URL("/student", nextUrl));
+          }
+          if (role === USER_ROLES.ADMIN) {
+            return Response.redirect(new URL("/admin", nextUrl));
+          }
+          return false;
+        }
+        return true;
       }
 
-      // Superadmin routes protection
+      // 3. Superadmin routes protection: Only admin role
       if (pathname.startsWith("/admin")) {
         if (!isLoggedIn) return false;
-        const role = (auth.user as { role?: string })?.role;
-        return role === "admin";
+        if (role !== USER_ROLES.ADMIN) {
+          if (role === USER_ROLES.STUDENT) {
+            return Response.redirect(new URL("/student", nextUrl));
+          }
+          if (role === USER_ROLES.ORGANIZER) {
+            return Response.redirect(new URL("/organizer", nextUrl));
+          }
+          return false;
+        }
+        return true;
+      }
+
+      // 4. Redirect logged-in users away from auth pages to their respective dashboards
+      if (isLoggedIn && (pathname === "/login" || pathname === "/register")) {
+        if (role === USER_ROLES.ADMIN) {
+          return Response.redirect(new URL("/admin", nextUrl));
+        } else if (role === USER_ROLES.ORGANIZER) {
+          return Response.redirect(new URL("/organizer", nextUrl));
+        } else {
+          return Response.redirect(new URL("/student", nextUrl));
+        }
       }
 
       return true;
@@ -36,17 +75,17 @@ export const authConfig: NextAuthConfig = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = (user as { role?: string }).role || "student";
+        token.role = (user as { role?: string }).role || USER_ROLES.STUDENT;
       }
       return token;
     },
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = (token.id as string) || (token.sub as string);
-        (session.user as { role?: string }).role = (token.role as string) || "student";
+        (session.user as { role?: string }).role = (token.role as string) || USER_ROLES.STUDENT;
       }
       return session;
     },
   },
-  providers: [], // Configured with credentials in auth.ts
+  providers: [],
 };

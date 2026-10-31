@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
@@ -16,8 +16,6 @@ import {
   LogOut,
   Bell,
   Search,
-  Menu,
-  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -37,7 +35,6 @@ export default function StudentLayout({
 }) {
   const pathname = usePathname();
   const { data: session } = useSession();
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const studentName = session?.user?.name || "Student";
   const studentInitials =
@@ -106,14 +103,14 @@ export default function StudentLayout({
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Header */}
         <header className="h-16 border-b border-slate-200 bg-white/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setMobileSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
-            <div className="relative hidden sm:flex items-center w-80">
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Mobile Dashboard App-Style Header Logo */}
+            <div className="lg:hidden shrink-0">
+              <NotariLogo variant="student" />
+            </div>
+
+            {/* Desktop Search Bar */}
+            <div className="relative hidden sm:flex items-center w-64 md:w-80">
               <Search className="absolute left-3.5 w-4 h-4 text-slate-400" />
               <input
                 type="text"
@@ -123,71 +120,19 @@ export default function StudentLayout({
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
             <Link href="/events" className="hidden sm:inline-block text-xs font-semibold text-notari-primary hover:underline">
               Discover Events
             </Link>
-            <button className="relative p-2 rounded-xl text-slate-500 hover:bg-slate-100">
+            <button className="relative p-2 rounded-xl text-slate-500 hover:bg-slate-100 transition-colors cursor-pointer" aria-label="Notifications">
               <Bell className="w-5 h-5" />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-indigo-600" />
             </button>
-            <div className="w-8 h-8 rounded-full bg-indigo-100 text-notari-primary flex items-center justify-center font-bold text-xs">
+            <div className="w-8 h-8 rounded-full bg-indigo-100 text-notari-primary flex items-center justify-center font-bold text-xs ring-1 ring-indigo-200">
               {studentInitials}
             </div>
           </div>
         </header>
-
-        {/* Mobile Sidebar Overlay */}
-        {mobileSidebarOpen && (
-          <div className="fixed inset-0 z-50 flex lg:hidden">
-            <div
-              className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm"
-              onClick={() => setMobileSidebarOpen(false)}
-            />
-            <div className="relative w-72 bg-white p-5 flex flex-col justify-between">
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <NotariLogo variant="student" />
-                  <button onClick={() => setMobileSidebarOpen(false)}>
-                    <X className="w-5 h-5 text-slate-500" />
-                  </button>
-                </div>
-                <nav className="space-y-1">
-                  {STUDENT_NAV.map((item) => {
-                    const isActive = pathname === item.href;
-                    const Icon = item.icon;
-                    return (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        onClick={() => setMobileSidebarOpen(false)}
-                        className={cn(
-                          "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
-                          isActive
-                            ? "bg-notari-primary text-white shadow-sm"
-                            : "text-slate-600 hover:bg-slate-100 hover:text-notari-dark"
-                        )}
-                      >
-                        <Icon className="w-4 h-4 shrink-0" />
-                        <span>{item.name}</span>
-                      </Link>
-                    );
-                  })}
-                </nav>
-              </div>
-              <div className="pt-4 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => signOut({ callbackUrl: "/login" })}
-                  className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-rose-600 rounded-lg hover:bg-rose-50 w-full text-left cursor-pointer"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span>Logout</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Page Content */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 max-w-7xl w-full mx-auto">

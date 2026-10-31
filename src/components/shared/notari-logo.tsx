@@ -27,9 +27,9 @@ export function NotariLogo({ variant = "public", isDark = false, className }: No
       : "/";
 
   return (
-    <Link href={href} className={cn("inline-flex items-center gap-3 group select-none", className)}>
+    <Link href={href} className={cn("inline-flex items-center gap-2.5 sm:gap-3 group select-none shrink-0", className)}>
       {/* Crest Shield Icon */}
-      <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 text-white shadow-md shadow-indigo-500/20 ring-2 ring-white/10 group-hover:scale-105 transition-transform duration-200">
+      <div className="relative flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 text-white shadow-md shadow-indigo-500/20 ring-2 ring-white/10 group-hover:scale-105 transition-transform duration-200 shrink-0">
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -37,17 +37,17 @@ export function NotariLogo({ variant = "public", isDark = false, className }: No
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="w-5 h-5 text-amber-400"
+          className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400"
         >
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           <path d="m9 12 2 2 4-4" />
         </svg>
       </div>
 
-      <div className="flex flex-col leading-none">
+      <div className="flex flex-col leading-none min-w-0">
         <span
           className={cn(
-            "text-xl font-bold tracking-tight font-sans transition-colors",
+            "text-base sm:text-xl font-bold tracking-tight font-sans transition-colors truncate",
             isDark ? "text-white" : "text-notari-dark group-hover:text-notari-primary"
           )}
         >
@@ -55,7 +55,7 @@ export function NotariLogo({ variant = "public", isDark = false, className }: No
         </span>
         <span
           className={cn(
-            "text-[10px] font-medium tracking-wider uppercase mt-0.5",
+            "text-[9px] sm:text-[10px] font-medium tracking-wider uppercase mt-0.5 truncate",
             isDark ? "text-slate-400" : "text-slate-500"
           )}
         >

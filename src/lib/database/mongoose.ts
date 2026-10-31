@@ -24,15 +24,21 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
     return cached.conn;
   }
 
+  const uri = env.MONGODB_URI;
+  if (!uri) {
+    throw new Error(
+      "MONGODB_URI is not defined in environment variables. Please check your .env.local file. See .env.example for configuration details."
+    );
+  }
+
   if (!cached.promise) {
     const opts: mongoose.ConnectOptions = {
       bufferCommands: false,
     };
 
     cached.promise = mongoose
-      .connect(env.MONGODB_URI, opts)
+      .connect(uri, opts)
       .then((m) => {
-        console.log(" Connected to MongoDB");
         return m;
       })
       .catch((err) => {

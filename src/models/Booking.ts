@@ -31,7 +31,7 @@ const BookingSchema = new Schema<IBookingDocument>(
       default: "pending",
       index: true,
     },
-    paymentReference: { type: String, index: true },
+    paymentReference: { type: String, index: true, sparse: true, unique: true },
     paymentChannel: { type: String, enum: ["paystack", "free"], default: "free" },
     paidAt: { type: Date },
   },

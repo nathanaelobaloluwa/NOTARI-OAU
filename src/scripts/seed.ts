@@ -80,6 +80,11 @@ async function runSeed() {
     await mongoose.connect(MONGODB_URI, { bufferCommands: false });
     console.log("✅ Database connection established.");
 
+    // Ensure all Mongoose unique and sparse indexes are explicitly synchronized in MongoDB
+    await User.init();
+    await OrganizerProfile.init();
+    console.log("✅ Database unique & sparse indexes synchronized.");
+
     // Seed Config from environment (no hardcoded passwords)
     const adminConfig = {
       name: process.env.SEED_ADMIN_NAME || "Super Administrator",

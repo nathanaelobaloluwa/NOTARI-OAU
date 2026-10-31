@@ -35,6 +35,8 @@ const UserSchema = new Schema<IUserDocument>(
       uppercase: true,
       sparse: true,
       unique: true,
+      set: (v: string | null | undefined) =>
+        v && v.trim().length > 0 ? v.trim().toUpperCase() : undefined,
     },
     faculty: { type: String, trim: true },
     department: { type: String, trim: true },

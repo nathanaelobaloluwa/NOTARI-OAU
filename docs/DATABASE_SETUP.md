@@ -109,3 +109,15 @@ npm run db:seed
 ```
 
 The script will hash all passwords using `bcryptjs` (12 rounds) and safely insert or update the accounts without duplication. Actual passwords are never printed to terminal logs.
+
+---
+
+## Live Database Integration Testing (`npm run test:e2e`)
+
+To execute real end-to-end integration tests verifying live registration, normalization, uniqueness constraints, bcrypt encryption, query masking, and credentials authorization against MongoDB:
+
+```bash
+npm run test:e2e
+```
+
+The integration test runner creates isolated development test accounts (`test_e2e_*`) and cleans them up automatically upon completion. Real accounts are never affected.

@@ -75,7 +75,15 @@ export async function POST(request: NextRequest) {
       "Account registered successfully. You can now log in.",
       201
     );
-  } catch (error) {
+  } catch (error: unknown) {
+    // Handle MongoDB duplicate key error (code 11000) for race conditions
+    const mongoError = error as { code?: number; keyPattern?: Record<string, number> };
+    if (mongoError?.code === 11000) {
+      if (mongoError.keyPattern?.matricNumber) {
+        return apiError("A student with this matriculation number is already registered.", 409);
+      }
+      return apiError("An account with this email address already exists. Please log in instead.", 409);
+    }
     return handleApiError(error);
   }
 }

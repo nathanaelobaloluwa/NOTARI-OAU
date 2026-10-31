@@ -50,12 +50,22 @@ export function handleApiError(error: unknown) {
     return apiError("Validation failed", 422, formattedErrors);
   }
 
+  // Handle MongoDB duplicate key error code 11000 globally
+  const mongoError = error as { code?: number };
+  if (mongoError?.code === 11000) {
+    return apiError("A record with this unique value already exists.", 409);
+  }
+
   if (error instanceof Error) {
     if (error.name === "AuthorizationError") {
       return apiError(error.message, 401);
     }
     if (error.name === "ForbiddenError") {
       return apiError(error.message, 403);
+    }
+    // Prevent exposing raw database connection strings, stack traces, or socket errors to client
+    if (error.name === "MongoServerError" || error.name === "MongooseError") {
+      return apiError("A database service error occurred. Please try again later.", 500);
     }
     return apiError(error.message, 500);
   }

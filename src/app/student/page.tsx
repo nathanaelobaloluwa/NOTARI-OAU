@@ -32,51 +32,51 @@ export default function StudentDashboardPage() {
       </div>
 
       {/* 4 Summary Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="p-4 sm:p-5 border-slate-200/80 shadow-sm bg-white">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 text-notari-primary flex items-center justify-center">
-              <Calendar className="w-5 h-5" />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <Card className="p-3.5 sm:p-5 border-slate-200/80 shadow-sm bg-white">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-indigo-50 text-notari-primary flex items-center justify-center shrink-0">
+              <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <p className="text-xs text-slate-400 font-medium">Upcoming Events</p>
-              <h3 className="text-xl font-bold text-notari-dark">{MOCK_STUDENT_METRICS.upcomingEvents}</h3>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-4 sm:p-5 border-slate-200/80 shadow-sm bg-white">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <Ticket className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-xs text-slate-400 font-medium">My Tickets</p>
-              <h3 className="text-xl font-bold text-notari-dark">{MOCK_STUDENT_METRICS.myTickets}</h3>
+            <div className="min-w-0">
+              <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">Upcoming</p>
+              <h3 className="text-lg sm:text-xl font-bold text-notari-dark">{MOCK_STUDENT_METRICS.upcomingEvents}</h3>
             </div>
           </div>
         </Card>
 
-        <Card className="p-4 sm:p-5 border-slate-200/80 shadow-sm bg-white">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-              <CheckCircle2 className="w-5 h-5" />
+        <Card className="p-3.5 sm:p-5 border-slate-200/80 shadow-sm bg-white">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+              <Ticket className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <p className="text-xs text-slate-400 font-medium">Events Attended</p>
-              <h3 className="text-xl font-bold text-notari-dark">{MOCK_STUDENT_METRICS.eventsAttended}</h3>
+            <div className="min-w-0">
+              <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">My Tickets</p>
+              <h3 className="text-lg sm:text-xl font-bold text-notari-dark">{MOCK_STUDENT_METRICS.myTickets}</h3>
             </div>
           </div>
         </Card>
 
-        <Card className="p-4 sm:p-5 border-slate-200/80 shadow-sm bg-white">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-              <Bookmark className="w-5 h-5" />
+        <Card className="p-3.5 sm:p-5 border-slate-200/80 shadow-sm bg-white">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <p className="text-xs text-slate-400 font-medium">Saved Events</p>
-              <h3 className="text-xl font-bold text-notari-dark">{MOCK_STUDENT_METRICS.savedEvents}</h3>
+            <div className="min-w-0">
+              <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">Attended</p>
+              <h3 className="text-lg sm:text-xl font-bold text-notari-dark">{MOCK_STUDENT_METRICS.eventsAttended}</h3>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-3.5 sm:p-5 border-slate-200/80 shadow-sm bg-white">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+              <Bookmark className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">Saved</p>
+              <h3 className="text-lg sm:text-xl font-bold text-notari-dark">{MOCK_STUDENT_METRICS.savedEvents}</h3>
             </div>
           </div>
         </Card>

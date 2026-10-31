@@ -25,13 +25,13 @@ export default function StudentTicketsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="inline-flex p-1 bg-slate-100 rounded-xl">
+      <div className="grid grid-cols-3 sm:inline-flex w-full sm:w-auto p-1 bg-slate-100 rounded-xl">
         {(["upcoming", "past", "all"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className={cn(
-              "px-4 py-2 text-xs font-semibold rounded-lg capitalize transition-all",
+              "px-3 sm:px-4 py-2 text-xs font-semibold rounded-lg capitalize transition-all text-center",
               tab === t
                 ? "bg-white text-notari-primary shadow-sm"
                 : "text-slate-600 hover:text-notari-dark"
@@ -91,46 +91,47 @@ export default function StudentTicketsPage() {
 
       {/* TICKET PREVIEW MODAL */}
       {selectedTicket && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="relative w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl space-y-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
+          <div className="relative w-full max-w-[340px] sm:max-w-sm bg-white rounded-3xl p-5 sm:p-6 shadow-2xl space-y-5">
             <button
               onClick={() => setSelectedTicket(null)}
-              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100"
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors"
+              aria-label="Close pass modal"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div className="text-center space-y-1">
-              <span className="text-xs font-bold uppercase tracking-wider text-notari-primary">
+            <div className="text-center space-y-1 pr-6">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-notari-primary">
                 Digital Pass
               </span>
-              <h3 className="text-lg font-bold text-notari-dark">
+              <h3 className="text-base sm:text-lg font-bold text-notari-dark line-clamp-1">
                 {selectedTicket.eventTitle}
               </h3>
               <p className="text-xs text-slate-500">{selectedTicket.tierName}</p>
             </div>
 
             {/* Simulated QR Code Canvas */}
-            <div className="flex flex-col items-center justify-center p-6 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
-              <div className="w-44 h-44 bg-white p-3 rounded-xl shadow-inner flex flex-col items-center justify-center text-center">
-                <QrCode className="w-32 h-32 text-notari-dark" />
+            <div className="flex flex-col items-center justify-center p-4 sm:p-5 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+              <div className="w-36 h-36 sm:w-44 sm:h-44 bg-white p-2.5 sm:p-3 rounded-xl shadow-inner flex flex-col items-center justify-center text-center">
+                <QrCode className="w-24 h-24 sm:w-32 sm:h-32 text-notari-dark" />
                 <span className="text-[10px] font-mono font-bold text-slate-600 mt-1">
                   {selectedTicket.ticketCode}
                 </span>
               </div>
-              <span className="text-xs text-slate-500 font-medium mt-3">
+              <span className="text-[11px] text-slate-500 font-medium mt-2">
                 Scan at the venue entrance
               </span>
             </div>
 
-            <div className="space-y-2 text-xs text-slate-600 pt-2 border-t border-slate-100">
+            <div className="space-y-1.5 text-xs text-slate-600 pt-2 border-t border-slate-100">
               <div className="flex justify-between">
                 <span>Attendee:</span>
                 <span className="font-semibold text-notari-dark">Adeola Johnson</span>
               </div>
               <div className="flex justify-between">
                 <span>Venue:</span>
-                <span className="font-semibold text-notari-dark">{selectedTicket.venue}</span>
+                <span className="font-semibold text-notari-dark truncate max-w-[180px]">{selectedTicket.venue}</span>
               </div>
               <div className="flex justify-between">
                 <span>Status:</span>
@@ -139,7 +140,7 @@ export default function StudentTicketsPage() {
             </div>
 
             <Button
-              className="w-full rounded-xl gap-2 text-xs font-semibold"
+              className="w-full h-11 rounded-xl gap-2 text-xs font-semibold shadow-sm"
               onClick={() => setSelectedTicket(null)}
             >
               <Download className="w-4 h-4" />

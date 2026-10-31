@@ -6,6 +6,11 @@ import { TicketSecurityService } from "../lib/tickets/qr";
 import { User } from "../models/User";
 import { Bookmark } from "../models/Bookmark";
 import { bookmarkSchema, bookmarkQuerySchema } from "../validators/bookmark";
+import {
+  studentProfileUpdateSchema,
+  changePasswordSchema,
+  studentHistoryQuerySchema,
+} from "../validators/student";
 import { USER_ROLES } from "../constants/roles";
 import type { NextRequest } from "next/server";
 import type { Session } from "next-auth";
@@ -414,6 +419,58 @@ async function runFoundationTests() {
   );
 
   assert(Bookmark.schema.indexes().length >= 2, "Bookmark schema registers at least 2 compound/sorting indexes");
+
+  // TEST SUITE 13: Student Profile & Password Validation Tests
+  console.log("\n--- 13. Student Profile & Password Validation Tests ---");
+  const validProfileUpdate = {
+    name: "Obaloluwa Nathanael Ajekiigbe",
+    phone: "08012345678",
+    faculty: "Technology",
+    department: "Computer Science and Engineering",
+  };
+  const parsedProfile = studentProfileUpdateSchema.safeParse(validProfileUpdate);
+  assert(parsedProfile.success, "Valid student profile update payload passes Zod validation");
+
+  const invalidShortName = { name: "A" };
+  assert(!studentProfileUpdateSchema.safeParse(invalidShortName).success, "Short name (<2 chars) is rejected");
+
+  const invalidPhone = { name: "Obaloluwa", phone: "abc1234" };
+  assert(!studentProfileUpdateSchema.safeParse(invalidPhone).success, "Invalid phone number format is rejected");
+
+  const validPasswordChange = {
+    currentPassword: "OldPassword123!",
+    newPassword: "NewSecurePassword2026!",
+    confirmPassword: "NewSecurePassword2026!",
+  };
+  const parsedPassChange = changePasswordSchema.safeParse(validPasswordChange);
+  assert(parsedPassChange.success, "Valid password change payload passes Zod validation");
+
+  const mismatchedPassChange = {
+    currentPassword: "OldPassword123!",
+    newPassword: "NewSecurePassword2026!",
+    confirmPassword: "DifferentPassword2026!",
+  };
+  assert(!changePasswordSchema.safeParse(mismatchedPassChange).success, "Mismatched confirmation password is rejected");
+
+  const identicalPassChange = {
+    currentPassword: "SamePassword123!",
+    newPassword: "SamePassword123!",
+    confirmPassword: "SamePassword123!",
+  };
+  assert(!changePasswordSchema.safeParse(identicalPassChange).success, "New password identical to current password is rejected");
+
+  const weakPassChange = {
+    currentPassword: "OldPassword123!",
+    newPassword: "weak",
+    confirmPassword: "weak",
+  };
+  assert(!changePasswordSchema.safeParse(weakPassChange).success, "Weak new password (<8 chars / no numbers) is rejected");
+
+  const validHistoryTab = studentHistoryQuerySchema.safeParse({ tab: "upcoming" });
+  assert(validHistoryTab.success && validHistoryTab.data.tab === "upcoming", "studentHistoryQuerySchema accepts 'upcoming'");
+
+  const defaultHistoryTab = studentHistoryQuerySchema.safeParse({});
+  assert(defaultHistoryTab.success && defaultHistoryTab.data.tab === "all", "studentHistoryQuerySchema defaults to 'all'");
 
   // Summary
   console.log("\n========================================================");

@@ -11,6 +11,7 @@
     "db:seed": "tsx src/scripts/seed.ts",
     "test:foundation": "tsx src/scripts/test-foundation.ts",
     "test:e2e": "tsx src/scripts/test-e2e-auth.ts",
+    "test:e2e:seed": "tsx src/scripts/test-e2e-seed-auth.ts",
     "test:e2e:booking": "tsx src/scripts/test-e2e-booking.ts",
     "test:e2e:bookmark": "tsx src/scripts/test-e2e-bookmark.ts",
     "test:e2e:student": "tsx src/scripts/test-e2e-student.ts",

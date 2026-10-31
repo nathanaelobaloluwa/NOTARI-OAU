@@ -3,4 +3,5 @@ export * from "./OrganizerProfile";
 export * from "./Event";
 export * from "./Booking";
 export * from "./Ticket";
+export * from "./Bookmark";
 export * from "./Announcement";

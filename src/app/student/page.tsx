@@ -4,7 +4,7 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth/auth";
 import { connectToDatabase } from "@/lib/database/mongoose";
-import { User, Ticket } from "@/models";
+import { User, Ticket, Bookmark as BookmarkModel } from "@/models";
 import { USER_ROLES } from "@/constants/roles";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -57,6 +57,7 @@ export default async function StudentDashboardPage() {
   // 4. Query genuine student ticket statistics & registrations from MongoDB
   let totalTicketsCount = 0;
   let attendedCount = 0;
+  let savedEventsCount = 0;
   let upcomingTickets: Array<{
     _id: string;
     tierName: string;
@@ -78,7 +79,7 @@ export default async function StudentDashboardPage() {
   try {
     const studentObjectId = student._id;
 
-    const [totalTickets, attendedTickets, activeTickets] = await Promise.all([
+    const [totalTickets, attendedTickets, activeTickets, savedCount] = await Promise.all([
       Ticket.countDocuments({ userId: studentObjectId }),
       Ticket.countDocuments({ userId: studentObjectId, isCheckedIn: true }),
       Ticket.find({ userId: studentObjectId, isCheckedIn: false })
@@ -86,10 +87,12 @@ export default async function StudentDashboardPage() {
         .sort({ createdAt: -1 })
         .limit(3)
         .lean(),
+      BookmarkModel.countDocuments({ userId: studentObjectId }),
     ]);
 
     totalTicketsCount = totalTickets;
     attendedCount = attendedTickets;
+    savedEventsCount = savedCount;
     upcomingTickets = activeTickets as unknown as typeof upcomingTickets;
   } catch (error) {
     console.error("❌ Failed to query student tickets:", error);
@@ -241,18 +244,20 @@ export default async function StudentDashboardPage() {
           </div>
         </Card>
 
-        {/* Card 4: Saved Events (Neutral state for upcoming Phase 4 feature) */}
-        <Card className="p-3.5 sm:p-5 border-slate-200/80 shadow-sm bg-white">
-          <div className="flex items-center gap-2.5 sm:gap-3">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
-              <Bookmark className="w-4 h-4 sm:w-5 sm:h-5" />
+        {/* Card 4: Saved Events */}
+        <Link href="/student/saved" className="block">
+          <Card className="p-3.5 sm:p-5 border-slate-200/80 shadow-sm bg-white hover:border-purple-300 hover:shadow-md transition-all cursor-pointer h-full">
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+                <Bookmark className="w-4 h-4 sm:w-5 sm:h-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">Saved Events</p>
+                <h3 className="text-lg sm:text-xl font-bold text-notari-dark">{savedEventsCount}</h3>
+              </div>
             </div>
-            <div className="min-w-0">
-              <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">Saved Events</p>
-              <h3 className="text-lg sm:text-xl font-bold text-slate-400">0</h3>
-            </div>
-          </div>
-        </Card>
+          </Card>
+        </Link>
       </div>
 
       {/* 4. Main Content Grid: Upcoming Events + Quick Actions */}

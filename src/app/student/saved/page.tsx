@@ -1,76 +1,113 @@
 import React from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { MOCK_EVENTS } from "@/lib/mock-data";
-import { Calendar, MapPin, Trash2 } from "lucide-react";
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth/auth";
+import { connectToDatabase } from "@/lib/database/mongoose";
+import { Bookmark } from "@/models/Bookmark";
+import { USER_ROLES } from "@/constants/roles";
+import { EVENT_STATUS } from "@/constants/oau";
+import {
+  StudentSavedEventsList,
+  SavedEventItem,
+} from "@/components/student/StudentSavedEventsList";
 
-export default function StudentSavedEventsPage() {
-  const savedEvents = MOCK_EVENTS.slice(3, 6);
+export const metadata = {
+  title: "Saved Events | NOTARI Student Portal",
+  description: "View and manage your bookmarked campus events on NOTARI 2.0.",
+};
+
+interface PopulatedEventLean {
+  _id: { toString(): string };
+  title: string;
+  slug: string;
+  description?: string;
+  venue: string;
+  startDate?: Date;
+  endDate?: Date;
+  flyerUrl?: string;
+  category: string;
+  faculty?: string;
+  isFree?: boolean;
+  organizerName: string;
+  ticketTiers?: Array<{ name: string; price: number }>;
+  status: string;
+}
+
+export default async function StudentSavedEventsPage() {
+  // 1. Authenticate user server-side
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    redirect("/login?callbackUrl=/student/saved");
+  }
+
+  // 2. Strict role enforcement: Only students can access
+  const role = (session.user as { role?: string }).role;
+  if (role !== USER_ROLES.STUDENT) {
+    if (role === USER_ROLES.ADMIN) {
+      redirect("/admin");
+    } else if (role === USER_ROLES.ORGANIZER) {
+      redirect("/organizer");
+    } else {
+      redirect("/login");
+    }
+  }
+
+  // 3. Connect to MongoDB and retrieve active saved bookmarks
+  await connectToDatabase();
+
+  const bookmarks = await Bookmark.find({ userId: session.user.id })
+    .populate({
+      path: "eventId",
+      select:
+        "title slug description venue startDate endDate flyerUrl category faculty isFree ticketTiers organizerName status",
+    })
+    .sort({ createdAt: -1 })
+    .lean();
+
+  // 4. Transform and filter only published events
+  const savedEvents: SavedEventItem[] = bookmarks
+    .filter((b) => {
+      const evt = b.eventId as { status?: string } | null;
+      return evt && evt.status === EVENT_STATUS.PUBLISHED;
+    })
+    .map((b) => {
+      const evt = b.eventId as unknown as PopulatedEventLean;
+      const lowestPrice = evt.isFree
+        ? 0
+        : evt.ticketTiers && evt.ticketTiers.length > 0
+        ? Math.min(...evt.ticketTiers.map((t) => t.price))
+        : 0;
+
+      return {
+        id: b._id.toString(),
+        eventId: evt._id.toString(),
+        title: evt.title,
+        slug: evt.slug,
+        organizerName: evt.organizerName,
+        category: evt.category,
+        venue: evt.venue,
+        startDate: evt.startDate ? new Date(evt.startDate).toISOString() : "",
+        endDate: evt.endDate ? new Date(evt.endDate).toISOString() : "",
+        flyerUrl: evt.flyerUrl,
+        isFree: Boolean(evt.isFree),
+        lowestPrice,
+      };
+    });
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="space-y-1">
         <h1 className="text-2xl sm:text-3xl font-extrabold text-notari-dark tracking-tight">
           Saved Events
         </h1>
         <p className="text-xs sm:text-sm text-slate-500">
-          Bookmarked events you are considering attending.
+          Bookmarked events you are considering attending on campus.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {savedEvents.map((evt) => (
-          <Card
-            key={evt.id}
-            className="overflow-hidden border-slate-200/80 hover:shadow-md transition-all flex flex-col justify-between"
-          >
-            <div>
-              <div className="relative aspect-[16/10] bg-slate-100">
-                <Image
-                  src={evt.image}
-                  alt={evt.title}
-                  fill
-                  className="object-cover"
-                />
-                <div className="absolute top-3 left-3">
-                  <Badge variant="secondary" className="text-xs">
-                    {evt.category}
-                  </Badge>
-                </div>
-              </div>
-
-              <div className="p-5 space-y-2">
-                <p className="text-xs text-slate-400">{evt.organizer}</p>
-                <h3 className="text-base font-bold text-notari-dark line-clamp-1">{evt.title}</h3>
-                <div className="space-y-1 text-xs text-slate-500 pt-1">
-                  <div className="flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                    <span>{evt.date}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                    <span className="truncate">{evt.venue}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-5 pt-0 border-t border-slate-100 mt-2 flex items-center justify-between">
-              <Link href={`/events/${evt.slug}`}>
-                <Button size="sm" className="text-xs rounded-xl font-semibold">
-                  Reserve Pass
-                </Button>
-              </Link>
-              <button className="text-slate-400 hover:text-rose-600 p-2 rounded-lg">
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          </Card>
-        ))}
-      </div>
+      {/* Interactive Saved Events Component */}
+      <StudentSavedEventsList initialBookmarks={savedEvents} />
     </div>
   );
 }

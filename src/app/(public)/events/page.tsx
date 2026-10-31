@@ -1,12 +1,16 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { auth } from "@/lib/auth/auth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { StatusPill } from "@/components/shared/status-pill";
+import { BookmarkButton } from "@/components/events/BookmarkButton";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { Event } from "@/models/Event";
+import { Bookmark } from "@/models/Bookmark";
+import { USER_ROLES } from "@/constants/roles";
 import { EVENT_CATEGORIES, EVENT_STATUS, OAU_FACULTIES } from "@/constants/oau";
 import { eventFilterSchema } from "@/validators/event";
 import {
@@ -102,6 +106,17 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
       .lean(),
     Event.countDocuments(mongoQuery),
   ]);
+
+  // Query authenticated student bookmarks to show active state on cards
+  const session = await auth();
+  const isStudent = session?.user && (session.user as { role?: string }).role === USER_ROLES.STUDENT;
+  let savedEventIds = new Set<string>();
+  if (isStudent && session?.user?.id) {
+    const studentBookmarks = await Bookmark.find({ userId: session.user.id })
+      .select("eventId")
+      .lean();
+    savedEventIds = new Set(studentBookmarks.map((b) => b.eventId.toString()));
+  }
 
   const totalPages = Math.ceil(total / limit);
 
@@ -290,16 +305,21 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
                         <span className="text-xs font-bold uppercase tracking-wider">{evt.category}</span>
                       </div>
                     )}
-                    <div className="absolute top-3 left-3">
+                    <div className="absolute top-3 left-3 flex flex-wrap items-center gap-1.5 z-10">
                       <Badge variant="secondary" className="text-[11px] shadow-sm font-semibold">
                         {evt.category}
                       </Badge>
+                      {evt.isFree && <StatusPill status="free" />}
                     </div>
-                    {evt.isFree && (
-                      <div className="absolute top-3 right-3">
-                        <StatusPill status="free" />
-                      </div>
-                    )}
+                    <div className="absolute top-3 right-3 z-10">
+                      <BookmarkButton
+                        eventId={evt._id.toString()}
+                        initialIsBookmarked={savedEventIds.has(evt._id.toString())}
+                        isAuthenticated={Boolean(session?.user?.id)}
+                        isStudent={Boolean(isStudent)}
+                        variant="floating"
+                      />
+                    </div>
                   </div>
 
                   {/* Card Content */}

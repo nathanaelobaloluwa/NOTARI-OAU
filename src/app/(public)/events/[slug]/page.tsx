@@ -5,11 +5,14 @@ import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth/auth";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { Event } from "@/models/Event";
+import { Bookmark } from "@/models/Bookmark";
 import { EVENT_STATUS } from "@/constants/oau";
+import { USER_ROLES } from "@/constants/roles";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StatusPill } from "@/components/shared/status-pill";
 import { EventBookingCard } from "@/components/events/EventBookingCard";
+import { BookmarkButton } from "@/components/events/BookmarkButton";
 import {
   ArrowLeft,
   Calendar,
@@ -55,6 +58,17 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
       }
     : null;
 
+  // Check if current authenticated student has bookmarked this event
+  const isStudent = sessionUser?.role === USER_ROLES.STUDENT;
+  let isBookmarked = false;
+  if (isStudent && sessionUser?.id) {
+    const existingBookmark = await Bookmark.exists({
+      userId: sessionUser.id,
+      eventId: event._id,
+    });
+    isBookmarked = Boolean(existingBookmark);
+  }
+
   // 2. Date and Time formatting
   const startDate = new Date(event.startDate);
   const endDate = new Date(event.endDate);
@@ -98,8 +112,8 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 pb-28 lg:pb-8 space-y-8">
-      {/* 1. Navigation Breadcrumb */}
-      <div>
+      {/* 1. Navigation Breadcrumb & Bookmark Action */}
+      <div className="flex items-center justify-between gap-4">
         <Link
           href="/events"
           className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-600 hover:text-notari-primary transition-colors"
@@ -107,6 +121,15 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
           <ArrowLeft className="w-4 h-4" />
           <span>Back to all events</span>
         </Link>
+
+        <BookmarkButton
+          eventId={event._id.toString()}
+          initialIsBookmarked={isBookmarked}
+          variant="button"
+          showLabel={true}
+          isAuthenticated={Boolean(sessionUser)}
+          isStudent={Boolean(isStudent)}
+        />
       </div>
 
       {/* 2. Hero Cover Banner */}

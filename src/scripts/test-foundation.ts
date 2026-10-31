@@ -4,6 +4,8 @@ import { registerSchema } from "../validators/auth";
 import { authConfig } from "../lib/auth/auth.config";
 import { TicketSecurityService } from "../lib/tickets/qr";
 import { User } from "../models/User";
+import { Bookmark } from "../models/Bookmark";
+import { bookmarkSchema, bookmarkQuerySchema } from "../validators/bookmark";
 import { USER_ROLES } from "../constants/roles";
 import type { NextRequest } from "next/server";
 import type { Session } from "next-auth";
@@ -380,6 +382,38 @@ async function runFoundationTests() {
     !TicketSecurityService.verifyTicketSignature(testTicketCode, testEventId, "short"),
     "Mismatched signature length does not cause timingSafeEqual RangeError"
   );
+
+  // TEST SUITE 12: Bookmark Validation & Schema Contract Tests
+  console.log("\n--- 12. Bookmark Validation & Schema Contract Tests ---");
+  const validBookmark = { eventId: "65c1a1112223334445556667" };
+  const parsedBookmark = bookmarkSchema.safeParse(validBookmark);
+  assert(parsedBookmark.success, "Valid bookmark payload passes Zod validation");
+
+  const emptyBookmark = { eventId: "" };
+  assert(!bookmarkSchema.safeParse(emptyBookmark).success, "Empty eventId is rejected by bookmarkSchema");
+
+  const missingBookmark = {};
+  assert(!bookmarkSchema.safeParse(missingBookmark).success, "Missing eventId is rejected by bookmarkSchema");
+
+  const parsedIdsOnlyTrue = bookmarkQuerySchema.safeParse({ idsOnly: "true" });
+  assert(
+    parsedIdsOnlyTrue.success && parsedIdsOnlyTrue.data.idsOnly === true,
+    "bookmarkQuerySchema transforms idsOnly='true' into boolean true"
+  );
+
+  const parsedIdsOnlyFalse = bookmarkQuerySchema.safeParse({ idsOnly: "false" });
+  assert(
+    parsedIdsOnlyFalse.success && parsedIdsOnlyFalse.data.idsOnly === false,
+    "bookmarkQuerySchema transforms idsOnly='false' into boolean false"
+  );
+
+  const parsedIdsOnlyEmpty = bookmarkQuerySchema.safeParse({});
+  assert(
+    parsedIdsOnlyEmpty.success && parsedIdsOnlyEmpty.data.idsOnly === false,
+    "bookmarkQuerySchema defaults undefined idsOnly to boolean false"
+  );
+
+  assert(Bookmark.schema.indexes().length >= 2, "Bookmark schema registers at least 2 compound/sorting indexes");
 
   // Summary
   console.log("\n========================================================");

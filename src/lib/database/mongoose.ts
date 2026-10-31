@@ -20,11 +20,16 @@ if (!global.mongooseCache) {
  * Connect to MongoDB with cached connection for serverless Next.js runtimes
  */
 export async function connectToDatabase(): Promise<typeof mongoose> {
+  if (mongoose.connection.readyState === 1) {
+    cached.conn = mongoose;
+    return cached.conn;
+  }
+
   if (cached.conn) {
     return cached.conn;
   }
 
-  const uri = env.MONGODB_URI;
+  const uri = process.env.MONGODB_URI || env.MONGODB_URI;
   if (!uri) {
     throw new Error(
       "MONGODB_URI is not defined in environment variables. Please check your .env.local file. See .env.example for configuration details."

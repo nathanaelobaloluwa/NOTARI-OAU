@@ -2,20 +2,20 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import { auth } from "@/lib/auth/auth";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { Event } from "@/models/Event";
 import { EVENT_STATUS } from "@/constants/oau";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StatusPill } from "@/components/shared/status-pill";
+import { EventBookingCard } from "@/components/events/EventBookingCard";
 import {
   ArrowLeft,
   Calendar,
   Clock,
   MapPin,
   User,
-  Ticket,
   Sparkles,
   School,
 } from "lucide-react";
@@ -45,6 +45,16 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
     notFound();
   }
 
+  const session = await auth();
+  const sessionUser = session?.user
+    ? {
+        id: session.user.id as string,
+        name: session.user.name,
+        email: session.user.email,
+        role: (session.user as { role?: string }).role,
+      }
+    : null;
+
   // 2. Date and Time formatting
   const startDate = new Date(event.startDate);
   const endDate = new Date(event.endDate);
@@ -68,17 +78,23 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
 
   // 3. Pricing and Seat Availability
   const ticketTiers = event.ticketTiers || [];
-  const totalCapacity = event.totalCapacity || ticketTiers.reduce((acc, t) => acc + t.capacity, 0);
-  const totalAvailable = ticketTiers.reduce((acc, t) => acc + (t.available ?? t.capacity), 0);
-  const isSoldOut = totalCapacity > 0 && totalAvailable <= 0;
-
-  const lowestPrice = event.isFree
-    ? 0
-    : ticketTiers.length > 0
-    ? Math.min(...ticketTiers.map((t) => t.price))
-    : 0;
-
-  const priceDisplay = event.isFree || lowestPrice === 0 ? "Free Event" : `₦${lowestPrice.toLocaleString()}`;
+  const serializedTicketTiers = ticketTiers.map((t: {
+    _id?: { toString(): string };
+    name: string;
+    price: number;
+    capacity: number;
+    available?: number;
+    description?: string;
+    maxPerOrder?: number;
+  }) => ({
+    id: t._id ? t._id.toString() : "",
+    name: t.name,
+    price: t.price,
+    capacity: t.capacity,
+    available: t.available ?? t.capacity,
+    description: t.description,
+    maxPerOrder: t.maxPerOrder || 5,
+  }));
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 pb-28 lg:pb-8 space-y-8">
@@ -231,85 +247,18 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
 
         {/* Right Column: Desktop Booking Action Card */}
         <div className="lg:col-span-4 sticky top-24 space-y-4">
-          <Card className="p-6 border-slate-200/90 shadow-md space-y-6 rounded-2xl bg-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-xs text-slate-400 font-medium">Admission</span>
-                <div className="text-2xl font-extrabold text-notari-dark mt-0.5">
-                  {priceDisplay}
-                </div>
-              </div>
-              <span
-                className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
-                  isSoldOut
-                    ? "bg-rose-50 text-rose-600 border-rose-200"
-                    : "bg-emerald-50 text-emerald-600 border-emerald-200"
-                }`}
-              >
-                {isSoldOut ? "Sold Out" : `${totalAvailable} seats left`}
-              </span>
-            </div>
-
-            <div className="space-y-2.5">
-              {isSoldOut ? (
-                <Button disabled className="w-full h-12 rounded-xl text-sm font-semibold opacity-60">
-                  Event Sold Out
-                </Button>
-              ) : (
-                <Link href={`/login?callbackUrl=/events/${event.slug}`} className="w-full block">
-                  <Button className="w-full h-12 rounded-xl text-sm font-semibold shadow-md gap-2">
-                    <Ticket className="w-4 h-4" />
-                    <span>Reserve Your Spot</span>
-                  </Button>
-                </Link>
-              )}
-            </div>
-
-            <div className="pt-4 border-t border-slate-100 space-y-2.5 text-xs text-slate-500">
-              <div className="flex justify-between">
-                <span>Date:</span>
-                <span className="font-semibold text-notari-dark">{formattedDate}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Time:</span>
-                <span className="font-semibold text-notari-dark">{formattedTime}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Venue:</span>
-                <span className="font-semibold text-notari-dark truncate max-w-[180px]">{event.venue}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Organizer:</span>
-                <span className="font-semibold text-notari-dark truncate max-w-[180px]">{event.organizerName}</span>
-              </div>
-            </div>
-          </Card>
-        </div>
-      </div>
-
-      {/* 4. Mobile Sticky Booking Bar */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 p-3.5 sm:px-6 shadow-[0_-4px_20px_rgba(16,28,58,0.08)] pb-safe">
-        <div className="flex items-center justify-between gap-4 max-w-lg mx-auto">
-          <div>
-            <span className="text-[10px] text-slate-400 font-medium block">Price</span>
-            <span className="text-lg font-extrabold text-notari-dark">
-              {priceDisplay}
-            </span>
-          </div>
-          <div className="flex-1 max-w-[220px]">
-            {isSoldOut ? (
-              <Button disabled className="w-full h-11 rounded-xl text-xs sm:text-sm font-semibold opacity-60">
-                Sold Out
-              </Button>
-            ) : (
-              <Link href={`/login?callbackUrl=/events/${event.slug}`} className="w-full block">
-                <Button className="w-full h-11 rounded-xl text-xs sm:text-sm font-semibold shadow-md gap-2">
-                  <Ticket className="w-4 h-4" />
-                  <span>Reserve Spot</span>
-                </Button>
-              </Link>
-            )}
-          </div>
+          <EventBookingCard
+            eventId={event._id.toString()}
+            eventSlug={event.slug}
+            eventTitle={event.title}
+            venue={event.venue}
+            formattedDate={formattedDate}
+            formattedTime={formattedTime}
+            organizerName={event.organizerName}
+            isFree={event.isFree}
+            ticketTiers={serializedTicketTiers}
+            sessionUser={sessionUser}
+          />
         </div>
       </div>
     </div>

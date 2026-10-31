@@ -2,6 +2,7 @@ import mongoose, { Schema, Document, Model } from "mongoose";
 import { EVENT_CATEGORIES, EVENT_STATUS, EventCategory, EventStatus } from "@/constants/oau";
 
 export interface ITicketTierSubdocument {
+  _id?: mongoose.Types.ObjectId;
   name: string;
   price: number;
   capacity: number;

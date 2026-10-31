@@ -281,6 +281,106 @@ async function runFoundationTests() {
   assert(publicQuery.status !== EVENT_STATUS.PENDING_APPROVAL, "Public query isolates PENDING_APPROVAL events");
   assert(publicQuery.status !== EVENT_STATUS.REJECTED, "Public query isolates REJECTED events");
 
+  // TEST SUITE 9: Free Event Registration Validation & Security Tests
+  console.log("\n--- 9. Free Event Registration Validation & Bounds Tests ---");
+  const { freeRegistrationSchema, generateBookingReference } = await import("../validators/booking");
+
+  const validFreeBooking = {
+    eventId: "65c1a1112223334445556667",
+    ticketTierId: "65c1a1112223334445556668",
+    quantity: 2,
+  };
+  const parsedFree = freeRegistrationSchema.safeParse(validFreeBooking);
+  assert(parsedFree.success, "Valid free registration payload passes Zod validation");
+
+  const stringCoercedFree = freeRegistrationSchema.safeParse({
+    ...validFreeBooking,
+    quantity: "3",
+  });
+  assert(stringCoercedFree.success && (stringCoercedFree.data as { quantity: number }).quantity === 3, "Quantity string is safely coerced to integer");
+
+  const missingEvent = freeRegistrationSchema.safeParse({
+    ticketTierId: "65c1a1112223334445556668",
+    quantity: 1,
+  });
+  assert(!missingEvent.success, "Registration missing eventId is rejected");
+
+  const missingTier = freeRegistrationSchema.safeParse({
+    eventId: "65c1a1112223334445556667",
+    quantity: 1,
+  });
+  assert(!missingTier.success, "Registration missing ticketTierId is rejected");
+
+  const zeroQuantity = freeRegistrationSchema.safeParse({
+    ...validFreeBooking,
+    quantity: 0,
+  });
+  assert(!zeroQuantity.success, "Zero quantity registration is rejected");
+
+  const excessiveQuantity = freeRegistrationSchema.safeParse({
+    ...validFreeBooking,
+    quantity: 6,
+  });
+  assert(!excessiveQuantity.success, "Quantity exceeding max per order (5) is rejected");
+
+  const floatQuantity = freeRegistrationSchema.safeParse({
+    ...validFreeBooking,
+    quantity: 2.5,
+  });
+  assert(!floatQuantity.success, "Floating point fractional quantity is rejected");
+
+  // TEST SUITE 10: Booking Reference & Ticket Code Cryptographic Entropy Tests
+  console.log("\n--- 10. Booking Reference & Ticket Cryptographic Entropy Tests ---");
+  const ref1 = generateBookingReference(2026);
+  assert(/^NOT-2026-[0-9A-F]{8}$/.test(ref1), "Booking reference adheres to 'NOT-YYYY-XXXXXXXX' pattern");
+
+  const sampleRefs = new Set<string>();
+  for (let i = 0; i < 100; i++) {
+    sampleRefs.add(generateBookingReference());
+  }
+  assert(sampleRefs.size === 100, "100 consecutive booking references are completely unique (no collisions)");
+
+  const ticketCode1 = TicketSecurityService.generateTicketCode();
+  assert(/^NOT-OAU-[0-9A-F]{12}$/.test(ticketCode1), "Ticket code adheres to 'NOT-OAU-XXXXXXXXXXXX' pattern");
+
+  const sampleCodes = new Set<string>();
+  for (let i = 0; i < 100; i++) {
+    sampleCodes.add(TicketSecurityService.generateTicketCode());
+  }
+  assert(sampleCodes.size === 100, "100 consecutive ticket codes are completely unique (high entropy)");
+
+  // TEST SUITE 11: Ticket HMAC Signing & Anti-Tampering Verification Tests
+  console.log("\n--- 11. Ticket HMAC Signing & Anti-Forgery Verification Tests ---");
+  const testTicketCode = "NOT-OAU-A1B2C3D4E5F6";
+  const testEventId = "65c1a1112223334445556667";
+
+  const foundationValidSig = TicketSecurityService.signTicket(testTicketCode, testEventId);
+  assert(typeof foundationValidSig === "string" && foundationValidSig.length === 16, "Ticket signature generates a 16-character hex hash");
+  assert(
+    TicketSecurityService.verifyTicketSignature(testTicketCode, testEventId, foundationValidSig),
+    "Genuine ticket signature verifies true"
+  );
+  assert(
+    !TicketSecurityService.verifyTicketSignature("NOT-OAU-FORGEDCODE", testEventId, foundationValidSig),
+    "Tampered ticket code fails verification"
+  );
+  assert(
+    !TicketSecurityService.verifyTicketSignature(testTicketCode, "65c1a1112223334445559999", foundationValidSig),
+    "Ticket signature tied to different eventId fails verification"
+  );
+  assert(
+    !TicketSecurityService.verifyTicketSignature(testTicketCode, testEventId, "forged_signature_"),
+    "Forged signature fails verification"
+  );
+  assert(
+    !TicketSecurityService.verifyTicketSignature(testTicketCode, testEventId, ""),
+    "Empty signature is rejected safely without crash"
+  );
+  assert(
+    !TicketSecurityService.verifyTicketSignature(testTicketCode, testEventId, "short"),
+    "Mismatched signature length does not cause timingSafeEqual RangeError"
+  );
+
   // Summary
   console.log("\n========================================================");
   console.log(`📊 TEST RESULTS: ${passed} PASSED, ${failed} FAILED`);

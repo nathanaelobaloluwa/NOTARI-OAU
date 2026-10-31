@@ -9,7 +9,9 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "db:seed": "tsx src/scripts/seed.ts",
-    "test:e2e": "tsx src/scripts/test-e2e-auth.ts"
+    "test:foundation": "tsx src/scripts/test-foundation.ts",
+    "test:e2e": "tsx src/scripts/test-e2e-auth.ts",
+    "test:e2e:booking": "tsx src/scripts/test-e2e-booking.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

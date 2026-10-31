@@ -152,87 +152,87 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* 4 Platform Statistics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
         {/* Total Events */}
-        <Card className="p-5 border-slate-200/80 bg-white shadow-xs">
+        <Card className="p-3.5 sm:p-5 border-slate-200/80 bg-white shadow-xs">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3.5">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
-                <Calendar className="w-6 h-6" />
+            <div className="flex items-center gap-2.5 sm:gap-3.5">
+              <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 shrink-0">
+                <Calendar className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <div>
-                <p className="text-xs font-medium text-slate-500">Total Events</p>
-                <h3 className="text-2xl font-extrabold text-[#101C3A] mt-0.5">48</h3>
+              <div className="min-w-0">
+                <p className="text-[11px] sm:text-xs font-medium text-slate-500 truncate">Total Events</p>
+                <h3 className="text-lg sm:text-2xl font-extrabold text-[#101C3A] mt-0.5">48</h3>
               </div>
             </div>
-            <div className="flex items-center gap-0.5 text-xs font-bold text-emerald-600">
+            <div className="hidden sm:flex items-center gap-0.5 text-xs font-bold text-emerald-600">
               <TrendingUp className="w-3.5 h-3.5" />
               <span>+12%</span>
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 text-[11px] text-slate-400">
+          <div className="mt-2.5 sm:mt-3 pt-2 sm:pt-3 border-t border-slate-100 text-[10px] sm:text-[11px] text-slate-400">
             vs. last 30 days
           </div>
         </Card>
 
         {/* Published Events */}
-        <Card className="p-5 border-slate-200/80 bg-white shadow-xs">
+        <Card className="p-3.5 sm:p-5 border-slate-200/80 bg-white shadow-xs">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3.5">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
-                <CalendarCheck2 className="w-6 h-6" />
+            <div className="flex items-center gap-2.5 sm:gap-3.5">
+              <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 shrink-0">
+                <CalendarCheck2 className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <div>
-                <p className="text-xs font-medium text-slate-500">Published Events</p>
-                <h3 className="text-2xl font-extrabold text-[#101C3A] mt-0.5">36</h3>
+              <div className="min-w-0">
+                <p className="text-[11px] sm:text-xs font-medium text-slate-500 truncate">Published</p>
+                <h3 className="text-lg sm:text-2xl font-extrabold text-[#101C3A] mt-0.5">36</h3>
               </div>
             </div>
-            <div className="flex items-center gap-0.5 text-xs font-bold text-emerald-600">
+            <div className="hidden sm:flex items-center gap-0.5 text-xs font-bold text-emerald-600">
               <TrendingUp className="w-3.5 h-3.5" />
               <span>+20%</span>
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 text-[11px] text-slate-400">
+          <div className="mt-2.5 sm:mt-3 pt-2 sm:pt-3 border-t border-slate-100 text-[10px] sm:text-[11px] text-slate-400">
             vs. last 30 days
           </div>
         </Card>
 
         {/* Total Bookings */}
-        <Card className="p-5 border-slate-200/80 bg-white shadow-xs">
+        <Card className="p-3.5 sm:p-5 border-slate-200/80 bg-white shadow-xs">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3.5">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
-                <Ticket className="w-6 h-6" />
+            <div className="flex items-center gap-2.5 sm:gap-3.5">
+              <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 shrink-0">
+                <Ticket className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <div>
-                <p className="text-xs font-medium text-slate-500">Total Bookings</p>
-                <h3 className="text-2xl font-extrabold text-[#101C3A] mt-0.5">1,248</h3>
+              <div className="min-w-0">
+                <p className="text-[11px] sm:text-xs font-medium text-slate-500 truncate">Bookings</p>
+                <h3 className="text-lg sm:text-2xl font-extrabold text-[#101C3A] mt-0.5">1,248</h3>
               </div>
             </div>
-            <div className="flex items-center gap-0.5 text-xs font-bold text-emerald-600">
+            <div className="hidden sm:flex items-center gap-0.5 text-xs font-bold text-emerald-600">
               <TrendingUp className="w-3.5 h-3.5" />
               <span>+48%</span>
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 text-[11px] text-slate-400">
+          <div className="mt-2.5 sm:mt-3 pt-2 sm:pt-3 border-t border-slate-100 text-[10px] sm:text-[11px] text-slate-400">
             vs. last 30 days
           </div>
         </Card>
 
         {/* Total Revenue */}
-        <Card className="p-5 border-slate-200/80 bg-white shadow-xs">
+        <Card className="p-3.5 sm:p-5 border-slate-200/80 bg-white shadow-xs">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3.5">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-50 text-purple-600">
-                <CircleDollarSign className="w-6 h-6" />
+            <div className="flex items-center gap-2.5 sm:gap-3.5">
+              <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-purple-50 text-purple-600 shrink-0">
+                <CircleDollarSign className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <div>
-                <p className="text-xs font-medium text-slate-500">Total Revenue</p>
-                <h3 className="text-2xl font-extrabold text-[#101C3A] mt-0.5">₦2,560,000</h3>
+              <div className="min-w-0">
+                <p className="text-[11px] sm:text-xs font-medium text-slate-500 truncate">Revenue</p>
+                <h3 className="text-base sm:text-2xl font-extrabold text-[#101C3A] mt-0.5 truncate">₦2,560,000</h3>
               </div>
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-slate-100 text-[11px] text-slate-400">
+          <div className="mt-2.5 sm:mt-3 pt-2 sm:pt-3 border-t border-slate-100 text-[10px] sm:text-[11px] text-slate-400">
             vs. last 30 days
           </div>
         </Card>
@@ -242,16 +242,16 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         {/* Column 1: Event & Booking Overview Graph (6 cols) */}
         <div className="lg:col-span-6">
-          <Card className="p-6 border-slate-200/80 bg-white shadow-xs h-full flex flex-col justify-between space-y-4">
-            <div className="flex items-center justify-between">
+          <Card className="p-4 sm:p-6 border-slate-200/80 bg-white shadow-xs h-full flex flex-col justify-between space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h3 className="text-sm font-bold text-[#101C3A]">Event & Booking Overview</h3>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-3 text-[11px] text-slate-500 mr-2">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <div className="flex flex-wrap items-center gap-2.5 text-[10px] sm:text-[11px] text-slate-500 mr-1">
                   <span className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-blue-500" />
-                    <span>Events Created</span>
+                    <span>Created</span>
                   </span>
                   <span className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-emerald-500" />
@@ -259,10 +259,10 @@ export default function AdminDashboardPage() {
                   </span>
                   <span className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-purple-600" />
-                    <span>Revenue (₦)</span>
+                    <span>Revenue</span>
                   </span>
                 </div>
-                <select className="h-7 rounded-lg border border-slate-200 bg-slate-50 px-2 text-[11px] text-slate-600">
+                <select className="h-7 rounded-lg border border-slate-200 bg-slate-50 px-2 text-[10px] sm:text-[11px] text-slate-600">
                   <option>Last 7 days</option>
                   <option>Last 30 days</option>
                 </select>
@@ -481,8 +481,8 @@ export default function AdminDashboardPage() {
               </Link>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+            <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0">
+              <table className="w-full text-left text-xs min-w-[500px]">
                 <thead>
                   <tr className="border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider">
                     <th className="pb-3">Event</th>

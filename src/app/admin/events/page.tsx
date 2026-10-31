@@ -60,10 +60,41 @@ export default function AdminEventsManagementPage() {
         </div>
       </Card>
 
-      {/* Events Table */}
-      <Card className="p-6 border-slate-200/80 bg-white shadow-xs">
+      {/* Mobile Events Cards (< md) */}
+      <div className="space-y-3 md:hidden">
+        {MOCK_EVENTS.map((evt) => (
+          <Card key={evt.id} className="p-4 border-slate-200/80 bg-white shadow-xs space-y-2.5">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <h3 className="font-bold text-sm text-[#101C3A] truncate">{evt.title}</h3>
+                <p className="text-xs text-slate-400 truncate">{evt.organizer}</p>
+              </div>
+              <StatusPill status={evt.status} />
+            </div>
+
+            <div className="text-xs text-slate-500 space-y-0.5">
+              <p>{evt.date} • {evt.venue}</p>
+              <p className="text-slate-400 text-[11px] font-medium">Capacity: {evt.registered} / {evt.capacity} registered</p>
+            </div>
+
+            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+              <Link href={`/events/${evt.slug}`} className="text-slate-400 hover:text-slate-600 font-medium text-[11px]">
+                Public Preview
+              </Link>
+              <Link href={`/admin/events/${evt.id}`}>
+                <Button size="sm" variant="outline" className="h-8 text-xs font-semibold text-blue-600 border-blue-200">
+                  Manage Event
+                </Button>
+              </Link>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      {/* Desktop Events Table (>= md) */}
+      <Card className="hidden md:block p-6 border-slate-200/80 bg-white shadow-xs">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-left text-xs min-w-[650px]">
             <thead>
               <tr className="border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider">
                 <th className="pb-3">Event Title</th>

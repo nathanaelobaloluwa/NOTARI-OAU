@@ -35,9 +35,33 @@ export default function AdminBookingsPage() {
         </div>
       </Card>
 
-      <Card className="p-6 border-slate-200/80 bg-white shadow-xs">
+      {/* Mobile Card View (< md) */}
+      <div className="space-y-3 md:hidden">
+        {bookings.map((b, i) => (
+          <Card key={i} className="p-4 border-slate-200/80 bg-white shadow-xs space-y-2.5">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <h3 className="font-bold text-sm text-[#101C3A]">{b.name}</h3>
+                <p className="text-xs text-slate-400">{b.email}</p>
+              </div>
+              <StatusPill status={b.status} />
+            </div>
+
+            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+              <div className="min-w-0 pr-2">
+                <p className="text-slate-700 font-medium truncate">{b.event}</p>
+                <span className="text-[11px] text-slate-400">{b.tier} Tier</span>
+              </div>
+              <span className="font-bold text-[#101C3A] shrink-0">{b.amount}</span>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      {/* Desktop Table View (>= md) */}
+      <Card className="hidden md:block p-6 border-slate-200/80 bg-white shadow-xs">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-left text-xs min-w-[600px]">
             <thead>
               <tr className="border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider">
                 <th className="pb-3">Student Name</th>

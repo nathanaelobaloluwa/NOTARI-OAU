@@ -51,6 +51,12 @@ export function handleApiError(error: unknown) {
   }
 
   if (error instanceof Error) {
+    if (error.name === "AuthorizationError") {
+      return apiError(error.message, 401);
+    }
+    if (error.name === "ForbiddenError") {
+      return apiError(error.message, 403);
+    }
     return apiError(error.message, 500);
   }
 

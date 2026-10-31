@@ -20,13 +20,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing webhook signature" }, { status: 400 });
     }
 
-    // Verify cryptographic signature
+    // Verify cryptographic signature with constant-time comparison to prevent timing attacks
     const hash = crypto
       .createHmac("sha512", env.PAYSTACK_SECRET_KEY)
       .update(rawBody)
       .digest("hex");
 
-    if (hash !== signature) {
+    const hashBuffer = Buffer.from(hash, "utf-8");
+    const signatureBuffer = Buffer.from(signature, "utf-8");
+
+    if (
+      hashBuffer.byteLength !== signatureBuffer.byteLength ||
+      !crypto.timingSafeEqual(hashBuffer, signatureBuffer)
+    ) {
       return NextResponse.json({ error: "Invalid webhook signature" }, { status: 401 });
     }
 

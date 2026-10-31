@@ -61,9 +61,10 @@ export default function AdminDashboardPage() {
         {/* Center Banner Card: OAU Landmark */}
         <div className="lg:col-span-5 relative rounded-2xl overflow-hidden bg-gradient-to-r from-blue-900 to-indigo-950 text-white shadow-sm flex flex-col justify-end p-6 min-h-[180px] group">
           <Image
-            src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=800&auto=format&fit=crop&q=80"
-            alt="Obafemi Awolowo University Campus"
+            src="/images/oau/oau-senate-building.png"
+            alt="Obafemi Awolowo University Senate Building"
             fill
+            sizes="(max-width: 1024px) 100vw, 40vw"
             className="object-cover opacity-35 group-hover:scale-105 transition-transform duration-500"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0B132B] via-transparent to-transparent" />

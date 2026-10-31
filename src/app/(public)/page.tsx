@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StatusPill } from "@/components/shared/status-pill";
+import { CampusHeroVisual } from "@/components/home/CampusHeroVisual";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { Event } from "@/models/Event";
 import { EVENT_STATUS, OAU_FACULTIES, EVENT_CATEGORIES } from "@/constants/oau";
@@ -111,28 +112,9 @@ export default async function HomePage() {
               </div>
             </div>
 
-            {/* Right Column: Campus Visual Hero Card */}
+            {/* Right Column: Authentic Great Ife Campus Visual Hero Card */}
             <div className="lg:col-span-5 relative">
-              <div className="relative rounded-3xl overflow-hidden border border-white/10 shadow-2xl bg-slate-900/80 backdrop-blur-md group">
-                <div className="relative aspect-[4/3] w-full">
-                  <Image
-                    src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=1000&auto=format&fit=crop"
-                    alt="OAU Campus Experience"
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-700 opacity-90"
-                    priority
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
-                </div>
-
-                <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8 space-y-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-amber-300">Great Ife Community</span>
-                  <h3 className="text-xl sm:text-2xl font-bold text-white">Experience Campus Life</h3>
-                  <p className="text-xs sm:text-sm text-slate-300">
-                    Stay connected with student events, conferences, and celebrations happening around Oduduwa Hall.
-                  </p>
-                </div>
-              </div>
+              <CampusHeroVisual />
             </div>
           </div>
         </div>
@@ -231,10 +213,20 @@ export default async function HomePage() {
 
             {/* Campus Promo Card */}
             <div className="lg:col-span-4">
-              <Card className="h-full bg-gradient-to-br from-indigo-900 to-slate-900 text-white p-8 flex flex-col justify-between border-0 shadow-lg relative overflow-hidden rounded-2xl">
+              <Card className="h-full bg-slate-950 text-white p-8 flex flex-col justify-between border-0 shadow-lg relative overflow-hidden rounded-2xl group">
+                {/* Background Authentic OAU Amphitheatre Photograph */}
+                <Image
+                  src="/images/oau/oau-amphitheatre-stage.jpg"
+                  alt="Amphitheatre Stage, Obafemi Awolowo University"
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 33vw"
+                  className="object-cover opacity-20 group-hover:scale-105 transition-transform duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-indigo-950/80 to-indigo-900/70" />
+
                 <div className="relative z-10 space-y-4">
-                  <span className="text-xs font-bold uppercase tracking-wider text-indigo-300">
-                    Campus Community
+                  <span className="text-xs font-bold uppercase tracking-wider text-amber-300">
+                    Great Ife Community
                   </span>
                   <h3 className="text-2xl font-bold leading-tight">
                     Your Campus. <br />
@@ -344,7 +336,117 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* 4. CATEGORIES EXPLORATION GRID */}
+      {/* 4. ICONIC GREAT IFE EVENT VENUES */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+          <div>
+            <div className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-notari-primary mb-1">
+              <MapPin className="w-3.5 h-3.5" />
+              <span>Campus Landmarks</span>
+            </div>
+            <h2 className="text-2xl font-bold text-notari-dark tracking-tight">Iconic Great Ife Venues</h2>
+            <p className="text-sm text-slate-500">Discover where memorable events, symposiums, and celebrations take place</p>
+          </div>
+          <Link href="/events" className="text-sm font-semibold text-notari-primary hover:text-indigo-700 flex items-center gap-1 shrink-0">
+            <span>Explore all campus venues</span>
+            <ChevronRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Card 1: Oduduwa Hall */}
+          <Link
+            href="/events?search=Oduduwa+Hall"
+            className="group relative rounded-2xl overflow-hidden border border-slate-200/90 bg-white shadow-sm hover:shadow-md transition-all flex flex-col"
+          >
+            <div className="relative aspect-[16/10] overflow-hidden bg-slate-900">
+              <Image
+                src="/images/oau/oau-oduduwa-hall.jpg"
+                alt="Oduduwa Hall, Obafemi Awolowo University"
+                fill
+                sizes="(max-width: 768px) 100vw, 33vw"
+                className="object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
+              <div className="absolute bottom-3 left-3 right-3 text-white">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300">Central Auditorium</span>
+                <h3 className="text-lg font-bold">Oduduwa Hall</h3>
+              </div>
+            </div>
+            <div className="p-4 flex-1 flex flex-col justify-between">
+              <p className="text-xs text-slate-600 line-clamp-2">
+                The grand architectural centerpiece for university convocations, public lectures, awards, and student conferences.
+              </p>
+              <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-notari-primary">
+                <span>View Oduduwa Hall Events</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </div>
+          </Link>
+
+          {/* Card 2: Amphitheatre */}
+          <Link
+            href="/events?search=Amphitheatre"
+            className="group relative rounded-2xl overflow-hidden border border-slate-200/90 bg-white shadow-sm hover:shadow-md transition-all flex flex-col"
+          >
+            <div className="relative aspect-[16/10] overflow-hidden bg-slate-900">
+              <Image
+                src="/images/oau/oau-amphitheatre-stage.jpg"
+                alt="OAU Amphitheatre Stage"
+                fill
+                sizes="(max-width: 768px) 100vw, 33vw"
+                className="object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
+              <div className="absolute bottom-3 left-3 right-3 text-white">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300">Open-Air Stage</span>
+                <h3 className="text-lg font-bold">OAU Amphitheatre</h3>
+              </div>
+            </div>
+            <div className="p-4 flex-1 flex flex-col justify-between">
+              <p className="text-xs text-slate-600 line-clamp-2">
+                Great Ife&apos;s renowned tiered open arena, home to matriculation rites, campus congresses, concerts, and cultural nights.
+              </p>
+              <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-notari-primary">
+                <span>View Amphitheatre Events</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </div>
+          </Link>
+
+          {/* Card 3: Senate Building & Grounds */}
+          <Link
+            href="/events"
+            className="group relative rounded-2xl overflow-hidden border border-slate-200/90 bg-white shadow-sm hover:shadow-md transition-all flex flex-col"
+          >
+            <div className="relative aspect-[16/10] overflow-hidden bg-slate-900">
+              <Image
+                src="/images/oau/oau-senate-building.png"
+                alt="Obafemi Awolowo University Senate Building"
+                fill
+                sizes="(max-width: 768px) 100vw, 33vw"
+                className="object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
+              <div className="absolute bottom-3 left-3 right-3 text-white">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300">Administrative Hub</span>
+                <h3 className="text-lg font-bold">Senate Building & Grounds</h3>
+              </div>
+            </div>
+            <div className="p-4 flex-1 flex flex-col justify-between">
+              <p className="text-xs text-slate-600 line-clamp-2">
+                The administrative pulse of Africa&apos;s most beautiful campus, connecting faculties, centers, and official student bodies.
+              </p>
+              <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-notari-primary">
+                <span>Explore Campus Activities</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </div>
+          </Link>
+        </div>
+      </section>
+
+      {/* 5. CATEGORIES EXPLORATION GRID */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="space-y-2 mb-8">
           <h2 className="text-2xl font-bold text-notari-dark tracking-tight">Explore By Category</h2>

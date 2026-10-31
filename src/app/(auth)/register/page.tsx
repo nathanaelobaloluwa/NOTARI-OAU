@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { OAU_FACULTIES } from "@/constants/oau";
-import { User, Mail, Lock, Building, Sparkles } from "lucide-react";
+import { User, Mail, Lock, Building, Sparkles, AlertCircle, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function RegisterPage() {
@@ -20,19 +20,45 @@ export default function RegisterPage() {
   const [matricNumber, setMatricNumber] = useState("");
   const [orgName, setOrgName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(null);
     setIsLoading(true);
 
-    setTimeout(() => {
-      setIsLoading(false);
-      if (accountType === "organizer") {
-        router.push("/organizer");
-      } else {
-        router.push("/student");
+    try {
+      const payload = {
+        name: accountType === "student" ? name.trim() : `${name.trim()} (${orgName.trim()})`,
+        email: email.toLowerCase().trim(),
+        password,
+        faculty: faculty || undefined,
+        matricNumber: matricNumber ? matricNumber.toUpperCase().trim() : undefined,
+      };
+
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setErrorMessage(
+          data?.message || (data?.errors && typeof data.errors === "string" ? data.errors : "Registration failed. Please check your inputs.")
+        );
+        setIsLoading(false);
+        return;
       }
-    }, 600);
+
+      // Successful registration: Redirect to login with confirmation
+      router.push("/login?registered=true");
+    } catch (err) {
+      console.error("Registration error:", err);
+      setErrorMessage("Network error during registration. Please verify your connection.");
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -46,11 +72,22 @@ export default function RegisterPage() {
         </p>
       </div>
 
+      {/* Error Alert Banner */}
+      {errorMessage && (
+        <div className="mb-5 p-3 rounded-xl bg-rose-50 border border-rose-200/80 flex items-start gap-2.5 text-xs text-rose-800 animate-in fade-in">
+          <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+          <span>{errorMessage}</span>
+        </div>
+      )}
+
       {/* Account Type Selector */}
-      <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl mb-6">
+      <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl mb-4">
         <button
           type="button"
-          onClick={() => setAccountType("student")}
+          onClick={() => {
+            setAccountType("student");
+            setErrorMessage(null);
+          }}
           className={cn(
             "flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-all",
             accountType === "student"
@@ -64,7 +101,10 @@ export default function RegisterPage() {
 
         <button
           type="button"
-          onClick={() => setAccountType("organizer")}
+          onClick={() => {
+            setAccountType("organizer");
+            setErrorMessage(null);
+          }}
           className={cn(
             "flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-all",
             accountType === "organizer"
@@ -76,6 +116,15 @@ export default function RegisterPage() {
           <span>Campus Organizer</span>
         </button>
       </div>
+
+      {accountType === "organizer" && (
+        <div className="mb-5 p-3 rounded-xl bg-purple-50 border border-purple-200/60 flex items-start gap-2.5 text-xs text-purple-900">
+          <Info className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
+          <span>
+            Organizer accounts require administrative verification. Register your official representative account below to initiate your application.
+          </span>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {accountType === "student" ? (
@@ -93,7 +142,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-700">OAU Email Address</label>
+              <label className="text-xs font-medium text-slate-700">University Email Address</label>
               <Input
                 type="email"
                 placeholder="adeola.johnson@oau.edu.ng"
@@ -178,11 +227,12 @@ export default function RegisterPage() {
           <label className="text-xs font-medium text-slate-700">Create Password</label>
           <Input
             type="password"
-            placeholder="Min. 8 characters with numbers"
+            placeholder="Min. 8 characters with at least 1 uppercase & 1 number"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             icon={<Lock className="w-4 h-4" />}
             required
+            autoComplete="new-password"
           />
         </div>
 

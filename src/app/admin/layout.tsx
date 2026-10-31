@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { NotariLogo } from "@/components/shared/notari-logo";
 import {
   LayoutDashboard,
@@ -108,13 +109,14 @@ export default function AdminLayout({
             <ChevronDown className="w-4 h-4 text-slate-400" />
           </div>
 
-          <Link
-            href="/login"
-            className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+          <button
+            type="button"
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors w-full text-left cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
             <span>Logout</span>
-          </Link>
+          </button>
         </div>
       </aside>
 
@@ -221,13 +223,14 @@ export default function AdminLayout({
               </div>
 
               <div className="pt-4 border-t border-slate-800">
-                <Link
-                  href="/login"
-                  className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-rose-400 rounded-lg hover:bg-rose-500/10"
+                <button
+                  type="button"
+                  onClick={() => signOut({ callbackUrl: "/login" })}
+                  className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-rose-400 rounded-lg hover:bg-rose-500/10 w-full text-left cursor-pointer"
                 >
                   <LogOut className="w-4 h-4" />
                   <span>Logout</span>
-                </Link>
+                </button>
               </div>
             </div>
           </div>

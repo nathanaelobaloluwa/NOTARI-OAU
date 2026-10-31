@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { NotariLogo } from "@/components/shared/notari-logo";
 import {
   LayoutDashboard,
@@ -79,13 +80,14 @@ export default function StudentLayout({
               <span className="text-[11px] text-slate-400 truncate">Student • OAU</span>
             </div>
           </div>
-          <Link
-            href="/login"
-            className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-500 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors"
+          <button
+            type="button"
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-500 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors w-full text-left cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
             <span>Logout</span>
-          </Link>
+          </button>
         </div>
       </aside>
 
@@ -163,13 +165,14 @@ export default function StudentLayout({
                 </nav>
               </div>
               <div className="pt-4 border-t border-slate-100">
-                <Link
-                  href="/login"
-                  className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-rose-600 rounded-lg hover:bg-rose-50"
+                <button
+                  type="button"
+                  onClick={() => signOut({ callbackUrl: "/login" })}
+                  className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-rose-600 rounded-lg hover:bg-rose-50 w-full text-left cursor-pointer"
                 >
                   <LogOut className="w-4 h-4" />
                   <span>Logout</span>
-                </Link>
+                </button>
               </div>
             </div>
           </div>

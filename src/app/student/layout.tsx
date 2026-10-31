@@ -39,14 +39,14 @@ export default function StudentLayout({
   const { data: session } = useSession();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
-  const studentName = session?.user?.name || "Adeola Johnson";
+  const studentName = session?.user?.name || "Student";
   const studentInitials =
     studentName
       .split(" ")
       .map((n) => n[0])
       .join("")
       .slice(0, 2)
-      .toUpperCase() || "AJ";
+      .toUpperCase() || "ST";
 
   return (
     <div className="min-h-screen bg-notari-bg flex">
@@ -88,7 +88,7 @@ export default function StudentLayout({
             </div>
             <div className="flex flex-col min-w-0">
               <span className="text-xs font-bold text-notari-dark truncate">{studentName}</span>
-              <span className="text-[11px] text-slate-400 truncate">Student • OAU</span>
+              <span className="text-[11px] text-slate-400 truncate">{session?.user?.email || "Student • OAU"}</span>
             </div>
           </div>
           <button

@@ -1,18 +1,33 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { User, Mail, Shield, Bell, Key, Check } from "lucide-react";
 
 export default function StudentSettingsPage() {
-  const [name, setName] = useState("Adeola Johnson");
+  const { data: session } = useSession();
+  const [name, setName] = useState(session?.user?.name || "Student");
   const [matric, setMatric] = useState("CSC/2021/1234");
-  const [email, setEmail] = useState("adeola.johnson@oau.edu.ng");
+  const [email, setEmail] = useState(session?.user?.email || "");
   const [faculty, setFaculty] = useState("Faculty of Science");
   const [department, setDepartment] = useState("Computer Science");
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    if (session?.user?.name) setName(session.user.name);
+    if (session?.user?.email) setEmail(session.user.email);
+  }, [session]);
+
+  const userInitials =
+    name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "ST";
 
   // Toggles
   const [twoFactor, setTwoFactor] = useState(false);
@@ -43,7 +58,7 @@ export default function StudentSettingsPage() {
           <Card className="p-6 border-slate-200/80 shadow-sm bg-white space-y-6">
             <div className="flex items-center gap-4 pb-6 border-b border-slate-100">
               <div className="w-16 h-16 rounded-2xl bg-indigo-100 text-notari-primary flex items-center justify-center font-bold text-xl">
-                AJ
+                {userInitials}
               </div>
               <div className="space-y-1">
                 <Button size="sm" variant="outline" className="h-8 text-xs rounded-lg">

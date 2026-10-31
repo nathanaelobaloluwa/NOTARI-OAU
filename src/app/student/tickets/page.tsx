@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 
 export default function StudentTicketsPage() {
   const { data: session } = useSession();
-  const attendeeName = session?.user?.name || "Adeola Johnson";
+  const attendeeName = session?.user?.name || "Student";
   const [tab, setTab] = useState<"upcoming" | "past" | "all">("upcoming");
   const [selectedTicket, setSelectedTicket] = useState<(typeof MOCK_STUDENT_TICKETS)[0] | null>(null);
 

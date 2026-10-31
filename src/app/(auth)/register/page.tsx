@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { OAU_FACULTIES } from "@/constants/oau";
-import { User, Mail, Lock, Building, Sparkles, AlertCircle, Info } from "lucide-react";
+import { User, Mail, Lock, Building, Sparkles, AlertCircle, Info, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function RegisterPage() {
@@ -84,12 +84,13 @@ export default function RegisterPage() {
       <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl mb-4">
         <button
           type="button"
+          disabled={isLoading}
           onClick={() => {
             setAccountType("student");
             setErrorMessage(null);
           }}
           className={cn(
-            "flex items-center justify-center gap-1.5 py-2.5 min-h-[44px] text-xs font-semibold rounded-lg transition-all",
+            "flex items-center justify-center gap-1.5 py-2.5 min-h-[44px] text-xs font-semibold rounded-lg transition-all disabled:opacity-50",
             accountType === "student"
               ? "bg-white text-notari-primary shadow-sm"
               : "text-slate-600 hover:text-notari-dark"
@@ -101,12 +102,13 @@ export default function RegisterPage() {
 
         <button
           type="button"
+          disabled={isLoading}
           onClick={() => {
             setAccountType("organizer");
             setErrorMessage(null);
           }}
           className={cn(
-            "flex items-center justify-center gap-1.5 py-2.5 min-h-[44px] text-xs font-semibold rounded-lg transition-all",
+            "flex items-center justify-center gap-1.5 py-2.5 min-h-[44px] text-xs font-semibold rounded-lg transition-all disabled:opacity-50",
             accountType === "organizer"
               ? "bg-white text-purple-600 shadow-sm"
               : "text-slate-600 hover:text-notari-dark"
@@ -138,6 +140,7 @@ export default function RegisterPage() {
                 onChange={(e) => setName(e.target.value)}
                 icon={<User className="w-4 h-4" />}
                 required
+                disabled={isLoading}
               />
             </div>
 
@@ -150,6 +153,7 @@ export default function RegisterPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 icon={<Mail className="w-4 h-4" />}
                 required
+                disabled={isLoading}
               />
             </div>
 
@@ -163,6 +167,7 @@ export default function RegisterPage() {
                   onChange={(e) => setMatricNumber(e.target.value)}
                   className="h-11"
                   required
+                  disabled={isLoading}
                 />
               </div>
 
@@ -171,7 +176,8 @@ export default function RegisterPage() {
                 <select
                   value={faculty}
                   onChange={(e) => setFaculty(e.target.value)}
-                  className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs text-notari-dark focus:outline-none focus:ring-2 focus:ring-notari-primary/20"
+                  disabled={isLoading}
+                  className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs text-notari-dark focus:outline-none focus:ring-2 focus:ring-notari-primary/20 disabled:opacity-50"
                   required
                 >
                   <option value="">Select Faculty</option>
@@ -195,6 +201,7 @@ export default function RegisterPage() {
                 onChange={(e) => setOrgName(e.target.value)}
                 icon={<Building className="w-4 h-4" />}
                 required
+                disabled={isLoading}
               />
             </div>
 
@@ -207,6 +214,7 @@ export default function RegisterPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 icon={<Mail className="w-4 h-4" />}
                 required
+                disabled={isLoading}
               />
             </div>
 
@@ -219,6 +227,7 @@ export default function RegisterPage() {
                 onChange={(e) => setName(e.target.value)}
                 icon={<User className="w-4 h-4" />}
                 required
+                disabled={isLoading}
               />
             </div>
           </>
@@ -234,15 +243,23 @@ export default function RegisterPage() {
             icon={<Lock className="w-4 h-4" />}
             required
             autoComplete="new-password"
+            disabled={isLoading}
           />
         </div>
 
         <Button
           type="submit"
           disabled={isLoading}
-          className="w-full h-11 rounded-xl font-semibold shadow-md mt-2"
+          className="w-full h-11 rounded-xl font-semibold shadow-md mt-2 flex items-center justify-center gap-2"
         >
-          {isLoading ? "Creating account..." : "Complete Registration"}
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin text-white" />
+              <span>Creating your account...</span>
+            </>
+          ) : (
+            "Complete Registration"
+          )}
         </Button>
       </form>
 

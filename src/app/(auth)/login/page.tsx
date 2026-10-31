@@ -7,7 +7,7 @@ import { signIn, getSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Mail, Lock, Eye, EyeOff, User, Sparkles, Shield, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, User, Sparkles, Shield, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type AuthRoleTab = "student" | "organizer" | "admin";
@@ -96,12 +96,13 @@ function LoginForm() {
       <div className="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-xl mb-6">
         <button
           type="button"
+          disabled={isLoading}
           onClick={() => {
             setActiveTab("student");
             setErrorMessage(null);
           }}
           className={cn(
-            "flex items-center justify-center gap-1.5 py-2.5 min-h-[44px] text-xs font-semibold rounded-lg transition-all",
+            "flex items-center justify-center gap-1.5 py-2.5 min-h-[44px] text-xs font-semibold rounded-lg transition-all disabled:opacity-50",
             activeTab === "student"
               ? "bg-white text-notari-primary shadow-sm"
               : "text-slate-600 hover:text-notari-dark"
@@ -113,12 +114,13 @@ function LoginForm() {
 
         <button
           type="button"
+          disabled={isLoading}
           onClick={() => {
             setActiveTab("organizer");
             setErrorMessage(null);
           }}
           className={cn(
-            "flex items-center justify-center gap-1.5 py-2.5 min-h-[44px] text-xs font-semibold rounded-lg transition-all",
+            "flex items-center justify-center gap-1.5 py-2.5 min-h-[44px] text-xs font-semibold rounded-lg transition-all disabled:opacity-50",
             activeTab === "organizer"
               ? "bg-white text-purple-600 shadow-sm"
               : "text-slate-600 hover:text-notari-dark"
@@ -130,12 +132,13 @@ function LoginForm() {
 
         <button
           type="button"
+          disabled={isLoading}
           onClick={() => {
             setActiveTab("admin");
             setErrorMessage(null);
           }}
           className={cn(
-            "flex items-center justify-center gap-1.5 py-2.5 min-h-[44px] text-xs font-semibold rounded-lg transition-all",
+            "flex items-center justify-center gap-1.5 py-2.5 min-h-[44px] text-xs font-semibold rounded-lg transition-all disabled:opacity-50",
             activeTab === "admin"
               ? "bg-white text-indigo-900 shadow-sm"
               : "text-slate-600 hover:text-notari-dark"
@@ -164,6 +167,7 @@ function LoginForm() {
             icon={<Mail className="w-4 h-4" />}
             required
             autoComplete="email"
+            disabled={isLoading}
           />
         </div>
 
@@ -186,11 +190,13 @@ function LoginForm() {
               icon={<Lock className="w-4 h-4" />}
               required
               autoComplete="current-password"
+              disabled={isLoading}
             />
             <button
               type="button"
+              disabled={isLoading}
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 disabled:opacity-50"
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -203,7 +209,8 @@ function LoginForm() {
             id="remember"
             checked={rememberMe}
             onChange={(e) => setRememberMe(e.target.checked)}
-            className="rounded border-slate-300 text-notari-primary focus:ring-notari-primary"
+            disabled={isLoading}
+            className="rounded border-slate-300 text-notari-primary focus:ring-notari-primary disabled:opacity-50"
           />
           <label htmlFor="remember" className="text-xs text-slate-600 cursor-pointer">
             Remember me
@@ -213,9 +220,16 @@ function LoginForm() {
         <Button
           type="submit"
           disabled={isLoading}
-          className="w-full h-11 rounded-xl font-semibold shadow-md mt-2"
+          className="w-full h-11 rounded-xl font-semibold shadow-md mt-2 flex items-center justify-center gap-2"
         >
-          {isLoading ? "Verifying Credentials..." : "Sign In"}
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin text-white" />
+              <span>Signing you in...</span>
+            </>
+          ) : (
+            "Sign In"
+          )}
         </Button>
       </form>
 
@@ -234,34 +248,37 @@ function LoginForm() {
       <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
         <button
           type="button"
+          disabled={isLoading}
           onClick={() => {
             setEmail("student@notari.oau.edu.ng");
             setActiveTab("student");
             setErrorMessage(null);
           }}
-          className="py-2.5 px-1 text-[10px] sm:text-[11px] font-medium border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors truncate"
+          className="py-2.5 px-1 text-[10px] sm:text-[11px] font-medium border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors truncate disabled:opacity-50"
         >
           Dev Student
         </button>
         <button
           type="button"
+          disabled={isLoading}
           onClick={() => {
             setEmail("organizer@notari.oau.edu.ng");
             setActiveTab("organizer");
             setErrorMessage(null);
           }}
-          className="py-2.5 px-1 text-[10px] sm:text-[11px] font-medium border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors truncate"
+          className="py-2.5 px-1 text-[10px] sm:text-[11px] font-medium border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors truncate disabled:opacity-50"
         >
           Dev Org
         </button>
         <button
           type="button"
+          disabled={isLoading}
           onClick={() => {
             setEmail("admin@notari.oau.edu.ng");
             setActiveTab("admin");
             setErrorMessage(null);
           }}
-          className="py-2.5 px-1 text-[10px] sm:text-[11px] font-medium border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors truncate"
+          className="py-2.5 px-1 text-[10px] sm:text-[11px] font-medium border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors truncate disabled:opacity-50"
         >
           Dev Admin
         </button>

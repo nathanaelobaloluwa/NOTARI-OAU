@@ -39,51 +39,51 @@ export default function OrganizerDashboardPage() {
       </div>
 
       {/* 4 Summary Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="p-5 border-slate-200/80 shadow-sm bg-white">
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center">
-              <Calendar className="w-5 h-5" />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <Card className="p-3.5 sm:p-5 border-slate-200/80 shadow-sm bg-white">
+          <div className="flex items-center gap-2.5 sm:gap-3.5">
+            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+              <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <p className="text-xs text-slate-400 font-medium">Total Events</p>
-              <h3 className="text-2xl font-bold text-notari-dark">{MOCK_ORGANIZER_METRICS.totalEvents}</h3>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-5 border-slate-200/80 shadow-sm bg-white">
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <Ticket className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-xs text-slate-400 font-medium">Total Bookings</p>
-              <h3 className="text-2xl font-bold text-notari-dark">{MOCK_ORGANIZER_METRICS.totalBookings}</h3>
+            <div className="min-w-0">
+              <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">Total Events</p>
+              <h3 className="text-lg sm:text-2xl font-bold text-notari-dark">{MOCK_ORGANIZER_METRICS.totalEvents}</h3>
             </div>
           </div>
         </Card>
 
-        <Card className="p-5 border-slate-200/80 shadow-sm bg-white">
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-indigo-50 text-notari-primary flex items-center justify-center">
-              <DollarSign className="w-5 h-5" />
+        <Card className="p-3.5 sm:p-5 border-slate-200/80 shadow-sm bg-white">
+          <div className="flex items-center gap-2.5 sm:gap-3.5">
+            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+              <Ticket className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <p className="text-xs text-slate-400 font-medium">Total Revenue</p>
-              <h3 className="text-2xl font-bold text-notari-dark">₦820,000</h3>
+            <div className="min-w-0">
+              <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">Bookings</p>
+              <h3 className="text-lg sm:text-2xl font-bold text-notari-dark">{MOCK_ORGANIZER_METRICS.totalBookings}</h3>
             </div>
           </div>
         </Card>
 
-        <Card className="p-5 border-slate-200/80 shadow-sm bg-white">
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
-              <Clock className="w-5 h-5" />
+        <Card className="p-3.5 sm:p-5 border-slate-200/80 shadow-sm bg-white">
+          <div className="flex items-center gap-2.5 sm:gap-3.5">
+            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-indigo-50 text-notari-primary flex items-center justify-center shrink-0">
+              <DollarSign className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <p className="text-xs text-slate-400 font-medium">Upcoming Events</p>
-              <h3 className="text-2xl font-bold text-notari-dark">{MOCK_ORGANIZER_METRICS.upcomingEvents}</h3>
+            <div className="min-w-0">
+              <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">Revenue</p>
+              <h3 className="text-lg sm:text-2xl font-bold text-notari-dark">₦820,000</h3>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-3.5 sm:p-5 border-slate-200/80 shadow-sm bg-white">
+          <div className="flex items-center gap-2.5 sm:gap-3.5">
+            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">Upcoming</p>
+              <h3 className="text-lg sm:text-2xl font-bold text-notari-dark">{MOCK_ORGANIZER_METRICS.upcomingEvents}</h3>
             </div>
           </div>
         </Card>

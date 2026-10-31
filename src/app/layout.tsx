@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SessionProvider } from "@/components/shared/session-provider";
 import "./globals.css";
@@ -13,11 +13,28 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  themeColor: "#4F46E5",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: "cover",
+};
+
 export const metadata: Metadata = {
   title: "NOTARI 2.0 - OAU University Event Discovery & Ticketing Platform",
   description:
     "The modern event discovery, digital ticketing, and community management platform for Obafemi Awolowo University (OAU), Ile-Ife, Nigeria.",
   keywords: ["NOTARI", "OAU", "Obafemi Awolowo University", "Events", "Tickets", "Great Ife"],
+  applicationName: "NOTARI 2.0",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "NOTARI",
+  },
+  formatDetection: {
+    telephone: false,
+  },
 };
 
 export default function RootLayout({

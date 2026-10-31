@@ -27,13 +27,28 @@ export const createEventSchema = z.object({
 export type CreateEventInput = z.infer<typeof createEventSchema>;
 
 export const eventFilterSchema = z.object({
-  search: z.string().optional(),
-  category: z.string().optional(),
-  faculty: z.string().optional(),
-  date: z.enum(["all", "today", "this_week", "this_month"]).optional(),
-  isFree: z.enum(["true", "false"]).optional(),
+  search: z
+    .string()
+    .optional()
+    .transform((v) => (v && v.trim().length > 0 ? v.trim() : undefined)),
+  category: z
+    .string()
+    .optional()
+    .transform((v) => (v && v !== "all" && v.trim().length > 0 ? v.trim() : undefined)),
+  faculty: z
+    .string()
+    .optional()
+    .transform((v) => (v && v !== "all" && v.trim().length > 0 ? v.trim() : undefined)),
+  date: z
+    .enum(["all", "today", "this_week", "this_month", ""])
+    .optional()
+    .transform((v) => (v === "" || v === "all" ? undefined : v)),
+  isFree: z
+    .enum(["true", "false", "all", ""])
+    .optional()
+    .transform((v) => (v === "" || v === "all" ? undefined : v)),
   page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().max(50).default(12),
+  limit: z.coerce.number().int().positive().max(50).default(9),
 });
 
 export type EventFilterInput = z.infer<typeof eventFilterSchema>;

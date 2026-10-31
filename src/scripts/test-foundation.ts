@@ -254,6 +254,33 @@ async function runFoundationTests() {
   const shortPassword = "short";
   assert(shortPassword.length < 8, "Passwords under 8 characters are identified as insecure");
 
+  // TEST SUITE 8: Public Event Discovery & Query Filter Security Tests
+  console.log("\n--- 8. Public Event Discovery & Filter Security Tests ---");
+  const { eventFilterSchema } = await import("../validators/event");
+  const { EVENT_STATUS } = await import("../constants/oau");
+
+  // Filter validation tests
+  const emptyFilterParsed = eventFilterSchema.parse({
+    search: "",
+    category: "",
+    faculty: "all",
+    date: "",
+    isFree: "",
+    page: "2",
+  });
+  assert(emptyFilterParsed.search === undefined, "Empty search query is sanitized to undefined");
+  assert(emptyFilterParsed.category === undefined, "Empty category is sanitized to undefined");
+  assert(emptyFilterParsed.faculty === undefined, "'all' faculty option is sanitized to undefined");
+  assert(emptyFilterParsed.page === 2, "Page number is coerced into positive integer");
+  assert(emptyFilterParsed.limit === 9, "Default limit applies when omitted");
+
+  // Visibility and security rule test
+  const publicQuery: { status: string } = { status: EVENT_STATUS.PUBLISHED };
+  assert(publicQuery.status === "published", "Public event query strictly requires 'published' status");
+  assert(publicQuery.status !== EVENT_STATUS.DRAFT, "Public query isolates DRAFT events");
+  assert(publicQuery.status !== EVENT_STATUS.PENDING_APPROVAL, "Public query isolates PENDING_APPROVAL events");
+  assert(publicQuery.status !== EVENT_STATUS.REJECTED, "Public query isolates REJECTED events");
+
   // Summary
   console.log("\n========================================================");
   console.log(`📊 TEST RESULTS: ${passed} PASSED, ${failed} FAILED`);

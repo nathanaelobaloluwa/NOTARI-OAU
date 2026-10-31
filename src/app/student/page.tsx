@@ -58,34 +58,31 @@ export default async function StudentDashboardPage() {
   let totalTicketsCount = 0;
   let attendedCount = 0;
   let savedEventsCount = 0;
-  let upcomingTickets: Array<{
+  let upcomingEventsList: Array<{
     _id: string;
-    tierName: string;
+    title: string;
+    slug: string;
+    organizerName: string;
+    startDate: Date;
+    venue: string;
+    flyerUrl?: string;
+    category: string;
     ticketCode: string;
-    isCheckedIn: boolean;
-    createdAt: Date;
-    eventId?: {
-      _id: string;
-      title: string;
-      slug: string;
-      organizerName: string;
-      startDate: Date;
-      venue: string;
-      flyerUrl?: string;
-      category: string;
-    } | null;
+    tierName: string;
   }> = [];
 
   try {
     const studentObjectId = student._id;
+    const now = new Date();
 
-    const [totalTickets, attendedTickets, activeTickets, savedCount] = await Promise.all([
+    const [totalTickets, attendedTickets, allStudentTickets, savedCount] = await Promise.all([
       Ticket.countDocuments({ userId: studentObjectId }),
       Ticket.countDocuments({ userId: studentObjectId, isCheckedIn: true }),
-      Ticket.find({ userId: studentObjectId, isCheckedIn: false })
-        .populate("eventId")
-        .sort({ createdAt: -1 })
-        .limit(3)
+      Ticket.find({ userId: studentObjectId })
+        .populate({
+          path: "eventId",
+          select: "title slug organizerName startDate endDate venue flyerUrl category status",
+        })
         .lean(),
       BookmarkModel.countDocuments({ userId: studentObjectId }),
     ]);
@@ -93,12 +90,59 @@ export default async function StudentDashboardPage() {
     totalTicketsCount = totalTickets;
     attendedCount = attendedTickets;
     savedEventsCount = savedCount;
-    upcomingTickets = activeTickets as unknown as typeof upcomingTickets;
+
+    // Filter distinct upcoming events (where event hasn't ended yet)
+    const upcomingEventsMap = new Map<string, (typeof upcomingEventsList)[0]>();
+
+    for (const tkt of allStudentTickets) {
+      const evt = tkt.eventId as {
+        _id?: { toString(): string };
+        title?: string;
+        slug?: string;
+        organizerName?: string;
+        startDate?: Date;
+        endDate?: Date;
+        venue?: string;
+        flyerUrl?: string;
+        category?: string;
+      } | null;
+
+      if (!evt || !evt.title) continue;
+
+      const eventEndDate = evt.endDate
+        ? new Date(evt.endDate)
+        : evt.startDate
+        ? new Date(evt.startDate)
+        : new Date(0);
+
+      if (eventEndDate >= now) {
+        const evtId = evt._id ? evt._id.toString() : "";
+        if (!upcomingEventsMap.has(evtId)) {
+          upcomingEventsMap.set(evtId, {
+            _id: evtId,
+            title: evt.title,
+            slug: evt.slug || "",
+            organizerName: evt.organizerName || "OAU Organizer",
+            startDate: evt.startDate ? new Date(evt.startDate) : new Date(),
+            venue: evt.venue || "",
+            flyerUrl: evt.flyerUrl,
+            category: evt.category || "",
+            ticketCode: tkt.ticketCode,
+            tierName: tkt.tierName,
+          });
+        }
+      }
+    }
+
+    // Sort upcoming events chronologically (earliest first)
+    upcomingEventsList = Array.from(upcomingEventsMap.values()).sort(
+      (a, b) => a.startDate.getTime() - b.startDate.getTime()
+    );
   } catch (error) {
     console.error("❌ Failed to query student tickets:", error);
   }
 
-  const upcomingCount = upcomingTickets.length;
+  const upcomingCount = upcomingEventsList.length;
 
   // 5. Time-of-day greeting
   const hour = new Date().getHours();
@@ -112,9 +156,8 @@ export default async function StudentDashboardPage() {
       .slice(0, 2)
       .toUpperCase() || "ST";
 
-  // Next upcoming event (if any)
-  const nextTicket = upcomingTickets[0];
-  const nextEvent = nextTicket?.eventId;
+  // Next upcoming event (chronologically earliest)
+  const nextEvent = upcomingEventsList[0];
 
   return (
     <div className="space-y-8">
@@ -206,43 +249,49 @@ export default async function StudentDashboardPage() {
       {/* 3. Real Student Metric Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         {/* Card 1: Upcoming Events */}
-        <Card className="p-3.5 sm:p-5 border-slate-200/80 shadow-sm bg-white">
-          <div className="flex items-center gap-2.5 sm:gap-3">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-indigo-50 text-notari-primary flex items-center justify-center shrink-0">
-              <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
+        <Link href="/student/my-events" className="block">
+          <Card className="p-3.5 sm:p-5 border-slate-200/80 shadow-sm bg-white hover:border-indigo-300 hover:shadow-md transition-all cursor-pointer h-full">
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-indigo-50 text-notari-primary flex items-center justify-center shrink-0">
+                <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">Upcoming</p>
+                <h3 className="text-lg sm:text-xl font-bold text-notari-dark">{upcomingCount}</h3>
+              </div>
             </div>
-            <div className="min-w-0">
-              <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">Upcoming</p>
-              <h3 className="text-lg sm:text-xl font-bold text-notari-dark">{upcomingCount}</h3>
-            </div>
-          </div>
-        </Card>
+          </Card>
+        </Link>
 
         {/* Card 2: My Tickets */}
-        <Card className="p-3.5 sm:p-5 border-slate-200/80 shadow-sm bg-white">
-          <div className="flex items-center gap-2.5 sm:gap-3">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-              <TicketIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+        <Link href="/student/tickets" className="block">
+          <Card className="p-3.5 sm:p-5 border-slate-200/80 shadow-sm bg-white hover:border-emerald-300 hover:shadow-md transition-all cursor-pointer h-full">
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                <TicketIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">My Tickets</p>
+                <h3 className="text-lg sm:text-xl font-bold text-notari-dark">{totalTicketsCount}</h3>
+              </div>
             </div>
-            <div className="min-w-0">
-              <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">My Tickets</p>
-              <h3 className="text-lg sm:text-xl font-bold text-notari-dark">{totalTicketsCount}</h3>
-            </div>
-          </div>
-        </Card>
+          </Card>
+        </Link>
 
         {/* Card 3: Events Attended */}
-        <Card className="p-3.5 sm:p-5 border-slate-200/80 shadow-sm bg-white">
-          <div className="flex items-center gap-2.5 sm:gap-3">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-              <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" />
+        <Link href="/student/history" className="block">
+          <Card className="p-3.5 sm:p-5 border-slate-200/80 shadow-sm bg-white hover:border-amber-300 hover:shadow-md transition-all cursor-pointer h-full">
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">Attended</p>
+                <h3 className="text-lg sm:text-xl font-bold text-notari-dark">{attendedCount}</h3>
+              </div>
             </div>
-            <div className="min-w-0">
-              <p className="text-[11px] sm:text-xs text-slate-400 font-medium truncate">Attended</p>
-              <h3 className="text-lg sm:text-xl font-bold text-notari-dark">{attendedCount}</h3>
-            </div>
-          </div>
-        </Card>
+          </Card>
+        </Link>
 
         {/* Card 4: Saved Events */}
         <Link href="/student/saved" className="block">
@@ -279,10 +328,7 @@ export default async function StudentDashboardPage() {
 
           {upcomingCount > 0 ? (
             <div className="space-y-3">
-              {upcomingTickets.map((tkt) => {
-                const evt = tkt.eventId;
-                if (!evt) return null;
-
+              {upcomingEventsList.slice(0, 3).map((evt) => {
                 const eventDateFormatted = evt.startDate
                   ? new Date(evt.startDate).toLocaleDateString("en-NG", {
                       weekday: "short",
@@ -293,7 +339,7 @@ export default async function StudentDashboardPage() {
 
                 return (
                   <Card
-                    key={tkt._id.toString()}
+                    key={evt._id}
                     className="p-4 border-slate-200/80 bg-white hover:border-slate-300 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-xl"
                   >
                     <div className="flex items-center gap-4 min-w-0">

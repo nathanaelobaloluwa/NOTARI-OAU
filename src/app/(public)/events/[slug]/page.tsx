@@ -24,7 +24,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
   const event = MOCK_EVENTS.find((e) => e.slug === slug) || MOCK_EVENTS[0];
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 pb-28 lg:pb-8 space-y-8">
       {/* Back button */}
       <div>
         <Link
@@ -172,6 +172,24 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
               </div>
             </div>
           </Card>
+        </div>
+      </div>
+
+      {/* Mobile Sticky Booking Bar */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 p-3.5 sm:px-6 shadow-[0_-4px_20px_rgba(16,28,58,0.08)] pb-safe">
+        <div className="flex items-center justify-between gap-4 max-w-lg mx-auto">
+          <div>
+            <span className="text-[10px] text-slate-400 font-medium block">Price</span>
+            <span className="text-lg font-extrabold text-notari-dark">
+              {event.isFree ? "Free" : `₦${event.price.toLocaleString()}`}
+            </span>
+          </div>
+          <Link href="/login" className="flex-1 max-w-[220px]">
+            <Button className="w-full h-11 rounded-xl text-xs sm:text-sm font-semibold shadow-md gap-2">
+              <Ticket className="w-4 h-4" />
+              <span>Reserve Spot</span>
+            </Button>
+          </Link>
         </div>
       </div>
     </div>

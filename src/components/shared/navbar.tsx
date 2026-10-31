@@ -107,20 +107,20 @@ export function Navbar() {
         <div className="flex md:hidden items-center gap-2">
           {session?.user ? (
             <Link href={dashboardHref}>
-              <Button size="sm" variant="subtle" className="rounded-lg text-xs font-semibold">
+              <Button size="sm" variant="subtle" className="rounded-lg text-xs font-semibold h-9 px-2.5">
                 {dashboardLabel}
               </Button>
             </Link>
           ) : (
             <Link href="/login">
-              <Button size="sm" variant="subtle" className="rounded-lg text-xs font-semibold">
+              <Button size="sm" variant="subtle" className="rounded-lg text-xs font-semibold h-9 px-2.5">
                 Log In
               </Button>
             </Link>
           )}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 rounded-lg text-slate-600 hover:bg-slate-100 focus:outline-none"
+            className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 focus:outline-none"
             aria-label="Toggle navigation menu"
           >
             {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -130,14 +130,14 @@ export function Navbar() {
 
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-b border-slate-200 bg-white px-4 pt-3 pb-6 space-y-4">
-          <nav className="flex flex-col space-y-3">
+        <div className="md:hidden border-b border-slate-200 bg-white px-4 pt-3 pb-6 space-y-4 animate-in slide-in-from-top-2">
+          <nav className="flex flex-col space-y-1">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.name}
                 href={link.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-base font-medium text-slate-700 hover:text-notari-primary py-1"
+                className="text-base font-semibold text-slate-700 hover:text-notari-primary py-2.5 px-2 rounded-lg hover:bg-slate-50 transition-colors"
               >
                 {link.name}
               </Link>

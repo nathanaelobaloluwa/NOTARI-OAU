@@ -55,9 +55,9 @@ export default function AuthLayout({
       </div>
 
       {/* Right Form Area */}
-      <div className="lg:col-span-7 flex flex-col justify-center items-center p-6 sm:p-12 bg-notari-bg lg:bg-white">
-        <div className="w-full max-w-md space-y-8">
-          <div className="lg:hidden flex justify-center pb-4">
+      <div className="lg:col-span-7 flex flex-col justify-center items-center px-3.5 py-6 sm:p-12 bg-notari-bg lg:bg-white min-h-screen lg:min-h-0">
+        <div className="w-full max-w-md space-y-6 sm:space-y-8">
+          <div className="lg:hidden flex justify-center pb-2">
             <NotariLogo variant="public" />
           </div>
           {children}

@@ -62,9 +62,9 @@ export default function RegisterPage() {
   };
 
   return (
-    <Card className="p-8 border-slate-200/80 shadow-lg bg-white rounded-2xl">
-      <div className="space-y-2 text-center sm:text-left mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-notari-dark">
+    <Card className="p-5 sm:p-8 border-slate-200/80 shadow-lg bg-white rounded-2xl">
+      <div className="space-y-1.5 text-center sm:text-left mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-notari-dark">
           Create an Account
         </h1>
         <p className="text-xs sm:text-sm text-slate-500">
@@ -89,7 +89,7 @@ export default function RegisterPage() {
             setErrorMessage(null);
           }}
           className={cn(
-            "flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-all",
+            "flex items-center justify-center gap-1.5 py-2.5 min-h-[44px] text-xs font-semibold rounded-lg transition-all",
             accountType === "student"
               ? "bg-white text-notari-primary shadow-sm"
               : "text-slate-600 hover:text-notari-dark"
@@ -106,7 +106,7 @@ export default function RegisterPage() {
             setErrorMessage(null);
           }}
           className={cn(
-            "flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-all",
+            "flex items-center justify-center gap-1.5 py-2.5 min-h-[44px] text-xs font-semibold rounded-lg transition-all",
             accountType === "organizer"
               ? "bg-white text-purple-600 shadow-sm"
               : "text-slate-600 hover:text-notari-dark"
@@ -153,7 +153,7 @@ export default function RegisterPage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-slate-700">Matric No.</label>
                 <Input
@@ -161,6 +161,7 @@ export default function RegisterPage() {
                   placeholder="CSC/2021/045"
                   value={matricNumber}
                   onChange={(e) => setMatricNumber(e.target.value)}
+                  className="h-11"
                   required
                 />
               </div>

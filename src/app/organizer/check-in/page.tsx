@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CheckCircle2, AlertCircle, Camera, Flashlight, RefreshCw, QrCode } from "lucide-react";
+import { CheckCircle2, AlertCircle, Camera, Flashlight, RefreshCw } from "lucide-react";
 
 export default function OrganizerCheckInScannerPage() {
   const [ticketCode, setTicketCode] = useState("");

@@ -66,9 +66,9 @@ function LoginForm() {
   };
 
   return (
-    <Card className="p-8 border-slate-200/80 shadow-lg bg-white rounded-2xl">
-      <div className="space-y-2 text-center sm:text-left mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-notari-dark">
+    <Card className="p-5 sm:p-8 border-slate-200/80 shadow-lg bg-white rounded-2xl">
+      <div className="space-y-1.5 text-center sm:text-left mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-notari-dark">
           Login to Your Account
         </h1>
         <p className="text-xs sm:text-sm text-slate-500">
@@ -101,7 +101,7 @@ function LoginForm() {
             setErrorMessage(null);
           }}
           className={cn(
-            "flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-all",
+            "flex items-center justify-center gap-1.5 py-2.5 min-h-[44px] text-xs font-semibold rounded-lg transition-all",
             activeTab === "student"
               ? "bg-white text-notari-primary shadow-sm"
               : "text-slate-600 hover:text-notari-dark"
@@ -118,7 +118,7 @@ function LoginForm() {
             setErrorMessage(null);
           }}
           className={cn(
-            "flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-all",
+            "flex items-center justify-center gap-1.5 py-2.5 min-h-[44px] text-xs font-semibold rounded-lg transition-all",
             activeTab === "organizer"
               ? "bg-white text-purple-600 shadow-sm"
               : "text-slate-600 hover:text-notari-dark"
@@ -135,7 +135,7 @@ function LoginForm() {
             setErrorMessage(null);
           }}
           className={cn(
-            "flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-all",
+            "flex items-center justify-center gap-1.5 py-2.5 min-h-[44px] text-xs font-semibold rounded-lg transition-all",
             activeTab === "admin"
               ? "bg-white text-indigo-900 shadow-sm"
               : "text-slate-600 hover:text-notari-dark"
@@ -231,7 +231,7 @@ function LoginForm() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
         <button
           type="button"
           onClick={() => {
@@ -239,7 +239,7 @@ function LoginForm() {
             setActiveTab("student");
             setErrorMessage(null);
           }}
-          className="py-2 text-[11px] font-medium border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors"
+          className="py-2.5 px-1 text-[10px] sm:text-[11px] font-medium border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors truncate"
         >
           Dev Student
         </button>
@@ -250,7 +250,7 @@ function LoginForm() {
             setActiveTab("organizer");
             setErrorMessage(null);
           }}
-          className="py-2 text-[11px] font-medium border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors"
+          className="py-2.5 px-1 text-[10px] sm:text-[11px] font-medium border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors truncate"
         >
           Dev Org
         </button>
@@ -261,7 +261,7 @@ function LoginForm() {
             setActiveTab("admin");
             setErrorMessage(null);
           }}
-          className="py-2 text-[11px] font-medium border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors"
+          className="py-2.5 px-1 text-[10px] sm:text-[11px] font-medium border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors truncate"
         >
           Dev Admin
         </button>

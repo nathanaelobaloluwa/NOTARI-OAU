@@ -13,6 +13,9 @@ export const authConfig: NextAuthConfig = {
       const isLoggedIn = !!auth?.user;
       const pathname = nextUrl.pathname;
       const role = (auth?.user as { role?: string })?.role as UserRole | undefined;
+      const isOrganizer = Boolean(
+        (auth?.user as { isOrganizer?: boolean })?.isOrganizer || role === USER_ROLES.ORGANIZER
+      );
 
       // 1. Student routes protection: Only student role
       if (pathname.startsWith("/student")) {
@@ -29,10 +32,10 @@ export const authConfig: NextAuthConfig = {
         return true;
       }
 
-      // 2. Organizer routes protection: Only organizer role
+      // 2. Organizer routes protection: Either dedicated organizer role or approved student organizer capability
       if (pathname.startsWith("/organizer")) {
         if (!isLoggedIn) return false;
-        if (role !== USER_ROLES.ORGANIZER) {
+        if (!isOrganizer) {
           if (role === USER_ROLES.STUDENT) {
             return Response.redirect(new URL("/student", nextUrl));
           }
@@ -76,6 +79,7 @@ export const authConfig: NextAuthConfig = {
       if (user) {
         token.id = user.id;
         token.role = (user as { role?: string }).role || USER_ROLES.STUDENT;
+        token.isOrganizer = Boolean((user as { isOrganizer?: boolean }).isOrganizer);
       }
       return token;
     },
@@ -83,6 +87,7 @@ export const authConfig: NextAuthConfig = {
       if (token && session.user) {
         session.user.id = (token.id as string) || (token.sub as string);
         (session.user as { role?: string }).role = (token.role as string) || USER_ROLES.STUDENT;
+        (session.user as { isOrganizer?: boolean }).isOrganizer = Boolean(token.isOrganizer);
       }
       return session;
     },

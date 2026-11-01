@@ -45,6 +45,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             name: user.name,
             email: user.email,
             role: user.role,
+            isOrganizer: Boolean(user.isOrganizer || user.role === "organizer"),
             image: user.image,
           };
         } catch (error) {

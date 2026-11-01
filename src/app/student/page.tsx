@@ -470,6 +470,62 @@ export default async function StudentDashboardPage() {
             </div>
           </Card>
 
+          {/* Organizer Accreditation Banner */}
+          {student.isOrganizer ? (
+            <Card className="p-5 border-purple-200 bg-gradient-to-br from-purple-50 via-white to-purple-50/50 shadow-xs space-y-3 rounded-2xl">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-purple-600" />
+                  <span>Accredited Organizer</span>
+                </span>
+                <span className="text-xs text-emerald-600 font-semibold">Active</span>
+              </div>
+              <h4 className="text-sm font-bold text-notari-dark leading-snug">
+                Host & Manage Campus Events
+              </h4>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Access your Organizer Dashboard to publish new events, monitor registrations, and verify tickets.
+              </p>
+              <div className="pt-1 flex gap-2">
+                <Link href="/organizer" className="flex-1">
+                  <Button size="sm" className="w-full text-xs font-semibold rounded-xl bg-purple-600 hover:bg-purple-700 gap-1.5 shadow-sm">
+                    <span>Organizer Portal</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Button>
+                </Link>
+                <Link href="/organizer/profile">
+                  <Button size="sm" variant="outline" className="text-xs font-semibold rounded-xl border-slate-200">
+                    Profile
+                  </Button>
+                </Link>
+              </div>
+            </Card>
+          ) : (
+            <Card className="p-5 border-indigo-100 bg-gradient-to-br from-indigo-50/70 via-white to-indigo-50/30 shadow-xs space-y-3 rounded-2xl">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-amber-500" />
+                  <span>Great Ife Organizers</span>
+                </span>
+                <span className="text-[11px] text-indigo-600 font-medium">Free Application</span>
+              </div>
+              <h4 className="text-sm font-bold text-notari-dark leading-snug">
+                Organize Events on NOTARI
+              </h4>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Are you an individual student organizer, faculty rep, or campus organization? Apply for accreditation today.
+              </p>
+              <div className="pt-1">
+                <Link href="/student/organizer-apply" className="block">
+                  <Button size="sm" className="w-full text-xs font-semibold rounded-xl bg-notari-primary hover:bg-indigo-700 gap-1.5 shadow-sm">
+                    <span>Apply for Organizer Access</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Button>
+                </Link>
+              </div>
+            </Card>
+          )}
+
           {/* Context Banner: Next Event Reminder or OAU Campus Life Prompt */}
           {nextEvent ? (
             <Card className="p-6 bg-gradient-to-br from-indigo-700 via-indigo-800 to-purple-900 text-white border-0 shadow-md space-y-3 rounded-2xl">

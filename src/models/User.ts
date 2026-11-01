@@ -7,6 +7,7 @@ export interface IUserDocument extends Document {
   password?: string;
   image?: string;
   role: UserRole;
+  isOrganizer?: boolean;
   matricNumber?: string;
   faculty?: string;
   department?: string;
@@ -27,6 +28,11 @@ const UserSchema = new Schema<IUserDocument>(
       enum: Object.values(USER_ROLES),
       default: USER_ROLES.STUDENT,
       required: true,
+      index: true,
+    },
+    isOrganizer: {
+      type: Boolean,
+      default: false,
       index: true,
     },
     matricNumber: {

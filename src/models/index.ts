@@ -1,5 +1,6 @@
 export * from "./User";
 export * from "./OrganizerProfile";
+export * from "./OrganizerApplication";
 export * from "./Event";
 export * from "./Booking";
 export * from "./Ticket";

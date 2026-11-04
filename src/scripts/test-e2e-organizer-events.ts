@@ -281,7 +281,7 @@ async function runOrganizerEventsE2E() {
 
     draftEvent.status = EVENT_STATUS.PUBLISHED;
     draftEvent.approvedAt = new Date();
-    draftEvent.approvedBy = adminUser._id as any;
+    draftEvent.approvedBy = new mongoose.Types.ObjectId(adminUser._id.toString());
     draftEvent.rejectionReason = undefined;
     await draftEvent.save();
 
@@ -412,3 +412,4 @@ async function runOrganizerEventsE2E() {
 }
 
 runOrganizerEventsE2E();
+

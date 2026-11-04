@@ -6,7 +6,7 @@ import { User } from "../models/User";
 import { OrganizerApplication } from "../models/OrganizerApplication";
 import { OrganizerProfile } from "../models/OrganizerProfile";
 import { USER_ROLES, ORGANIZER_STATUS } from "../constants/roles";
-import { APPLICANT_TYPES, APPLICATION_STATUS } from "../constants/organizer";
+import { APPLICATION_STATUS } from "../constants/organizer";
 import {
   organizerApplicationSchema,
   applicationReviewSchema,

@@ -20,7 +20,6 @@ import {
   applicationReviewSchema,
   organizerProfileUpdateSchema,
 } from "../validators/organizer";
-import { APPLICANT_TYPES, APPLICATION_STATUS, ORGANIZATION_CATEGORIES } from "../constants/organizer";
 import { USER_ROLES } from "../constants/roles";
 import type { NextRequest } from "next/server";
 import type { Session } from "next-auth";

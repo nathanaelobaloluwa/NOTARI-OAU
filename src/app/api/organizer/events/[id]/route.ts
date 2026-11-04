@@ -105,71 +105,73 @@ export async function PUT(
       );
     }
 
-    // If event is published: enforce safe editing rules
-    if (event.status === EVENT_STATUS.PUBLISHED) {
-      const newTotalCapacity = payload.ticketTiers.reduce((acc, t) => acc + t.capacity, 0);
-      if (newTotalCapacity < event.registeredCount) {
-        return NextResponse.json(
-          {
-            success: false,
-            message: `Total capacity (${newTotalCapacity}) cannot be lower than current registered attendees (${event.registeredCount}).`,
-          },
-          { status: 400 }
-        );
+    // If event is published and ticket tiers are updated: enforce safe editing rules
+    if (payload.ticketTiers && payload.ticketTiers.length > 0) {
+      if (event.status === EVENT_STATUS.PUBLISHED) {
+        const newTotalCapacity = payload.ticketTiers.reduce((acc, t) => acc + t.capacity, 0);
+        if (newTotalCapacity < event.registeredCount) {
+          return NextResponse.json(
+            {
+              success: false,
+              message: `Total capacity (${newTotalCapacity}) cannot be lower than current registered attendees (${event.registeredCount}).`,
+            },
+            { status: 400 }
+          );
+        }
       }
+
+      // Prepare updated ticket tiers
+      const updatedTiers = payload.ticketTiers.map((newTier) => {
+        // Find matching existing tier if _id provided
+        const existing = event.ticketTiers.find(
+          (t) => t._id && newTier._id && t._id.toString() === newTier._id
+        );
+
+        const soldCount = existing ? existing.capacity - existing.available : 0;
+        const newCapacity = Math.max(newTier.capacity, soldCount);
+        const newAvailable = newCapacity - soldCount;
+
+        return {
+          _id: existing ? existing._id : new mongoose.Types.ObjectId(),
+          name: newTier.name,
+          price: newTier.price,
+          capacity: newCapacity,
+          available: newAvailable,
+          description: newTier.description || "",
+          maxPerOrder: newTier.maxPerOrder || 5,
+          salesStartDate: newTier.salesStartDate ? new Date(newTier.salesStartDate) : undefined,
+          salesEndDate: newTier.salesEndDate ? new Date(newTier.salesEndDate) : undefined,
+        };
+      });
+
+      event.ticketTiers = updatedTiers;
+      event.totalCapacity = updatedTiers.reduce((acc, t) => acc + t.capacity, 0);
     }
 
-    // Prepare updated ticket tiers
-    const updatedTiers = payload.ticketTiers.map((newTier) => {
-      // Find matching existing tier if _id provided
-      const existing = event.ticketTiers.find(
-        (t) => t._id && newTier._id && t._id.toString() === newTier._id
-      );
-
-      const soldCount = existing ? existing.capacity - existing.available : 0;
-      const newCapacity = Math.max(newTier.capacity, soldCount);
-      const newAvailable = newCapacity - soldCount;
-
-      return {
-        _id: existing ? existing._id : new mongoose.Types.ObjectId(),
-        name: newTier.name,
-        price: newTier.price,
-        capacity: newCapacity,
-        available: newAvailable,
-        description: newTier.description || "",
-        maxPerOrder: newTier.maxPerOrder || 5,
-        salesStartDate: newTier.salesStartDate ? new Date(newTier.salesStartDate) : undefined,
-        salesEndDate: newTier.salesEndDate ? new Date(newTier.salesEndDate) : undefined,
-      };
-    });
-
-    const totalCapacity = updatedTiers.reduce((acc, t) => acc + t.capacity, 0);
-
-    // Apply updates
-    event.title = payload.title;
+    // Apply field updates
+    if (payload.title !== undefined) event.title = payload.title;
     if (payload.summary !== undefined) event.summary = payload.summary;
-    event.description = payload.description;
-    event.category = payload.category;
-    event.eventType = payload.eventType;
-    event.faculty = payload.faculty || undefined;
-    event.department = payload.department || undefined;
-    event.venue = payload.venue;
-    event.address = payload.address || undefined;
+    if (payload.description !== undefined) event.description = payload.description;
+    if (payload.category !== undefined) event.category = payload.category;
+    if (payload.eventType !== undefined) event.eventType = payload.eventType;
+    if (payload.faculty !== undefined) event.faculty = payload.faculty || undefined;
+    if (payload.department !== undefined) event.department = payload.department || undefined;
+    if (payload.venue !== undefined) event.venue = payload.venue;
+    if (payload.address !== undefined) event.address = payload.address || undefined;
     if (payload.onlineDetails !== undefined) event.onlineDetails = payload.onlineDetails;
-    event.targetAudience = payload.targetAudience || undefined;
+    if (payload.targetAudience !== undefined) event.targetAudience = payload.targetAudience || undefined;
     if (payload.tags !== undefined) event.tags = payload.tags;
-    event.contactEmail = payload.contactEmail || userWithProfile.email;
-    event.contactPhone = payload.contactPhone || undefined;
-    event.instructions = payload.instructions || undefined;
-    event.startDate = new Date(payload.startDate);
-    event.endDate = new Date(payload.endDate);
-    event.salesStartDate = payload.salesStartDate ? new Date(payload.salesStartDate) : undefined;
-    event.salesEndDate = payload.salesEndDate ? new Date(payload.salesEndDate) : undefined;
-    if (payload.flyerUrl !== undefined) event.flyerUrl = payload.flyerUrl || undefined;
+    if (payload.contactEmail !== undefined) event.contactEmail = payload.contactEmail || userWithProfile.email;
+    if (payload.contactPhone !== undefined) event.contactPhone = payload.contactPhone || undefined;
+    if (payload.instructions !== undefined) event.instructions = payload.instructions || undefined;
+    if (payload.startDate !== undefined) event.startDate = new Date(payload.startDate);
+    if (payload.endDate !== undefined) event.endDate = new Date(payload.endDate);
+    if (payload.salesStartDate !== undefined) event.salesStartDate = payload.salesStartDate ? new Date(payload.salesStartDate) : undefined;
+    if (payload.salesEndDate !== undefined) event.salesEndDate = payload.salesEndDate ? new Date(payload.salesEndDate) : undefined;
+    const flyerToSet = payload.flyerUrl !== undefined ? payload.flyerUrl : payload.flyerImage;
+    if (flyerToSet !== undefined) event.flyerUrl = flyerToSet || undefined;
     if (payload.galleryUrls !== undefined) event.galleryUrls = payload.galleryUrls;
-    event.isFree = payload.isFree;
-    event.ticketTiers = updatedTiers;
-    event.totalCapacity = totalCapacity;
+    if (payload.isFree !== undefined) event.isFree = payload.isFree;
 
     // Resubmission rule: If rejected or draft and user chose pending_approval
     if (

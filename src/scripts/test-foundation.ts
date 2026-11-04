@@ -631,7 +631,7 @@ async function runFoundationTests() {
     title: "OAU Annual Tech & Innovation Summit 2026",
     summary: "The flagship gathering of tech builders and innovators at Obafemi Awolowo University.",
     description: "Join hundreds of student engineers, designers, founders and tech enthusiasts for keynote presentations, hackathon pitches, and company exhibitions.",
-    category: "Academic",
+    category: "Academic & Educational",
     eventType: "physical",
     venue: "Oduduwa Hall",
     faculty: "Faculty of Technology",

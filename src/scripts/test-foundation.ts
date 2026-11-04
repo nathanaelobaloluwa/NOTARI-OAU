@@ -598,6 +598,113 @@ async function runFoundationTests() {
   assert(OrganizerApplication.schema.indexes().length >= 2, "OrganizerApplication schema registers compound and query indexes");
   assert(OrganizerProfile.schema.indexes().length >= 2, "OrganizerProfile schema registers unique and status indexes");
 
+  // ========================================================
+  // SUITE 15: EVENT CREATION, TICKETING & SUPERADMIN REVIEW (PHASE 5.2)
+  // ========================================================
+  console.log("\n🧪 SUITE 15: Event Creation, Ticketing & Superadmin Review Validation (Phase 5.2)");
+
+  // 1. Ticket Tier Validation
+  const validTier = {
+    name: "General Admission",
+    price: 0,
+    capacity: 250,
+    maxPerOrder: 5,
+    description: "Standard free entry for OAU undergraduates.",
+  };
+  assert(ticketTierSchema.safeParse(validTier).success, "Valid free ticket tier passes validation");
+
+  const negativePriceTier = { ...validTier, price: -500 };
+  assert(!ticketTierSchema.safeParse(negativePriceTier).success, "Negative ticket price is rejected");
+
+  const zeroCapacityTier = { ...validTier, capacity: 0 };
+  assert(!ticketTierSchema.safeParse(zeroCapacityTier).success, "Zero ticket capacity is rejected");
+
+  const excessiveOrderTier = { ...validTier, maxPerOrder: 15 };
+  assert(!ticketTierSchema.safeParse(excessiveOrderTier).success, "maxPerOrder exceeding limit of 10 is rejected");
+
+  // 2. Event Creation Schema
+  const now = new Date();
+  const validStartDate = new Date(now.getTime() + 86400000).toISOString(); // +1 day
+  const validEndDate = new Date(now.getTime() + 90000000).toISOString(); // +1 day + 1 hour
+
+  const validEventPayload = {
+    title: "OAU Annual Tech & Innovation Summit 2026",
+    summary: "The flagship gathering of tech builders and innovators at Obafemi Awolowo University.",
+    description: "Join hundreds of student engineers, designers, founders and tech enthusiasts for keynote presentations, hackathon pitches, and company exhibitions.",
+    category: "Academic",
+    eventType: "physical",
+    venue: "Oduduwa Hall",
+    faculty: "Faculty of Technology",
+    department: "Computer Science and Engineering",
+    startDate: validStartDate,
+    endDate: validEndDate,
+    isFree: true,
+    flyerImage: "/images/oau/oau-oduduwa-hall.jpg",
+    ticketTiers: [validTier],
+  };
+
+  const parsedValidEvent = createEventSchema.safeParse(validEventPayload);
+  assert(parsedValidEvent.success, "Valid event payload with OAU venue and ticket tiers passes validation");
+
+  // End date before start date
+  const invertedDatesEvent = {
+    ...validEventPayload,
+    startDate: validEndDate,
+    endDate: validStartDate,
+  };
+  assert(!createEventSchema.safeParse(invertedDatesEvent).success, "Event with end date earlier than start date is rejected");
+
+  // Free event with paid tier conflict
+  const conflictingFreeEvent = {
+    ...validEventPayload,
+    isFree: true,
+    ticketTiers: [{ ...validTier, price: 1500 }],
+  };
+  assert(!createEventSchema.safeParse(conflictingFreeEvent).success, "Free event with a paid tier (price > 0) is rejected by refinement");
+
+  // Paid event with only free tiers conflict
+  const conflictingPaidEvent = {
+    ...validEventPayload,
+    isFree: false,
+    ticketTiers: [{ ...validTier, price: 0 }],
+  };
+  assert(!createEventSchema.safeParse(conflictingPaidEvent).success, "Paid event with only free tiers is rejected by refinement");
+
+  // Short description (<20 chars)
+  const shortDescEvent = {
+    ...validEventPayload,
+    description: "Too short desc",
+  };
+  assert(!createEventSchema.safeParse(shortDescEvent).success, "Event with description under 20 characters is rejected");
+
+  // 3. Event Update Schema
+  const validUpdate = {
+    title: "Updated Summit Title 2026",
+    venue: "Amphitheatre Stage",
+    description: "Updated description meeting length requirements for campus event discovery.",
+  };
+  assert(updateEventSchema.safeParse(validUpdate).success, "Partial event update payload passes validation");
+
+  // 4. Admin Event Review Schema
+  const validAdminApprove = adminEventReviewSchema.safeParse({ action: "approve" });
+  assert(validAdminApprove.success, "Admin 'approve' action passes without mandatory reason");
+
+  const invalidAdminRejectNoReason = adminEventReviewSchema.safeParse({ action: "reject" });
+  assert(!invalidAdminRejectNoReason.success, "Admin 'reject' action without reason is rejected");
+
+  const invalidAdminRejectShort = adminEventReviewSchema.safeParse({ action: "reject", reason: "bad" });
+  assert(!invalidAdminRejectShort.success, "Admin 'reject' action with reason <5 chars is rejected");
+
+  const validAdminReject = adminEventReviewSchema.safeParse({
+    action: "reject",
+    reason: "Venue is already booked for university faculty matriculation ceremony on the selected date.",
+  });
+  assert(validAdminReject.success, "Admin 'reject' action with detailed reason passes validation");
+
+  // 5. Event Mongoose Model Indexes
+  const eventIndexes = Event.schema.indexes();
+  assert(eventIndexes.length >= 2, "Event Mongoose schema defines compound and query indexes for performance");
+
   // Summary
   console.log("\n========================================================");
   console.log(`📊 TEST RESULTS: ${passed} PASSED, ${failed} FAILED`);

@@ -219,7 +219,10 @@ async function runOrganizerEventsE2E() {
 
     assert(draftEvent._id && draftEvent.status === "draft", "Draft event created successfully in MongoDB");
     assert(draftEvent.totalCapacity === 200, "Draft event totalCapacity matches configured tiers");
-    assert(draftEvent.availableSeats === 200, "Draft event availableSeats initialized to full capacity");
+    assert(
+      draftEvent.totalCapacity - draftEvent.registeredCount === 200,
+      "Draft event available spots matches full capacity"
+    );
     assert(draftEvent.organizerId.toString() === studentOrgUser._id.toString(), "Event ownership correctly linked to organizer");
 
     // Verify draft event is ISOLATED from public discovery

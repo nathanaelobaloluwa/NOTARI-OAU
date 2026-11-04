@@ -145,7 +145,9 @@ async function runSeed() {
       { userId: orgUser._id },
       {
         userId: orgUser._id,
+        organizerType: APPLICANT_TYPES.ORGANIZATION,
         organizationName: organizerConfig.name,
+        displayName: organizerConfig.name,
         category: organizerConfig.category,
         description: organizerConfig.description,
         contactEmail: orgUser.email,

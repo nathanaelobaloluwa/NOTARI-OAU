@@ -1330,3 +1330,4 @@ export function OrganizerEventDetailClient({ eventId }: { eventId: string }) {
     </div>
   );
 }
+

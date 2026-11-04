@@ -72,3 +72,4 @@ export async function POST(
     return NextResponse.json({ success: false, message: "Failed to cancel event." }, { status: 500 });
   }
 }
+

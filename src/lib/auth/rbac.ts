@@ -98,8 +98,8 @@ export async function requireApprovedOrganizer(
     // Admin has universal oversight
     if (verifyInDb) {
       await connectToDatabase();
-      const profile = await OrganizerProfile.findOne({ userId: user.id }).lean();
-      return { ...user, organizerProfile: (profile as IOrganizerProfileDocument) || undefined };
+      const profile = await OrganizerProfile.findOne({ userId: user.id });
+      return { ...user, organizerProfile: profile || undefined };
     }
     return user;
   }

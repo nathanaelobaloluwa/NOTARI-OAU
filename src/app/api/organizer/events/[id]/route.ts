@@ -263,3 +263,4 @@ export async function DELETE(
     return NextResponse.json({ success: false, message: "Failed to delete event." }, { status: 500 });
   }
 }
+

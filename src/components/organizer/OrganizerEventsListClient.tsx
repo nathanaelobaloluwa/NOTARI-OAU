@@ -449,3 +449,4 @@ export function OrganizerEventsListClient() {
     </div>
   );
 }
+

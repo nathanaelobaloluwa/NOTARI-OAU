@@ -5,12 +5,22 @@ import { authConfig } from "../lib/auth/auth.config";
 import { TicketSecurityService } from "../lib/tickets/qr";
 import { User } from "../models/User";
 import { Bookmark } from "../models/Bookmark";
+import { OrganizerApplication } from "../models/OrganizerApplication";
+import { OrganizerProfile } from "../models/OrganizerProfile";
 import { bookmarkSchema, bookmarkQuerySchema } from "../validators/bookmark";
 import {
   studentProfileUpdateSchema,
   changePasswordSchema,
   studentHistoryQuerySchema,
 } from "../validators/student";
+import {
+  individualApplicationSchema,
+  organizationApplicationSchema,
+  organizerApplicationSchema,
+  applicationReviewSchema,
+  organizerProfileUpdateSchema,
+} from "../validators/organizer";
+import { APPLICANT_TYPES, APPLICATION_STATUS, ORGANIZATION_CATEGORIES } from "../constants/organizer";
 import { USER_ROLES } from "../constants/roles";
 import type { NextRequest } from "next/server";
 import type { Session } from "next-auth";
@@ -155,6 +165,18 @@ async function runFoundationTests() {
 
   const adminOnAdmin = await authorizedCallback({ auth: adminAuth, ...dummyReq("/admin") });
   assert(adminOnAdmin === true, "Admin accessing /admin is allowed");
+
+  // Dual-capability: Student with approved organizer accreditation
+  const studentOrganizerAuth = {
+    user: { id: "so1", email: "student.org@oau.edu.ng", role: USER_ROLES.STUDENT, isOrganizer: true },
+    expires: new Date(Date.now() + 3600000).toISOString(),
+  } as unknown as Session;
+
+  const studentOrgOnOrg = await authorizedCallback({ auth: studentOrganizerAuth, ...dummyReq("/organizer") });
+  assert(studentOrgOnOrg === true, "Student with isOrganizer: true capability is allowed to access /organizer");
+
+  const studentOrgOnStudent = await authorizedCallback({ auth: studentOrganizerAuth, ...dummyReq("/student") });
+  assert(studentOrgOnStudent === true, "Student with isOrganizer: true capability retains full access to /student");
 
   // TEST SUITE 4: Ticket QR Security & Buffer Guard Tests
   console.log("\n--- 4. Ticket Security & Anti-Crash Buffer Tests ---");
@@ -471,6 +493,104 @@ async function runFoundationTests() {
 
   const defaultHistoryTab = studentHistoryQuerySchema.safeParse({});
   assert(defaultHistoryTab.success && defaultHistoryTab.data.tab === "all", "studentHistoryQuerySchema defaults to 'all'");
+
+  // TEST SUITE 14: Phase 5.1 Organizer Application & Profile Validation Tests
+  console.log("\n--- 14. Phase 5.1 Organizer Application & Accreditation Schema Tests ---");
+
+  // Check 1: Valid individual student organizer application
+  const validIndividual = {
+    applicantType: "individual" as const,
+    applicantName: "Bamidele Adeleke",
+    applicantEmail: "bamidele@oau.edu.ng",
+    applicantMatricNumber: "CSC/2021/099",
+    faculty: "Faculty of Technology",
+    department: "Computer Science and Engineering",
+    phone: "08012345678",
+    displayName: "Bamidele Events",
+    description: "Experienced student event producer organizing hackathons, tech talks, and academic workshops across OAU campus.",
+    reason: "I want to host tech meetups and student development conferences for Great Ife students using official campus accreditation.",
+    experience: "Co-organized the 2025 Tech Fest at OAU.",
+  };
+  const parsedIndividual = individualApplicationSchema.safeParse(validIndividual);
+  assert(parsedIndividual.success, "Valid individual student application payload passes Zod validation");
+
+  const parsedUnionIndividual = organizerApplicationSchema.safeParse(validIndividual);
+  assert(parsedUnionIndividual.success, "Valid individual application passes discriminated union organizerApplicationSchema");
+
+  // Check 2: Individual application validation bounds
+  const missingFaculty = { ...validIndividual, faculty: "" };
+  assert(!individualApplicationSchema.safeParse(missingFaculty).success, "Individual application missing faculty is rejected");
+
+  const shortDescription = { ...validIndividual, description: "Too short" };
+  assert(!individualApplicationSchema.safeParse(shortDescription).success, "Individual description <20 characters is rejected");
+
+  const shortReason = { ...validIndividual, reason: "Short reason" };
+  assert(!individualApplicationSchema.safeParse(shortReason).success, "Individual reason <20 characters is rejected");
+
+  // Check 3: Valid campus organization application
+  const validOrg = {
+    applicantType: "organization" as const,
+    organizationName: "OAU Google Developer Student Club",
+    organizationCategory: "Club",
+    organizationDescription: "Official campus student developer organization promoting technological innovation and community workshops across OAU.",
+    faculty: "Faculty of Technology",
+    department: "Computer Science",
+    contactPersonName: "Temitope Bakare",
+    contactPersonEmail: "temitope@oau.edu.ng",
+    contactPersonMatric: "CSC/2022/015",
+    contactPersonPhone: "+2348098765432",
+    officialEmail: "gdsc.oau@gmail.com",
+    reason: "We require verified organizer access to coordinate student tech workshops, seminars, and developer competitions at OAU.",
+  };
+  const parsedOrgApp = organizationApplicationSchema.safeParse(validOrg);
+  assert(parsedOrgApp.success, "Valid campus organization application payload passes Zod validation");
+
+  const parsedUnionOrg = organizerApplicationSchema.safeParse(validOrg);
+  assert(parsedUnionOrg.success, "Valid organization application passes discriminated union organizerApplicationSchema");
+
+  // Check 4: Organization application invalid category
+  const invalidOrgCategory = { ...validOrg, organizationCategory: "UnrecognizedCategory" };
+  assert(!organizationApplicationSchema.safeParse(invalidOrgCategory).success, "Organization application with invalid category is rejected");
+
+  // Check 5: Application review schema requirements
+  const validApprove = applicationReviewSchema.safeParse({ action: "approve", reviewNotes: "All documents verified." });
+  assert(validApprove.success, "Superadmin 'approve' action passes without mandatory reason text");
+
+  const invalidReject = applicationReviewSchema.safeParse({ action: "reject", reason: "" });
+  assert(!invalidReject.success, "Superadmin 'reject' action without reason is rejected");
+
+  const shortRejectReason = applicationReviewSchema.safeParse({ action: "reject", reason: "no" });
+  assert(!shortRejectReason.success, "Superadmin 'reject' action with reason <5 chars is rejected");
+
+  const validReject = applicationReviewSchema.safeParse({ action: "reject", reason: "Applicant does not satisfy recognized campus hosting criteria." });
+  assert(validReject.success, "Superadmin 'reject' action with detailed explanation passes validation");
+
+  const invalidChanges = applicationReviewSchema.safeParse({ action: "request_changes", reason: "" });
+  assert(!invalidChanges.success, "Superadmin 'request_changes' action without reason is rejected");
+
+  const validChanges = applicationReviewSchema.safeParse({ action: "request_changes", reason: "Please provide official department endorsement letter." });
+  assert(validChanges.success, "Superadmin 'request_changes' action with detailed explanation passes validation");
+
+  // Check 6: Organizer profile update schema
+  const validOrgProfileUpdate = {
+    displayName: "Great Ife Tech Hub",
+    description: "Updated mission statement focusing on campus-wide technology initiatives, workshops, and student mentorship.",
+    contactPhone: "08012345678",
+    website: "https://techhub.oauife.edu.ng",
+    socialLinks: {
+      twitter: "@OAUTechHub",
+      instagram: "@oautechhub",
+    },
+  };
+  const parsedOrgProfile = organizerProfileUpdateSchema.safeParse(validOrgProfileUpdate);
+  assert(parsedOrgProfile.success, "Valid organizer profile update payload passes Zod validation");
+
+  const invalidWebsiteUrl = { ...validOrgProfileUpdate, website: "not-a-valid-url" };
+  assert(!organizerProfileUpdateSchema.safeParse(invalidWebsiteUrl).success, "Invalid website URL format is rejected");
+
+  // Check 7: Schema indexes check
+  assert(OrganizerApplication.schema.indexes().length >= 2, "OrganizerApplication schema registers compound and query indexes");
+  assert(OrganizerProfile.schema.indexes().length >= 2, "OrganizerProfile schema registers unique and status indexes");
 
   // Summary
   console.log("\n========================================================");

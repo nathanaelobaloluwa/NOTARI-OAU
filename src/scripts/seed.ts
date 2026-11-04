@@ -4,7 +4,9 @@ import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
 import { User } from "../models/User";
 import { OrganizerProfile } from "../models/OrganizerProfile";
+import { OrganizerApplication } from "../models/OrganizerApplication";
 import { USER_ROLES, ORGANIZER_STATUS } from "../constants/roles";
+import { APPLICANT_TYPES } from "../constants/organizer";
 
 /**
  * Load .env.local if present in project root
@@ -83,6 +85,7 @@ async function runSeed() {
     // Ensure all Mongoose unique and sparse indexes are explicitly synchronized in MongoDB
     await User.init();
     await OrganizerProfile.init();
+    await OrganizerApplication.init();
     console.log("✅ Database unique & sparse indexes synchronized.");
 
     // Seed Config from environment (no hardcoded passwords)

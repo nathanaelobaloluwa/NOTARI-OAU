@@ -12,9 +12,10 @@ const envSchema = z.object({
   AUTH_SECRET: z.string().min(16).default("temporary_scaffold_auth_secret_minimum_32_characters"),
   NEXTAUTH_URL: z.string().url().optional(),
 
-  // Payments (Paystack) - Optional during scaffold
+  // Payments (Paystack)
   PAYSTACK_SECRET_KEY: z.string().optional(),
   NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY: z.string().optional(),
+  PAYSTACK_CALLBACK_URL: z.string().url().optional(),
 
   // Media (Cloudinary) - Optional during scaffold
   CLOUDINARY_CLOUD_NAME: z.string().optional(),

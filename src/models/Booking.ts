@@ -4,6 +4,7 @@ export interface IBookingDocument extends Document {
   bookingReference: string;
   userId: mongoose.Types.ObjectId;
   eventId: mongoose.Types.ObjectId;
+  organizerId?: mongoose.Types.ObjectId;
   ticketTierId: mongoose.Types.ObjectId;
   quantity: number;
   unitPrice: number;
@@ -12,6 +13,7 @@ export interface IBookingDocument extends Document {
   paymentReference?: string;
   paymentChannel: "paystack" | "free";
   paidAt?: Date;
+  reservedUntil?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -21,6 +23,7 @@ const BookingSchema = new Schema<IBookingDocument>(
     bookingReference: { type: String, required: true, unique: true, index: true },
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
     eventId: { type: Schema.Types.ObjectId, ref: "Event", required: true, index: true },
+    organizerId: { type: Schema.Types.ObjectId, ref: "User", index: true },
     ticketTierId: { type: Schema.Types.ObjectId, required: true },
     quantity: { type: Number, required: true, min: 1 },
     unitPrice: { type: Number, required: true, min: 0 },
@@ -34,6 +37,7 @@ const BookingSchema = new Schema<IBookingDocument>(
     paymentReference: { type: String, index: true, sparse: true, unique: true },
     paymentChannel: { type: String, enum: ["paystack", "free"], default: "free" },
     paidAt: { type: Date },
+    reservedUntil: { type: Date, index: true },
   },
   {
     timestamps: true,

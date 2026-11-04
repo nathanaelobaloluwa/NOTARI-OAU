@@ -8,12 +8,19 @@ import { Bookmark } from "../models/Bookmark";
 import { OrganizerApplication } from "../models/OrganizerApplication";
 import { OrganizerProfile } from "../models/OrganizerProfile";
 import { Event } from "../models/Event";
+import { Payment } from "../models/Payment";
 import {
   createEventSchema,
   updateEventSchema,
   ticketTierSchema,
   adminEventReviewSchema,
 } from "../validators/event";
+import {
+  initializePaymentSchema,
+  verifyPaymentQuerySchema,
+  adminPaymentFilterSchema,
+  generatePaymentReference,
+} from "../validators/payment";
 import { bookmarkSchema, bookmarkQuerySchema } from "../validators/bookmark";
 import {
   studentProfileUpdateSchema,
@@ -704,6 +711,78 @@ async function runFoundationTests() {
   // 5. Event Mongoose Model Indexes
   const eventIndexes = Event.schema.indexes();
   assert(eventIndexes.length >= 2, "Event Mongoose schema defines compound and query indexes for performance");
+
+  // ========================================================
+  // SUITE 16: PAID TICKETING & PAYSTACK PAYMENT INTEGRATION (PHASE 5.3)
+  // ========================================================
+  console.log("\n💳 SUITE 16: Paid Ticketing & Paystack Integration Validation (Phase 5.3)");
+
+  // 1. Payment Reference Generation & Cryptographic Entropy
+  const payRef = generatePaymentReference();
+  const payRefPattern = /^NOT-PAY-\d{8}-[A-F0-9]{8}$/;
+  assert(payRefPattern.test(payRef), "Payment reference matches 'NOT-PAY-YYYYMMDD-XXXXXXXX' format");
+
+  const refs = new Set<string>();
+  for (let i = 0; i < 100; i++) {
+    refs.add(generatePaymentReference());
+  }
+  assert(refs.size === 100, "100 consecutive payment references generated without collision (high entropy)");
+
+  // 2. Initialize Payment Validation
+  const validInit = {
+    eventId: "65d8f0a1b2c3d4e5f6a7b8c9",
+    ticketTierId: "65d8f0a1b2c3d4e5f6a7b8d0",
+    quantity: 2,
+    callbackUrl: "http://localhost:3000/payment/verify",
+  };
+  assert(initializePaymentSchema.safeParse(validInit).success, "Valid paid checkout initialization payload passes validation");
+
+  const invalidZeroQty = { ...validInit, quantity: 0 };
+  assert(!initializePaymentSchema.safeParse(invalidZeroQty).success, "Zero quantity paid checkout is rejected");
+
+  const invalidNegativeQty = { ...validInit, quantity: -2 };
+  assert(!initializePaymentSchema.safeParse(invalidNegativeQty).success, "Negative quantity paid checkout is rejected");
+
+  const invalidExcessiveQty = { ...validInit, quantity: 15 };
+  assert(!initializePaymentSchema.safeParse(invalidExcessiveQty).success, "Quantity exceeding max per order limit (10) is rejected");
+
+  const missingEventInit = { ticketTierId: validInit.ticketTierId, quantity: 1 };
+  assert(!initializePaymentSchema.safeParse(missingEventInit).success, "Missing eventId is rejected");
+
+  const missingTierInit = { eventId: validInit.eventId, quantity: 1 };
+  assert(!initializePaymentSchema.safeParse(missingTierInit).success, "Missing ticketTierId is rejected");
+
+  // 3. Payment Verification Query Validation
+  const validVerifyQuery = { reference: payRef };
+  assert(verifyPaymentQuerySchema.safeParse(validVerifyQuery).success, "Valid payment reference passes query validation");
+
+  const invalidShortRef = { reference: "abc" };
+  assert(!verifyPaymentQuerySchema.safeParse(invalidShortRef).success, "Short payment reference is rejected");
+
+  // 4. Admin Payment Filter Schema
+  const defaultAdminFilter = adminPaymentFilterSchema.safeParse({});
+  assert(
+    defaultAdminFilter.success &&
+      defaultAdminFilter.data.status === "all" &&
+      defaultAdminFilter.data.page === 1 &&
+      defaultAdminFilter.data.limit === 15,
+    "Admin payment filter applies safe defaults (status: 'all', page: 1, limit: 15)"
+  );
+
+  const customAdminFilter = adminPaymentFilterSchema.safeParse({
+    status: "successful",
+    search: "NOT-PAY",
+    page: 2,
+    limit: 25,
+  });
+  assert(
+    customAdminFilter.success && customAdminFilter.data.status === "successful",
+    "Admin payment filter parses custom status, pagination and search query"
+  );
+
+  // 5. Payment Mongoose Model Indexes
+  const paymentIndexes = Payment.schema.indexes();
+  assert(paymentIndexes.length >= 4, "Payment Mongoose schema defines compound and query indexes for references and audits");
 
   // Summary
   console.log("\n========================================================");

@@ -21,11 +21,7 @@ import {
   MapPin,
   Calendar,
   Ticket,
-  AlertTriangle,
-  Send,
   User,
-  Mail,
-  ShieldAlert,
   CheckCircle2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -174,8 +170,8 @@ export function AdminEventApprovalsClient() {
       setReviewModal(null);
       setRejectReason("");
       fetchEvents();
-    } catch (err: any) {
-      setActionError(err.message || "An error occurred during review.");
+    } catch (err: unknown) {
+      setActionError((err as Error).message || "An error occurred during review.");
     } finally {
       setActionLoading(false);
     }

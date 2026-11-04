@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import mongoose from "mongoose";
 import { requireApprovedOrganizer } from "@/lib/auth/rbac";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { Event } from "@/models/Event";
@@ -43,7 +44,7 @@ export async function GET(req: NextRequest) {
       Event.find(query).sort({ createdAt: -1 }).skip(skip).limit(filter.limit).lean(),
       Event.countDocuments(query),
       Event.aggregate([
-        { $match: { organizerId: new (require("mongoose").Types.ObjectId)(user.id) } },
+        { $match: { organizerId: new mongoose.Types.ObjectId(user.id) } },
         {
           $group: {
             _id: "$status",
@@ -89,12 +90,13 @@ export async function GET(req: NextRequest) {
       },
       { status: 200 }
     );
-  } catch (error: any) {
-    if (error.name === "AuthorizationError") {
-      return NextResponse.json({ success: false, message: error.message }, { status: 401 });
+  } catch (error: unknown) {
+    const err = error as { name?: string; message?: string };
+    if (err.name === "AuthorizationError") {
+      return NextResponse.json({ success: false, message: err.message }, { status: 401 });
     }
-    if (error.name === "ForbiddenError") {
-      return NextResponse.json({ success: false, message: error.message }, { status: 403 });
+    if (err.name === "ForbiddenError") {
+      return NextResponse.json({ success: false, message: err.message }, { status: 403 });
     }
     console.error("❌ Error fetching organizer events:", error);
     return NextResponse.json(
@@ -218,12 +220,13 @@ export async function POST(req: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error: any) {
-    if (error.name === "AuthorizationError") {
-      return NextResponse.json({ success: false, message: error.message }, { status: 401 });
+  } catch (error: unknown) {
+    const err = error as { name?: string; message?: string };
+    if (err.name === "AuthorizationError") {
+      return NextResponse.json({ success: false, message: err.message }, { status: 401 });
     }
-    if (error.name === "ForbiddenError") {
-      return NextResponse.json({ success: false, message: error.message }, { status: 403 });
+    if (err.name === "ForbiddenError") {
+      return NextResponse.json({ success: false, message: err.message }, { status: 403 });
     }
     console.error("❌ Error creating organizer event:", error);
     return NextResponse.json(

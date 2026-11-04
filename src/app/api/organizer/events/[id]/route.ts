@@ -38,12 +38,13 @@ export async function GET(
     }
 
     return NextResponse.json({ success: true, event }, { status: 200 });
-  } catch (error: any) {
-    if (error.name === "AuthorizationError") {
-      return NextResponse.json({ success: false, message: error.message }, { status: 401 });
+  } catch (error: unknown) {
+    const err = error as { name?: string; message?: string };
+    if (err.name === "AuthorizationError") {
+      return NextResponse.json({ success: false, message: err.message }, { status: 401 });
     }
-    if (error.name === "ForbiddenError") {
-      return NextResponse.json({ success: false, message: error.message }, { status: 403 });
+    if (err.name === "ForbiddenError") {
+      return NextResponse.json({ success: false, message: err.message }, { status: 403 });
     }
     console.error("❌ Error retrieving organizer event:", error);
     return NextResponse.json({ success: false, message: "Failed to retrieve event." }, { status: 500 });
@@ -190,12 +191,13 @@ export async function PUT(
       },
       { status: 200 }
     );
-  } catch (error: any) {
-    if (error.name === "AuthorizationError") {
-      return NextResponse.json({ success: false, message: error.message }, { status: 401 });
+  } catch (error: unknown) {
+    const err = error as { name?: string; message?: string };
+    if (err.name === "AuthorizationError") {
+      return NextResponse.json({ success: false, message: err.message }, { status: 401 });
     }
-    if (error.name === "ForbiddenError") {
-      return NextResponse.json({ success: false, message: error.message }, { status: 403 });
+    if (err.name === "ForbiddenError") {
+      return NextResponse.json({ success: false, message: err.message }, { status: 403 });
     }
     console.error("❌ Error updating organizer event:", error);
     return NextResponse.json({ success: false, message: "Failed to update event." }, { status: 500 });

@@ -7,6 +7,13 @@ import { User } from "../models/User";
 import { Bookmark } from "../models/Bookmark";
 import { OrganizerApplication } from "../models/OrganizerApplication";
 import { OrganizerProfile } from "../models/OrganizerProfile";
+import { Event } from "../models/Event";
+import {
+  createEventSchema,
+  updateEventSchema,
+  ticketTierSchema,
+  adminEventReviewSchema,
+} from "../validators/event";
 import { bookmarkSchema, bookmarkQuerySchema } from "../validators/bookmark";
 import {
   studentProfileUpdateSchema,

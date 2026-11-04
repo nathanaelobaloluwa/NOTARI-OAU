@@ -3,8 +3,7 @@ import { apiSuccess, handleApiError } from "@/lib/utils/api-response";
 import { createEventSchema, eventFilterSchema } from "@/validators/event";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { Event } from "@/models/Event";
-import { requireRole } from "@/lib/auth/rbac";
-import { USER_ROLES } from "@/constants/roles";
+import { requireApprovedOrganizer } from "@/lib/auth/rbac";
 import { EVENT_STATUS } from "@/constants/oau";
 
 /**

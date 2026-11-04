@@ -58,6 +58,10 @@ async function runOrganizerEventsE2E() {
   console.log("🎟️  NOTARI 2.0: END-TO-END ORGANIZER EVENT LIFECYCLE & APPROVAL AUDIT (PHASE 5.2)");
   console.log("================================================================================\n");
 
+  const createdUserIds: mongoose.Types.ObjectId[] = [];
+  const createdProfileIds: mongoose.Types.ObjectId[] = [];
+  const createdEventIds: mongoose.Types.ObjectId[] = [];
+
   try {
     console.log("🔌 Connecting to MongoDB Atlas...");
     await mongoose.connect(MONGODB_URI);
@@ -72,6 +76,11 @@ async function runOrganizerEventsE2E() {
     const testCampusOrgEmail = `${testPrefix}_campusorg@oauife.edu.ng`;
     const testUnapprovedStudentEmail = `${testPrefix}_unapproved@oauife.edu.ng`;
     const testAttendeeEmail = `${testPrefix}_attendee@oauife.edu.ng`;
+
+    const randNum = Math.floor(1000 + Math.random() * 9000);
+    const testMatricA = `CSC/2021/${randNum}`;
+    const testMatricB = `GLY/2022/${randNum}`;
+    const testMatricC = `ECN/2023/${randNum}`;
 
     // -------------------------------------------------------------------------
     // 1. SETUP TEST USERS & ORGANIZER ACCREDITATIONS
@@ -93,7 +102,7 @@ async function runOrganizerEventsE2E() {
           password: passwordHash,
           role: USER_ROLES.STUDENT,
           isOrganizer: true,
-          matricNumber: "CSC/2021/099",
+          matricNumber: testMatricA,
           faculty: "Faculty of Technology",
           department: "Computer Science and Engineering",
         }),
@@ -112,7 +121,7 @@ async function runOrganizerEventsE2E() {
           password: passwordHash,
           role: USER_ROLES.STUDENT,
           isOrganizer: false,
-          matricNumber: "GLY/2022/045",
+          matricNumber: testMatricB,
           faculty: "Faculty of Science",
           department: "Geology",
         }),
@@ -122,11 +131,19 @@ async function runOrganizerEventsE2E() {
           password: passwordHash,
           role: USER_ROLES.STUDENT,
           isOrganizer: false,
-          matricNumber: "ECN/2023/112",
+          matricNumber: testMatricC,
           faculty: "Faculty of Social Sciences",
           department: "Economics",
         }),
       ]);
+
+    createdUserIds.push(
+      adminUser._id as mongoose.Types.ObjectId,
+      studentOrgUser._id as mongoose.Types.ObjectId,
+      campusOrgUser._id as mongoose.Types.ObjectId,
+      unapprovedStudent._id as mongoose.Types.ObjectId,
+      attendeeStudent._id as mongoose.Types.ObjectId
+    );
 
     // Create approved profiles for the accredited organizers
     const [studentProfile, campusOrgProfile] = await Promise.all([
@@ -153,6 +170,11 @@ async function runOrganizerEventsE2E() {
         status: ORGANIZER_STATUS.APPROVED,
       }),
     ]);
+
+    createdProfileIds.push(
+      studentProfile._id as mongoose.Types.ObjectId,
+      campusOrgProfile._id as mongoose.Types.ObjectId
+    );
 
     assert(adminUser._id && adminUser.role === "admin", "Superadmin provisioned with admin role");
     assert(
@@ -206,7 +228,6 @@ async function runOrganizerEventsE2E() {
       organizerName: studentProfile.displayName,
       status: EVENT_STATUS.DRAFT,
       totalCapacity: 200,
-      availableSeats: 200,
       registeredCount: 0,
       ticketTiers: [
         {
@@ -219,6 +240,8 @@ async function runOrganizerEventsE2E() {
         },
       ],
     });
+
+    createdEventIds.push(draftEvent._id as mongoose.Types.ObjectId);
 
     assert(draftEvent._id && draftEvent.status === "draft", "Draft event created successfully in MongoDB");
     assert(draftEvent.totalCapacity === 200, "Draft event totalCapacity matches configured tiers");
@@ -401,6 +424,24 @@ async function runOrganizerEventsE2E() {
     console.error("❌ Critical error during Phase 5.2 E2E test run:", err);
     failed++;
   } finally {
+    try {
+      if (createdEventIds.length > 0) {
+        await Promise.all([
+          Event.deleteMany({ _id: { $in: createdEventIds } }),
+          Ticket.deleteMany({ eventId: { $in: createdEventIds } }),
+          Booking.deleteMany({ eventId: { $in: createdEventIds } }),
+        ]);
+      }
+      if (createdProfileIds.length > 0) {
+        await OrganizerProfile.deleteMany({ _id: { $in: createdProfileIds } });
+      }
+      if (createdUserIds.length > 0) {
+        await User.deleteMany({ _id: { $in: createdUserIds } });
+      }
+      console.log("🧹 Cleanup completed in finally block.");
+    } catch (cleanupErr) {
+      console.error("Warning: Cleanup error:", cleanupErr);
+    }
     await mongoose.disconnect();
   }
 

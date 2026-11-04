@@ -98,8 +98,8 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    // Enforce server-side authorization: only organizers or admins can submit events
-    const authUser = await requireRole([USER_ROLES.ORGANIZER, USER_ROLES.ADMIN]);
+    // Enforce server-side authorization: only verified approved organizers or admins can submit events
+    const authUser = await requireApprovedOrganizer(true);
 
     const body = await request.json();
     const validated = createEventSchema.parse(body);
@@ -115,14 +115,27 @@ export async function POST(request: NextRequest) {
 
     const totalCapacity = validated.ticketTiers.reduce((acc, t) => acc + t.capacity, 0);
 
+    const ticketTiers = validated.ticketTiers.map((t) => ({
+      ...t,
+      available: t.capacity,
+    }));
+
+    const orgDisplayName =
+      authUser.organizerProfile?.displayName ||
+      authUser.organizerProfile?.organizationName ||
+      authUser.name ||
+      "Campus Organizer";
+
     const newEvent = await Event.create({
       ...validated,
       slug,
       organizerId: authUser.id,
-      organizerName: authUser.name,
+      organizerName: orgDisplayName,
+      ticketTiers,
       totalCapacity,
       registeredCount: 0,
       status: validated.status || EVENT_STATUS.DRAFT,
+      submittedAt: validated.status === EVENT_STATUS.PENDING_APPROVAL ? new Date() : undefined,
     });
 
     return apiSuccess(newEvent, "Event submitted successfully for review", 201);

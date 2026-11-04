@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { EVENT_CATEGORIES, EVENT_STATUS, OAU_FACULTIES } from "@/constants/oau";
+import { EVENT_CATEGORIES, EVENT_STATUS } from "@/constants/oau";
 
 const phoneRegex = /^[0-9+() -]{8,20}$/;
 

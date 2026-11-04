@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { AdminApprovalsClient } from "@/components/admin/AdminApprovalsClient";
 import { AdminEventApprovalsClient } from "@/components/admin/AdminEventApprovalsClient";

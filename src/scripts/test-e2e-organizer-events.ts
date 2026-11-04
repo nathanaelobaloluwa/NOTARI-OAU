@@ -132,21 +132,25 @@ async function runOrganizerEventsE2E() {
     const [studentProfile, campusOrgProfile] = await Promise.all([
       OrganizerProfile.create({
         userId: studentOrgUser._id,
-        applicantType: "individual",
+        organizerType: "individual",
+        organizationName: "Student Builder Initiative",
         displayName: "Student Builder Initiative",
+        category: "Individual Student Organizer",
         description: "Empowering university students with open source skills and peer learning.",
+        contactEmail: testStudentOrgEmail,
+        contactPhone: "08012345678",
         status: ORGANIZER_STATUS.APPROVED,
-        isVerified: true,
       }),
       OrganizerProfile.create({
         userId: campusOrgUser._id,
-        applicantType: "organization",
+        organizerType: "organization",
         organizationName: "NACOSS OAU",
         displayName: "NACOSS OAU Chapter",
-        organizationCategory: "Departmental",
+        category: "Departmental",
         description: "Nigeria Association of Computer Science Students, OAU Chapter.",
+        contactEmail: testCampusOrgEmail,
+        contactPhone: "08087654321",
         status: ORGANIZER_STATUS.APPROVED,
-        isVerified: true,
       }),
     ]);
 

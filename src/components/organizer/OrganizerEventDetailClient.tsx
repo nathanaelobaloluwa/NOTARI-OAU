@@ -12,7 +12,6 @@ import { StatusPill } from "@/components/shared/status-pill";
 import {
   EVENT_CATEGORIES,
   OAU_FACULTIES,
-  OAU_VENUES,
   EVENT_STATUS,
 } from "@/constants/oau";
 import {
@@ -36,7 +35,6 @@ import {
   Mail,
   Phone,
   Info,
-  DollarSign,
   Ban,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -147,9 +145,9 @@ export function OrganizerEventDetailClient({ eventId }: { eventId: string }) {
       }
 
       setEvent(data.event);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error fetching event details:", err);
-      setError(err.message || "Failed to load event.");
+      setError((err as Error).message || "Failed to load event.");
     } finally {
       setLoading(false);
     }
@@ -214,8 +212,8 @@ export function OrganizerEventDetailClient({ eventId }: { eventId: string }) {
       setActionSuccess("Event submitted for Superadmin review successfully!");
       setIsSubmitModalOpen(false);
       fetchEvent();
-    } catch (err: any) {
-      setActionError(err.message || "Failed to submit event.");
+    } catch (err: unknown) {
+      setActionError((err as Error).message || "Failed to submit event.");
     } finally {
       setActionLoading(false);
     }
@@ -238,8 +236,8 @@ export function OrganizerEventDetailClient({ eventId }: { eventId: string }) {
       setActionSuccess("Event marked as cancelled.");
       setIsCancelModalOpen(false);
       fetchEvent();
-    } catch (err: any) {
-      setActionError(err.message || "Failed to cancel event.");
+    } catch (err: unknown) {
+      setActionError((err as Error).message || "Failed to cancel event.");
     } finally {
       setActionLoading(false);
     }
@@ -261,8 +259,8 @@ export function OrganizerEventDetailClient({ eventId }: { eventId: string }) {
 
       setIsDeleteModalOpen(false);
       router.push("/organizer/events");
-    } catch (err: any) {
-      setActionError(err.message || "Failed to delete draft.");
+    } catch (err: unknown) {
+      setActionError((err as Error).message || "Failed to delete draft.");
     } finally {
       setActionLoading(false);
     }
@@ -333,14 +331,14 @@ export function OrganizerEventDetailClient({ eventId }: { eventId: string }) {
       setActionSuccess("Event updated successfully!");
       setIsEditModalOpen(false);
       fetchEvent();
-    } catch (err: any) {
-      setActionError(err.message || "Failed to update event.");
+    } catch (err: unknown) {
+      setActionError((err as Error).message || "Failed to update event.");
     } finally {
       setActionLoading(false);
     }
   };
 
-  const handleTierChange = (index: number, field: keyof TicketTier, value: any) => {
+  const handleTierChange = (index: number, field: keyof TicketTier, value: string | number) => {
     const updated = [...editTiers];
     updated[index] = { ...updated[index], [field]: value };
     setEditTiers(updated);
@@ -1129,7 +1127,7 @@ export function OrganizerEventDetailClient({ eventId }: { eventId: string }) {
                   <label className="text-xs font-semibold text-slate-700">Event Mode *</label>
                   <select
                     value={editEventType}
-                    onChange={(e) => setEditEventType(e.target.value as any)}
+                    onChange={(e) => setEditEventType(e.target.value as "physical" | "online" | "hybrid")}
                     className="w-full text-xs rounded-xl border border-slate-200 p-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600"
                   >
                     <option value="physical">Physical On-Campus</option>

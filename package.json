@@ -16,6 +16,7 @@
     "test:e2e:bookmark": "tsx src/scripts/test-e2e-bookmark.ts",
     "test:e2e:student": "tsx src/scripts/test-e2e-student.ts",
     "test:e2e:organizer": "tsx src/scripts/test-e2e-organizer.ts",
+    "test:e2e:organizer-events": "tsx src/scripts/test-e2e-organizer-events.ts",
     "test:audit:concurrency": "tsx src/scripts/test-concurrency-audit.ts"
   },
   "dependencies": {

@@ -18,10 +18,7 @@ import {
   ArrowRight,
   Plus,
   Trash2,
-  Calendar,
-  MapPin,
   Ticket,
-  Image as ImageIcon,
   CheckCircle2,
   AlertTriangle,
   RefreshCw,
@@ -66,7 +63,6 @@ export function OrganizerCreateEventClient() {
   const [endDate, setEndDate] = useState("");
   const [venue, setVenue] = useState("");
   const [customVenue, setCustomVenue] = useState("");
-  const [address, setAddress] = useState("");
   const [faculty, setFaculty] = useState("");
   const [department, setDepartment] = useState("");
   const [onlinePlatform, setOnlinePlatform] = useState("");
@@ -112,7 +108,7 @@ export function OrganizerCreateEventClient() {
     setTicketTiers((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleTierChange = (index: number, field: keyof FormTicketTier, value: any) => {
+  const handleTierChange = (index: number, field: keyof FormTicketTier, value: string | number) => {
     setTicketTiers((prev) => {
       const copy = [...prev];
       copy[index] = { ...copy[index], [field]: value };
@@ -146,7 +142,6 @@ export function OrganizerCreateEventClient() {
       category,
       eventType,
       venue: chosenVenue,
-      address: address || undefined,
       faculty: faculty || undefined,
       department: department || undefined,
       onlineDetails:

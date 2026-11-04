@@ -300,7 +300,6 @@ export function OrganizerEventsListClient() {
                 ? Math.min(100, Math.round((evt.registeredCount / evt.totalCapacity) * 100))
                 : 0;
 
-            const isPending = evt.status === EVENT_STATUS.PENDING_APPROVAL;
             const isDraft = evt.status === EVENT_STATUS.DRAFT;
             const isRejected = evt.status === EVENT_STATUS.REJECTED;
             const isPublished = evt.status === EVENT_STATUS.PUBLISHED;

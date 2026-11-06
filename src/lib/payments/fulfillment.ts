@@ -5,6 +5,8 @@ import { Ticket } from "@/models/Ticket";
 import { TicketSecurityService } from "@/lib/tickets/qr";
 import { PaystackVerifyResponse } from "@/lib/payments/paystack";
 import { reservePaidTickets, releasePaymentReservation } from "@/lib/payments/reservation";
+import { recordLedgerEntry } from "@/lib/financial/ledger";
+import { FINANCIAL_ENTRY_TYPES } from "@/models/FinancialLedger";
 
 export interface FulfillVerifiedPaymentParams {
   reference: string;
@@ -186,6 +188,23 @@ export async function fulfillVerifiedPayment({
     id: paystackData.id,
   };
   await payment.save();
+
+  // Record immutable financial ledger credit entry
+  try {
+    await recordLedgerEntry({
+      entryType: FINANCIAL_ENTRY_TYPES.TICKET_PAYMENT,
+      direction: "credit",
+      amountInKobo: payment.amountInKobo,
+      organizerId: payment.organizerId,
+      eventId: payment.eventId,
+      userId: payment.userId,
+      paymentId: payment._id,
+      reference: payment.paymentReference,
+      description: `Ticket payment verified for ${payment.tierName} (${payment.quantity} ticket(s))`,
+    });
+  } catch (ledgerErr) {
+    console.error("⚠️ Failed to record financial ledger entry for payment:", ledgerErr);
+  }
 
   return {
     success: true,

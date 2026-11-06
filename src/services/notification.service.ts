@@ -116,6 +116,84 @@ class NotificationService {
       timestamp: new Date().toISOString(),
     };
   }
+
+  /**
+   * Notify organizer of payout account status update
+   */
+  async notifyPayoutAccountStatus(params: {
+    recipientEmail: string;
+    organizerName: string;
+    bankName: string;
+    accountNumberMasked: string;
+    status: "verified" | "rejected" | "disabled";
+    reason?: string;
+  }): Promise<NotificationResult> {
+    const subject = `NOTARI 2.0: Payout Account ${params.status.toUpperCase()}`;
+    console.log(
+      `📧 [NOTIFICATION DISPATCH] ${subject} -> To: ${params.recipientEmail} | Bank: ${params.bankName} (${params.accountNumberMasked})`
+    );
+
+    return {
+      success: true,
+      delivered: false,
+      provider: "simulated_logger",
+      recipient: params.recipientEmail,
+      subject,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * Notify organizer of payout request status update
+   */
+  async notifyPayoutStatus(params: {
+    recipientEmail: string;
+    organizerName: string;
+    reference: string;
+    amountInNaira: number;
+    status: string;
+    reason?: string;
+  }): Promise<NotificationResult> {
+    const subject = `NOTARI 2.0: Payout Request ${params.reference} Update (${params.status.toUpperCase()})`;
+    console.log(
+      `📧 [NOTIFICATION DISPATCH] ${subject} -> To: ${params.recipientEmail} | Ref: ${params.reference} | ₦${params.amountInNaira}`
+    );
+
+    return {
+      success: true,
+      delivered: false,
+      provider: "simulated_logger",
+      recipient: params.recipientEmail,
+      subject,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * Notify student of refund request status update
+   */
+  async notifyRefundStatus(params: {
+    recipientEmail: string;
+    studentName: string;
+    reference: string;
+    amountInNaira: number;
+    status: string;
+    reason?: string;
+  }): Promise<NotificationResult> {
+    const subject = `NOTARI 2.0: Ticket Refund ${params.reference} Update (${params.status.toUpperCase()})`;
+    console.log(
+      `📧 [NOTIFICATION DISPATCH] ${subject} -> To: ${params.recipientEmail} | Ref: ${params.reference} | ₦${params.amountInNaira}`
+    );
+
+    return {
+      success: true,
+      delivered: false,
+      provider: "simulated_logger",
+      recipient: params.recipientEmail,
+      subject,
+      timestamp: new Date().toISOString(),
+    };
+  }
 }
 
 export const notificationService = new NotificationService();

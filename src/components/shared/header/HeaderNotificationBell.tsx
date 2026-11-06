@@ -32,7 +32,7 @@ interface HeaderNotificationBellProps {
   className?: string;
 }
 
-function formatTimeAgo(isoString: string): string {
+export function formatTimeAgo(isoString: string): string {
   try {
     const diffMs = Date.now() - new Date(isoString).getTime();
     const diffSec = Math.floor(diffMs / 1000);

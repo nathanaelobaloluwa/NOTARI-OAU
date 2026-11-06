@@ -34,7 +34,7 @@ interface HeaderProfileAvatarProps {
   className?: string;
 }
 
-function getInitials(name?: string | null): string {
+export function getInitials(name?: string | null): string {
   if (!name || !name.trim()) return "U";
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();

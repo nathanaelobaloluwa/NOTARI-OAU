@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import QRCode from "qrcode";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/shared/status-pill";
@@ -59,6 +60,28 @@ export function StudentTicketsClient({ tickets, studentName }: StudentTicketsCli
   const [tab, setTab] = useState<"upcoming" | "past" | "all">("upcoming");
   const [selectedTicket, setSelectedTicket] = useState<SerializedStudentTicket | null>(null);
   const [copiedCode, setCopiedCode] = useState<boolean>(false);
+  const [qrDataUrl, setQrDataUrl] = useState<string>("");
+
+  useEffect(() => {
+    if (selectedTicket) {
+      const payload = JSON.stringify({
+        code: selectedTicket.ticketCode,
+        eventId: selectedTicket.eventId || selectedTicket.event?.id || "",
+      });
+      QRCode.toDataURL(payload, {
+        width: 256,
+        margin: 1,
+        color: {
+          dark: "#101C3A",
+          light: "#FFFFFF",
+        },
+      })
+        .then((url) => setQrDataUrl(url))
+        .catch(() => setQrDataUrl(""));
+    } else {
+      setQrDataUrl("");
+    }
+  }, [selectedTicket]);
 
   // Refund Modal State
   const [refundModalTicket, setRefundModalTicket] = useState<SerializedStudentTicket | null>(null);
@@ -352,7 +375,16 @@ export function StudentTicketsClient({ tickets, studentName }: StudentTicketsCli
             {/* QR Code Display */}
             <div className="flex flex-col items-center justify-center p-4 sm:p-5 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 space-y-2">
               <div className="w-40 h-40 sm:w-48 sm:h-48 bg-white p-3 rounded-2xl shadow-inner flex flex-col items-center justify-center text-center border border-slate-100">
-                <QrCode className="w-28 h-28 sm:w-36 sm:h-36 text-notari-dark" />
+                {qrDataUrl ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={qrDataUrl}
+                    alt={`QR Code for ${selectedTicket.ticketCode}`}
+                    className="w-32 h-32 sm:w-36 sm:h-36 object-contain"
+                  />
+                ) : (
+                  <QrCode className="w-28 h-28 sm:w-36 sm:h-36 text-notari-dark animate-pulse" />
+                )}
                 <span className="text-[10px] font-mono font-extrabold text-slate-700 tracking-wider mt-1">
                   {selectedTicket.ticketCode}
                 </span>

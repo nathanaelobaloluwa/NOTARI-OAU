@@ -22,14 +22,17 @@
     "test:audit:concurrency": "tsx src/scripts/test-concurrency-audit.ts"
   },
   "dependencies": {
+    "@types/qrcode": "^1.5.6",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.4.7",
+    "jsqr": "^1.4.0",
     "lucide-react": "^1.16.0",
     "mongoose": "^8.10.1",
     "next": "^15.2.0",
     "next-auth": "5.0.0-beta.25",
+    "qrcode": "^1.5.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwind-merge": "^3.0.1",

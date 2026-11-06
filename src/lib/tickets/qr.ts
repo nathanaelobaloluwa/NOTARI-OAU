@@ -56,4 +56,64 @@ export class TicketSecurityService {
 
     return crypto.timingSafeEqual(signatureBuffer, expectedBuffer);
   }
+
+  /**
+   * Generates a compact JSON string encoded inside the ticket's QR code.
+   */
+  public static generateQRPayload(ticketCode: string, eventId: string): string {
+    const signature = this.signTicket(ticketCode, eventId);
+    return JSON.stringify({
+      code: ticketCode,
+      eventId,
+      sig: signature,
+    });
+  }
+
+  /**
+   * Safely parses raw text scanned from camera QR codes.
+   * Handles JSON payloads, URL links with query parameters, or bare ticket codes.
+   */
+  public static parseScannedPayload(rawText: string): {
+    ticketCode: string;
+    eventId?: string;
+    signature?: string;
+  } {
+    const trimmed = (rawText || "").trim();
+
+    // 1. Try parsing JSON format
+    if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        const ticketCode = String(parsed.code || parsed.ticketCode || "").toUpperCase().trim();
+        const eventId = parsed.eventId ? String(parsed.eventId).trim() : undefined;
+        const signature = parsed.sig || parsed.signature ? String(parsed.sig || parsed.signature).trim() : undefined;
+        if (ticketCode) {
+          return { ticketCode, eventId, signature };
+        }
+      } catch {
+        // Fall through
+      }
+    }
+
+    // 2. Try parsing URL format: https://.../verify/NOT-OAU-...?sig=...&eventId=...
+    if (trimmed.includes("http://") || trimmed.includes("https://")) {
+      try {
+        const url = new URL(trimmed);
+        const pathSegments = url.pathname.split("/").filter(Boolean);
+        const ticketCode = (pathSegments[pathSegments.length - 1] || "").toUpperCase().trim();
+        const signature = url.searchParams.get("sig") || undefined;
+        const eventId = url.searchParams.get("eventId") || undefined;
+        if (ticketCode.startsWith("NOT-")) {
+          return { ticketCode, eventId, signature };
+        }
+      } catch {
+        // Fall through
+      }
+    }
+
+    // 3. Fallback: treat as bare ticket code
+    return {
+      ticketCode: trimmed.toUpperCase(),
+    };
+  }
 }

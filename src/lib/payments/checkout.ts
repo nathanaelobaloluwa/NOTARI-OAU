@@ -169,7 +169,6 @@ export async function processPaidCheckoutInitialization({
   const reservedUntil = new Date(Date.now() + RESERVATION_EXPIRY_MINUTES * 60 * 1000);
 
   let bookingDoc: InstanceType<typeof Booking> | null = null;
-  let paymentDoc: InstanceType<typeof Payment> | null = null;
 
   try {
     bookingDoc = await Booking.create({
@@ -187,7 +186,7 @@ export async function processPaidCheckoutInitialization({
       reservedUntil,
     });
 
-    paymentDoc = await Payment.create({
+    await Payment.create({
       userId: new mongoose.Types.ObjectId(userId),
       eventId: event._id,
       bookingId: bookingDoc._id,

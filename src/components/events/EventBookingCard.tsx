@@ -17,6 +17,8 @@ import {
   Minus,
   ShieldCheck,
   X,
+  CreditCard,
+  Lock,
 } from "lucide-react";
 
 export interface SerializedTicketTier {
@@ -27,6 +29,8 @@ export interface SerializedTicketTier {
   available: number;
   description?: string;
   maxPerOrder: number;
+  salesStartDate?: string | Date;
+  salesEndDate?: string | Date;
 }
 
 export interface EventBookingCardProps {
@@ -83,8 +87,17 @@ export function EventBookingCard({
   const tierAvailable = selectedTier ? selectedTier.available : 0;
   const isTierSoldOut = tierAvailable <= 0;
   const maxAllowedQuantity = selectedTier
-    ? Math.min(tierAvailable, selectedTier.maxPerOrder || 5, 5)
+    ? Math.min(tierAvailable, selectedTier.maxPerOrder || 5, 10)
     : 1;
+
+  const now = new Date();
+  const salesNotStarted = selectedTier?.salesStartDate
+    ? new Date(selectedTier.salesStartDate) > now
+    : false;
+  const salesEnded = selectedTier?.salesEndDate
+    ? new Date(selectedTier.salesEndDate) < now
+    : false;
+  const totalPrice = (selectedTier?.price || 0) * quantity;
 
   const totalCapacity = ticketTiers.reduce((acc, t) => acc + t.capacity, 0);
   const totalAvailable = ticketTiers.reduce((acc, t) => acc + t.available, 0);
@@ -109,8 +122,23 @@ export function EventBookingCard({
       return;
     }
 
-    if (!selectedTier || !isTierFree) {
-      setErrorMessage("Paid online ticket checkout is not yet open. Only free registrations are currently supported.");
+    if (!selectedTier) {
+      setErrorMessage("Please select a ticket tier to continue.");
+      return;
+    }
+
+    if (salesNotStarted) {
+      setErrorMessage("Ticket sales for this tier have not started yet.");
+      return;
+    }
+
+    if (salesEnded) {
+      setErrorMessage("Ticket sales for this tier have ended.");
+      return;
+    }
+
+    if (tierAvailable < quantity) {
+      setErrorMessage("Sorry, insufficient tickets remain in this tier.");
       return;
     }
 
@@ -118,33 +146,67 @@ export function EventBookingCard({
     setErrorMessage(null);
 
     try {
-      const response = await fetch("/api/bookings/register-free", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          eventId,
-          ticketTierId: selectedTier.id,
+      if (isTierFree) {
+        // Free ticket registration
+        const response = await fetch("/api/bookings/register-free", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            eventId,
+            ticketTierId: selectedTier.id,
+            quantity,
+          }),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          setErrorMessage(result.message || "Failed to complete registration. Please try again.");
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Success
+        setConfirmationData({
+          bookingReference: result.data.bookingReference,
+          ticketCodes: result.data.tickets.map((t: { ticketCode: string }) => t.ticketCode),
+          tierName: selectedTier.name,
           quantity,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        setErrorMessage(result.message || "Failed to complete registration. Please try again.");
+        });
         setIsSubmitting(false);
-        return;
-      }
+        router.refresh();
+      } else {
+        // Paid ticket checkout initialization via Paystack
+        const response = await fetch("/api/payments/initialize", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            eventId,
+            ticketTierId: selectedTier.id,
+            quantity,
+          }),
+        });
 
-      // Success
-      setConfirmationData({
-        bookingReference: result.data.bookingReference,
-        ticketCodes: result.data.tickets.map((t: { ticketCode: string }) => t.ticketCode),
-        tierName: selectedTier.name,
-        quantity,
-      });
-      setIsSubmitting(false);
-      router.refresh();
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          setErrorMessage(
+            result.message || "Failed to initialize payment checkout. Please try again."
+          );
+          setIsSubmitting(false);
+          return;
+        }
+
+        const authUrl = result.data?.authorizationUrl;
+        if (!authUrl) {
+          setErrorMessage("Paystack authorization URL was not received. Please try again.");
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Redirect to Paystack secure checkout
+        window.location.href = authUrl;
+      }
     } catch {
       setErrorMessage("Network error occurred while reserving your ticket. Please check your connection.");
       setIsSubmitting(false);
@@ -269,8 +331,8 @@ export function EventBookingCard({
         </div>
       )}
 
-      {/* Quantity Selector for Free Passes */}
-      {isTierFree && !isTierSoldOut && (
+      {/* Quantity Selector (for both free and paid tickets) */}
+      {!isTierSoldOut && (
         <div className="space-y-1.5 pt-1">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-notari-dark">Quantity</span>
@@ -300,6 +362,26 @@ export function EventBookingCard({
         </div>
       )}
 
+      {/* Paid Order Summary Breakdown */}
+      {!isTierFree && !isTierSoldOut && (
+        <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200/80 space-y-2 text-xs">
+          <div className="flex justify-between items-center text-slate-500">
+            <span>Ticket Price ({selectedTier?.name || "General"})</span>
+            <span className="font-semibold text-notari-dark">₦{(selectedTier?.price || 0).toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between items-center text-slate-500">
+            <span>Quantity</span>
+            <span className="font-semibold text-notari-dark">{quantity}</span>
+          </div>
+          <div className="pt-2 border-t border-slate-200 flex justify-between items-center">
+            <span className="font-bold text-notari-dark">Total Order</span>
+            <span className="text-base font-extrabold text-notari-primary">
+              ₦{totalPrice.toLocaleString()}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Action CTA Buttons */}
       <div className="space-y-2.5 pt-1">
         {isEventSoldOut || isTierSoldOut ? (
@@ -323,16 +405,15 @@ export function EventBookingCard({
               You are signed in as an {sessionUser.role}. Student event tickets are reserved through student accounts.
             </p>
           </div>
-        ) : !isTierFree ? (
-          <div className="space-y-2">
-            <Button disabled className="w-full h-12 rounded-xl text-xs sm:text-sm font-semibold opacity-60">
-              Paid Checkout Coming Soon
-            </Button>
-            <p className="text-[11px] text-slate-500 text-center leading-relaxed">
-              Paid ticket processing will be activated in Phase 5. Only free passes can be reserved currently.
-            </p>
-          </div>
-        ) : (
+        ) : salesNotStarted ? (
+          <Button disabled className="w-full h-12 rounded-xl text-sm font-semibold opacity-60">
+            Ticket Sales Not Started
+          </Button>
+        ) : salesEnded ? (
+          <Button disabled className="w-full h-12 rounded-xl text-sm font-semibold opacity-60">
+            Ticket Sales Closed
+          </Button>
+        ) : isTierFree ? (
           <Button
             onClick={handleRegister}
             disabled={isSubmitting}
@@ -350,6 +431,30 @@ export function EventBookingCard({
               </>
             )}
           </Button>
+        ) : (
+          <div className="space-y-2">
+            <Button
+              onClick={handleRegister}
+              disabled={isSubmitting}
+              className="w-full h-12 rounded-xl text-sm font-semibold shadow-md gap-2 bg-indigo-600 hover:bg-indigo-700 text-white"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Connecting to Paystack...</span>
+                </>
+              ) : (
+                <>
+                  <CreditCard className="w-4 h-4 text-indigo-200" />
+                  <span>Pay ₦{totalPrice.toLocaleString()} with Paystack</span>
+                </>
+              )}
+            </Button>
+            <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
+              <Lock className="w-3 h-3 text-slate-400" />
+              <span>Secured by Paystack • 256-bit SSL encryption</span>
+            </div>
+          </div>
         )}
       </div>
 
@@ -386,9 +491,11 @@ export function EventBookingCard({
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 p-3.5 sm:px-6 shadow-[0_-4px_20px_rgba(16,28,58,0.08)] pb-safe">
         <div className="flex items-center justify-between gap-4 max-w-lg mx-auto">
           <div>
-            <span className="text-[10px] text-slate-400 font-medium block">Admission</span>
+            <span className="text-[10px] text-slate-400 font-medium block">
+              {isTierFree ? "Admission" : `Total (${quantity} Ticket${quantity > 1 ? "s" : ""})`}
+            </span>
             <span className="text-lg font-extrabold text-notari-dark">
-              {priceDisplay}
+              {isTierFree ? "Free Pass" : `₦${totalPrice.toLocaleString()}`}
             </span>
           </div>
 
@@ -400,7 +507,7 @@ export function EventBookingCard({
                   <span>View Pass</span>
                 </Button>
               </Link>
-            ) : isEventSoldOut ? (
+            ) : isEventSoldOut || isTierSoldOut ? (
               <Button disabled className="w-full h-11 rounded-xl text-xs sm:text-sm font-semibold opacity-60">
                 Sold Out
               </Button>
@@ -416,8 +523,17 @@ export function EventBookingCard({
                 onClick={() => setIsMobileModalOpen(true)}
                 className="w-full h-11 rounded-xl text-xs sm:text-sm font-semibold shadow-md gap-2"
               >
-                <Ticket className="w-4 h-4" />
-                <span>Reserve Spot</span>
+                {isTierFree ? (
+                  <>
+                    <Ticket className="w-4 h-4" />
+                    <span>Reserve Spot</span>
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="w-4 h-4" />
+                    <span>Get Tickets</span>
+                  </>
+                )}
               </Button>
             )}
           </div>

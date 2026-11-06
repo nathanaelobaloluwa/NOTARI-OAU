@@ -16,6 +16,9 @@ import {
   ShieldCheck,
   Copy,
   Check,
+  RotateCcw,
+  Loader2,
+  Ban,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +33,8 @@ export interface SerializedStudentTicket {
   pricePaid: number;
   isCheckedIn: boolean;
   checkedInAt?: string;
+  isInvalidated?: boolean;
+  invalidatedReason?: string;
   qrCodeUrl?: string;
   createdAt: string;
   event: {
@@ -54,6 +59,13 @@ export function StudentTicketsClient({ tickets, studentName }: StudentTicketsCli
   const [tab, setTab] = useState<"upcoming" | "past" | "all">("upcoming");
   const [selectedTicket, setSelectedTicket] = useState<SerializedStudentTicket | null>(null);
   const [copiedCode, setCopiedCode] = useState<boolean>(false);
+
+  // Refund Modal State
+  const [refundModalTicket, setRefundModalTicket] = useState<SerializedStudentTicket | null>(null);
+  const [refundReason, setRefundReason] = useState<string>("");
+  const [isSubmittingRefund, setIsSubmittingRefund] = useState<boolean>(false);
+  const [refundError, setRefundError] = useState<string | null>(null);
+  const [refundSuccess, setRefundSuccess] = useState<string | null>(null);
 
   const now = new Date();
 
@@ -90,6 +102,46 @@ export function StudentTicketsClient({ tickets, studentName }: StudentTicketsCli
 
   const handlePrint = () => {
     window.print();
+  };
+
+  // Submit refund
+  const handleRefundSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!refundModalTicket) return;
+
+    setRefundError(null);
+    setRefundSuccess(null);
+    setIsSubmittingRefund(true);
+
+    try {
+      const res = await fetch("/api/student/refunds", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bookingId: refundModalTicket.bookingId,
+          reason: refundReason,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setRefundSuccess(
+          data.message || "Refund request submitted successfully. Administrator review is underway."
+        );
+        setTimeout(() => {
+          setRefundModalTicket(null);
+          setRefundSuccess(null);
+          setRefundReason("");
+          window.location.reload();
+        }, 2000);
+      } else {
+        setRefundError(data.message || "Failed to submit refund request");
+      }
+    } catch {
+      setRefundError("Network error while submitting refund request");
+    } finally {
+      setIsSubmittingRefund(false);
+    }
   };
 
   return (
@@ -186,19 +238,35 @@ export function StudentTicketsClient({ tickets, studentName }: StudentTicketsCli
                 })
               : "";
 
+            const isEventUpcoming =
+              tkt.event?.startDate && new Date(tkt.event.startDate) > new Date();
+
             return (
               <Card
                 key={tkt.id}
                 className="p-5 border-slate-200/80 bg-white hover:border-slate-300 transition-all flex flex-col md:flex-row md:items-center justify-between gap-6 rounded-2xl"
               >
                 <div className="flex items-start sm:items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-notari-primary shrink-0">
-                    <QrCode className="w-8 h-8" />
+                  <div
+                    className={cn(
+                      "w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border",
+                      tkt.isInvalidated
+                        ? "bg-rose-50 border-rose-200 text-rose-500"
+                        : "bg-indigo-50 border-indigo-100 text-notari-primary"
+                    )}
+                  >
+                    {tkt.isInvalidated ? <Ban className="w-8 h-8" /> : <QrCode className="w-8 h-8" />}
                   </div>
 
                   <div className="space-y-1.5 min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <StatusPill status={tkt.isCheckedIn ? "confirmed" : "free"} />
+                      {tkt.isInvalidated ? (
+                        <span className="text-[11px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2.5 py-0.5 rounded-full">
+                          Void / Refunded
+                        </span>
+                      ) : (
+                        <StatusPill status={tkt.isCheckedIn ? "confirmed" : "free"} />
+                      )}
                       <span className="text-xs text-slate-400 font-mono font-bold tracking-tight">
                         {tkt.ticketCode}
                       </span>
@@ -227,11 +295,25 @@ export function StudentTicketsClient({ tickets, studentName }: StudentTicketsCli
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100 justify-end shrink-0">
+                <div className="flex items-center gap-2 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100 justify-end shrink-0">
+                  {/* Request Refund button for paid, active, upcoming tickets */}
+                  {!tkt.isInvalidated && tkt.pricePaid > 0 && isEventUpcoming && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setRefundModalTicket(tkt)}
+                      className="text-xs font-semibold text-rose-600 border-rose-200 hover:bg-rose-50 rounded-xl h-10"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 mr-1" />
+                      <span>Request Refund</span>
+                    </Button>
+                  )}
+
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setSelectedTicket(tkt)}
+                    disabled={tkt.isInvalidated}
                     className="gap-2 text-xs font-semibold rounded-xl h-10 w-full md:w-auto"
                   >
                     <QrCode className="w-4 h-4 text-notari-primary" />
@@ -267,7 +349,7 @@ export function StudentTicketsClient({ tickets, studentName }: StudentTicketsCli
               <p className="text-xs text-slate-500 font-medium">{selectedTicket.tierName} Admission</p>
             </div>
 
-            {/* Simulated High-Res QR Code Display with Verification Signature */}
+            {/* QR Code Display */}
             <div className="flex flex-col items-center justify-center p-4 sm:p-5 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 space-y-2">
               <div className="w-40 h-40 sm:w-48 sm:h-48 bg-white p-3 rounded-2xl shadow-inner flex flex-col items-center justify-center text-center border border-slate-100">
                 <QrCode className="w-28 h-28 sm:w-36 sm:h-36 text-notari-dark" />
@@ -331,6 +413,88 @@ export function StudentTicketsClient({ tickets, studentName }: StudentTicketsCli
                 <span>Save / Print Ticket Pass</span>
               </Button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* STUDENT REFUND REQUEST MODAL */}
+      {refundModalTicket && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
+          <div className="relative w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl space-y-4">
+            <button
+              onClick={() => setRefundModalTicket(null)}
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100"
+              aria-label="Close modal"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                <RotateCcw className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-notari-dark">Request Ticket Refund</h3>
+                <p className="text-xs text-slate-500">{refundModalTicket.event?.title}</p>
+              </div>
+            </div>
+
+            {refundError && (
+              <div className="p-3 text-xs bg-rose-50 border border-rose-200 text-rose-700 rounded-xl">
+                {refundError}
+              </div>
+            )}
+            {refundSuccess && (
+              <div className="p-3 text-xs bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl">
+                {refundSuccess}
+              </div>
+            )}
+
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-600 space-y-1">
+              <p className="font-semibold text-notari-dark">Refund Policy & Guidelines</p>
+              <p className="text-slate-500 leading-relaxed">
+                Refunds must be requested before the event start time. Upon approval, your ticket pass
+                will be invalidated and ticket funds reversed via Paystack.
+              </p>
+            </div>
+
+            <form onSubmit={handleRefundSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700">Reason for Refund Request</label>
+                <textarea
+                  required
+                  rows={3}
+                  minLength={5}
+                  maxLength={500}
+                  placeholder="Please describe why you are requesting a refund..."
+                  value={refundReason}
+                  onChange={(e) => setRefundReason(e.target.value)}
+                  className="w-full p-3 text-xs rounded-xl border border-slate-200 text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-notari-primary"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setRefundModalTicket(null)}
+                  className="rounded-xl h-10 text-xs font-semibold"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isSubmittingRefund || refundReason.trim().length < 5}
+                  className="rounded-xl h-10 text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white"
+                >
+                  {isSubmittingRefund ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <span>Submit Refund Request</span>
+                  )}
+                </Button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { NotariLogo } from "@/components/shared/notari-logo";
 import { AdminBottomNav } from "@/components/admin/admin-bottom-nav";
+import { HeaderNotificationBell } from "@/components/shared/header/HeaderNotificationBell";
+import { HeaderProfileAvatar } from "@/components/shared/header/HeaderProfileAvatar";
 import { MOCK_PENDING_APPROVALS } from "@/lib/mock-data";
 import {
   LayoutDashboard,
@@ -20,7 +22,6 @@ import {
   BarChart2,
   Settings,
   LogOut,
-  Bell,
   Search,
   Sun,
   Moon,
@@ -163,17 +164,8 @@ export default function AdminLayout({
 
           {/* Top Right Utilities */}
           <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-            {/* Notification Bell with Dynamic Pending Approvals Badge */}
-            <Link href="/admin/approvals">
-              <button className="relative p-2 sm:p-2.5 rounded-xl text-slate-500 hover:bg-slate-100 transition-colors cursor-pointer" aria-label="Approvals notifications">
-                <Bell className="w-5 h-5" />
-                {pendingApprovalsCount > 0 && (
-                  <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white shadow-xs">
-                    {pendingApprovalsCount}
-                  </span>
-                )}
-              </button>
-            </Link>
+            {/* Interactive Notification Bell */}
+            <HeaderNotificationBell variant="admin" />
 
             {/* Dark / Light Toggle (Hidden on compact mobile screens to prevent overflow) */}
             <button className="hidden sm:inline-flex p-2 rounded-xl text-slate-500 hover:bg-slate-100 transition-colors" aria-label="Toggle theme">
@@ -185,11 +177,19 @@ export default function AdminLayout({
 
             <div className="hidden sm:block h-5 w-px bg-slate-200" />
 
-            {/* Admin Avatar */}
+            {/* Admin Avatar & Account Menu */}
             <div className="flex items-center gap-2.5 sm:gap-3">
-              <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs ring-2 ring-blue-500/20">
-                {adminInitials}
-              </div>
+              <HeaderProfileAvatar
+                user={{
+                  id: session?.user?.id,
+                  name: adminName,
+                  email: session?.user?.email,
+                  role: "admin",
+                  isOrganizer: true,
+                  image: session?.user?.image,
+                }}
+                variant="admin"
+              />
               <div className="hidden sm:flex flex-col text-left">
                 <span className="text-xs font-bold text-notari-dark">{adminName}</span>
                 <span className="text-[10px] text-slate-400">Super Administrator</span>

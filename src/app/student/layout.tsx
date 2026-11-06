@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { NotariLogo } from "@/components/shared/notari-logo";
 import { StudentBottomNav } from "@/components/student/student-bottom-nav";
+import { HeaderNotificationBell } from "@/components/shared/header/HeaderNotificationBell";
+import { HeaderProfileAvatar } from "@/components/shared/header/HeaderProfileAvatar";
 import {
   LayoutDashboard,
   Calendar,
@@ -14,7 +16,6 @@ import {
   Bookmark,
   Settings,
   LogOut,
-  Bell,
   Search,
   Sparkles,
 } from "lucide-react";
@@ -172,13 +173,18 @@ export default function StudentLayout({
             <Link href="/events" className="hidden sm:inline-block text-xs font-semibold text-slate-600 hover:text-notari-primary hover:underline">
               Discover Events
             </Link>
-            <button className="relative p-2 rounded-xl text-slate-500 hover:bg-slate-100 transition-colors cursor-pointer" aria-label="Notifications">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-indigo-600" />
-            </button>
-            <div className="w-8 h-8 rounded-full bg-indigo-100 text-notari-primary flex items-center justify-center font-bold text-xs ring-1 ring-indigo-200">
-              {studentInitials}
-            </div>
+            <HeaderNotificationBell variant="student" />
+            <HeaderProfileAvatar
+              user={{
+                id: session?.user?.id,
+                name: studentName,
+                email: session?.user?.email,
+                role: "student",
+                isOrganizer: Boolean(session?.user?.isOrganizer),
+                image: session?.user?.image,
+              }}
+              variant="student"
+            />
           </div>
         </header>
 

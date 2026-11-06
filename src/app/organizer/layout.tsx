@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { NotariLogo } from "@/components/shared/notari-logo";
 import { OrganizerBottomNav } from "@/components/organizer/organizer-bottom-nav";
+import { HeaderNotificationBell } from "@/components/shared/header/HeaderNotificationBell";
+import { HeaderProfileAvatar } from "@/components/shared/header/HeaderProfileAvatar";
 import {
   LayoutDashboard,
   Calendar,
@@ -17,7 +19,6 @@ import {
   BarChart3,
   Building,
   LogOut,
-  Bell,
   Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -133,13 +134,18 @@ export default function OrganizerLayout({
                 <span>New Event</span>
               </button>
             </Link>
-            <button className="relative p-2 rounded-xl text-slate-500 hover:bg-slate-100 transition-colors cursor-pointer" aria-label="Notifications">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-purple-600" />
-            </button>
-            <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-xs ring-1 ring-purple-200">
-              {orgInitials}
-            </div>
+            <HeaderNotificationBell variant="organizer" />
+            <HeaderProfileAvatar
+              user={{
+                id: session?.user?.id,
+                name: orgName,
+                email: session?.user?.email,
+                role: "organizer",
+                isOrganizer: true,
+                image: session?.user?.image,
+              }}
+              variant="organizer"
+            />
           </div>
         </header>
 

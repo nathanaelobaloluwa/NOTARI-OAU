@@ -19,6 +19,7 @@
     "test:e2e:organizer-events": "tsx src/scripts/test-e2e-organizer-events.ts",
     "test:e2e:payments": "tsx src/scripts/test-e2e-payments.ts",
     "test:e2e:financial": "tsx src/scripts/test-e2e-financial.ts",
+    "test:e2e:check-in": "tsx src/scripts/test-e2e-check-in.ts",
     "test:audit:concurrency": "tsx src/scripts/test-concurrency-audit.ts"
   },
   "dependencies": {

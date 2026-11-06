@@ -137,24 +137,7 @@ export async function verifyAndCheckInTicket(
 
   const normalizedCode = ticketCode.trim().toUpperCase();
 
-  // 2. Validate cryptographic signature if provided
-  if (signature) {
-    const isSigValid = TicketSecurityService.verifyTicketSignature(
-      normalizedCode,
-      eventId,
-      signature
-    );
-    if (!isSigValid) {
-      return {
-        success: false,
-        code: "INVALID_SIGNATURE",
-        status: 400,
-        message: "Cryptographic ticket signature verification failed. Counterfeit pass detected.",
-      };
-    }
-  }
-
-  // 3. Find ticket in MongoDB
+  // 2. Find ticket in MongoDB
   const ticket = await Ticket.findOne({ ticketCode: normalizedCode });
   if (!ticket) {
     return {
@@ -165,7 +148,7 @@ export async function verifyAndCheckInTicket(
     };
   }
 
-  // 4. Confirm ticket belongs to this exact event
+  // 3. Confirm ticket belongs to this exact event
   if (ticket.eventId.toString() !== eventId) {
     return {
       success: false,
@@ -182,6 +165,23 @@ export async function verifyAndCheckInTicket(
         isCheckedIn: ticket.isCheckedIn,
       },
     };
+  }
+
+  // 4. Validate cryptographic signature if provided
+  if (signature) {
+    const isSigValid = TicketSecurityService.verifyTicketSignature(
+      normalizedCode,
+      eventId,
+      signature
+    );
+    if (!isSigValid) {
+      return {
+        success: false,
+        code: "INVALID_SIGNATURE",
+        status: 400,
+        message: "Cryptographic ticket signature verification failed. Counterfeit pass detected.",
+      };
+    }
   }
 
   // 5. Check if ticket has been voided or refunded

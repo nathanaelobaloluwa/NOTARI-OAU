@@ -13,6 +13,9 @@ export interface ITicket {
   isCheckedIn: boolean;
   checkedInAt?: string;
   checkedInBy?: string;
+  isInvalidated?: boolean;
+  invalidatedAt?: string;
+  invalidatedReason?: string;
   createdAt: string;
 }
 

@@ -14,6 +14,9 @@ export interface ITicketDocument extends Document {
   isCheckedIn: boolean;
   checkedInAt?: Date;
   checkedInBy?: mongoose.Types.ObjectId;
+  isInvalidated?: boolean;
+  invalidatedAt?: Date;
+  invalidatedReason?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -33,6 +36,9 @@ const TicketSchema = new Schema<ITicketDocument>(
     isCheckedIn: { type: Boolean, default: false, index: true },
     checkedInAt: { type: Date },
     checkedInBy: { type: Schema.Types.ObjectId, ref: "User" },
+    isInvalidated: { type: Boolean, default: false, index: true },
+    invalidatedAt: { type: Date },
+    invalidatedReason: { type: String },
   },
   {
     timestamps: true,

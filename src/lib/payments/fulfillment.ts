@@ -108,8 +108,12 @@ export async function fulfillVerifiedPayment({
     };
   }
 
-  // Late Payment Handling: If reservation expired while student was paying
-  if (payment.paymentStatus === PAYMENT_STATUS.ABANDONED) {
+  // Late Payment Handling: If reservation expired or was released while student was paying
+  if (
+    payment.paymentStatus === PAYMENT_STATUS.ABANDONED ||
+    payment.paymentStatus === PAYMENT_STATUS.EXPIRED ||
+    payment.paymentStatus === PAYMENT_STATUS.FAILED
+  ) {
     console.warn(`⚠️ Late payment received for expired reservation: ${reference}. Checking available capacity...`);
     const reReserve = await reservePaidTickets(payment.eventId, payment.ticketTierId, payment.quantity);
 

@@ -6,6 +6,7 @@ export type PaymentStatus =
   | "successful"
   | "failed"
   | "abandoned"
+  | "expired"
   | "refunded"
   | "reconciliation_needed";
 
@@ -15,6 +16,7 @@ export const PAYMENT_STATUS = {
   SUCCESSFUL: "successful",
   FAILED: "failed",
   ABANDONED: "abandoned",
+  EXPIRED: "expired",
   REFUNDED: "refunded",
   RECONCILIATION_NEEDED: "reconciliation_needed",
 } as const;

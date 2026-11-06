@@ -22,8 +22,12 @@ export async function reservePaidTickets(
     {
       _id: eventObjectId,
       status: EVENT_STATUS.PUBLISHED,
-      "ticketTiers._id": tierObjectId,
-      "ticketTiers.available": { $gte: quantity },
+      ticketTiers: {
+        $elemMatch: {
+          _id: tierObjectId,
+          available: { $gte: quantity },
+        },
+      },
     },
     {
       $inc: {
@@ -68,18 +72,26 @@ export async function releasePaymentReservation(
   }
 
   // Restore inventory capacity atomically
-  await Event.findOneAndUpdate(
+  const eventId = new mongoose.Types.ObjectId(payment.eventId.toString());
+  const tierId = new mongoose.Types.ObjectId(payment.ticketTierId.toString());
+
+  const updatedDoc = await Event.findOneAndUpdate(
     {
-      _id: payment.eventId,
-      "ticketTiers._id": payment.ticketTierId,
+      _id: eventId,
+      "ticketTiers._id": tierId,
     },
     {
       $inc: {
         registeredCount: -payment.quantity,
         "ticketTiers.$.available": payment.quantity,
       },
-    }
+    },
+    { new: true }
   );
+
+  if (!updatedDoc) {
+    console.error(`❌ [RESERVATION] Failed to match Event ${eventId} and ticketTier ${tierId} for inventory restore!`);
+  }
 
   // Update Payment & Booking status
   payment.paymentStatus = newStatus;
@@ -106,10 +118,13 @@ export async function releasePaymentReservation(
  * Sweeps and releases all expired ticket reservations across the platform.
  * Ensures abandoned checkouts do not lock seats indefinitely.
  */
-export async function releaseExpiredReservations(): Promise<{ releasedCount: number }> {
+export async function releaseExpiredReservations(): Promise<{
+  success: boolean;
+  releasedCount: number;
+}> {
   const now = new Date();
   const expiredPayments = await Payment.find({
-    paymentStatus: PAYMENT_STATUS.PENDING,
+    paymentStatus: { $in: [PAYMENT_STATUS.PENDING, PAYMENT_STATUS.PROCESSING] },
     reservedUntil: { $lt: now },
   }).limit(50);
 
@@ -117,7 +132,7 @@ export async function releaseExpiredReservations(): Promise<{ releasedCount: num
   for (const payment of expiredPayments) {
     const result = await releasePaymentReservation(
       payment.paymentReference,
-      PAYMENT_STATUS.ABANDONED,
+      PAYMENT_STATUS.EXPIRED,
       "Reservation expired past 15-minute window"
     );
     if (result.released) {
@@ -125,6 +140,6 @@ export async function releaseExpiredReservations(): Promise<{ releasedCount: num
     }
   }
 
-  return { releasedCount };
+  return { success: true, releasedCount };
 }
 

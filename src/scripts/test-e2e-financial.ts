@@ -1,6 +1,5 @@
 import fs from "fs";
 import path from "path";
-import crypto from "crypto";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import { User } from "../models/User";
@@ -14,7 +13,7 @@ import { PayoutRequest, PAYOUT_REQUEST_STATUS } from "../models/PayoutRequest";
 import { RefundRequest, REFUND_REQUEST_STATUS } from "../models/RefundRequest";
 import { FinancialLedger, FINANCIAL_ENTRY_TYPES } from "../models/FinancialLedger";
 import { USER_ROLES, ORGANIZER_STATUS } from "../constants/roles";
-import { EVENT_STATUS, EVENT_CATEGORIES } from "../constants/oau";
+import { EVENT_STATUS } from "../constants/oau";
 import { PaystackService } from "../lib/payments/paystack";
 import { getOrganizerFinancialSummary } from "../lib/financial/balance";
 import {
@@ -24,7 +23,10 @@ import {
   reviewPayoutRequest,
 } from "../lib/financial/payout";
 import { requestStudentRefund, reviewRefundRequest } from "../lib/financial/refund";
-import { recordLedgerEntry, getPlatformReconciliationIssues } from "../lib/financial/ledger";
+import {
+  getPlatformReconciliationIssues,
+  syncHistoricalPaymentsToLedger,
+} from "../lib/financial/ledger";
 import { fulfillVerifiedPayment } from "../lib/payments/fulfillment";
 
 function loadLocalEnv() {
@@ -328,13 +330,14 @@ async function runFinancialE2E() {
       title: "Great Ife Annual Software Summit",
       slug: `great-ife-software-summit-${runId}`,
       description: "Annual university software development festival",
-      category: EVENT_CATEGORIES.ACADEMIC,
+      category: "Tech & Innovation",
       status: EVENT_STATUS.PUBLISHED,
       organizerId: orgUser._id,
-      venue: "Oduduwa Hall, OAU",
+      organizerName: orgUser.name,
+      venue: "Oduduwa Hall",
       startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days in future
       endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 4 * 60 * 60 * 1000),
-      capacity: 500,
+      totalCapacity: 500,
       registeredCount: 0,
       isFree: false,
       ticketTiers: [
@@ -585,6 +588,7 @@ async function runFinancialE2E() {
     console.log("--------------------------------------------------------------------------------");
 
     // Run platform reconciliation audit
+    await syncHistoricalPaymentsToLedger();
     const reconciliation = await getPlatformReconciliationIssues();
     assert(typeof reconciliation.totalDiscrepanciesCount === "number", "Reconciliation check completes successfully");
     assert(reconciliation.totalDiscrepanciesCount === 0, "Zero reconciliation discrepancies detected across valid transactions");

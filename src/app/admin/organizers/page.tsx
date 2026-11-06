@@ -13,6 +13,8 @@ export const metadata: Metadata = {
   description: "Accredited student associations, departmental committees, and campus event hosts.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminOrganizersPage() {
   await connectToDatabase();
 

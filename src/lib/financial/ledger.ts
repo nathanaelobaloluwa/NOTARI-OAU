@@ -1,5 +1,9 @@
 import mongoose from "mongoose";
-import { FinancialLedger, FinancialLedgerEntryType } from "@/models/FinancialLedger";
+import {
+  FinancialLedger,
+  FinancialLedgerEntryType,
+  FINANCIAL_ENTRY_TYPES,
+} from "@/models/FinancialLedger";
 import { Payment, PAYMENT_STATUS } from "@/models/Payment";
 import { PayoutRequest, PAYOUT_REQUEST_STATUS } from "@/models/PayoutRequest";
 import { RefundRequest, REFUND_REQUEST_STATUS } from "@/models/RefundRequest";
@@ -45,6 +49,36 @@ export async function recordLedgerEntry(params: RecordLedgerParams) {
   });
 
   return entry;
+}
+
+/**
+ * Synchronizes any historical successful payments to the append-only ledger
+ */
+export async function syncHistoricalPaymentsToLedger(): Promise<number> {
+  const successfulPayments = await Payment.find({
+    paymentStatus: PAYMENT_STATUS.SUCCESSFUL,
+  });
+
+  let syncedCount = 0;
+  for (const pay of successfulPayments) {
+    const exists = await FinancialLedger.exists({ reference: pay.paymentReference });
+    if (!exists) {
+      await recordLedgerEntry({
+        entryType: FINANCIAL_ENTRY_TYPES.TICKET_PAYMENT,
+        direction: "credit",
+        amountInKobo: pay.amountInKobo,
+        organizerId: pay.organizerId,
+        eventId: pay.eventId,
+        userId: pay.userId,
+        paymentId: pay._id,
+        reference: pay.paymentReference,
+        description: `Backfilled ticket payment record for ${pay.tierName}`,
+      });
+      syncedCount++;
+    }
+  }
+
+  return syncedCount;
 }
 
 export interface ReconciliationDiscrepancy {

@@ -11,3 +11,4 @@ export * from "./PayoutAccount";
 export * from "./PayoutRequest";
 export * from "./RefundRequest";
 export * from "./FinancialLedger";
+export * from "./Notification";

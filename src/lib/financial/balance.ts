@@ -29,11 +29,12 @@ export interface OrganizerFinancialSummary {
  * Never uses floating-point calculation for balances to eliminate rounding drift.
  */
 export async function getOrganizerFinancialSummary(
-  organizerId: string | mongoose.Types.ObjectId,
+  organizerId: string | mongoose.Types.ObjectId | (string | mongoose.Types.ObjectId)[],
   options?: { platformFeeRate?: number }
 ): Promise<OrganizerFinancialSummary> {
-  const orgObjectId =
-    typeof organizerId === "string" ? new mongoose.Types.ObjectId(organizerId) : organizerId;
+  const orgObjectIds: mongoose.Types.ObjectId[] = Array.isArray(organizerId)
+    ? organizerId.map((id) => (typeof id === "string" ? new mongoose.Types.ObjectId(id) : id))
+    : [typeof organizerId === "string" ? new mongoose.Types.ObjectId(organizerId) : organizerId];
 
   // 1. Platform Commission Policy (Default 0% per OAU university policy)
   const platformFeeRate = options?.platformFeeRate ?? 0;
@@ -46,7 +47,7 @@ export async function getOrganizerFinancialSummary(
   }>([
     {
       $match: {
-        organizerId: orgObjectId,
+        organizerId: { $in: orgObjectIds },
         paymentStatus: PAYMENT_STATUS.SUCCESSFUL,
       },
     },
@@ -66,7 +67,7 @@ export async function getOrganizerFinancialSummary(
 
   // 3. Count pending payments awaiting completion
   const pendingOrdersCount = await Payment.countDocuments({
-    organizerId: orgObjectId,
+    organizerId: { $in: orgObjectIds },
     paymentStatus: { $in: [PAYMENT_STATUS.PENDING, PAYMENT_STATUS.PROCESSING] },
   });
 
@@ -79,7 +80,7 @@ export async function getOrganizerFinancialSummary(
   }>([
     {
       $match: {
-        organizerId: orgObjectId,
+        organizerId: { $in: orgObjectIds },
         status: {
           $in: [
             REFUND_REQUEST_STATUS.APPROVED,
@@ -108,7 +109,7 @@ export async function getOrganizerFinancialSummary(
   }>([
     {
       $match: {
-        organizerId: orgObjectId,
+        organizerId: { $in: orgObjectIds },
         status: {
           $in: [
             PAYOUT_REQUEST_STATUS.PENDING,
@@ -135,7 +136,7 @@ export async function getOrganizerFinancialSummary(
   }>([
     {
       $match: {
-        organizerId: orgObjectId,
+        organizerId: { $in: orgObjectIds },
         status: PAYOUT_REQUEST_STATUS.SUCCESSFUL,
       },
     },

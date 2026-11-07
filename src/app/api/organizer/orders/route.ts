@@ -30,10 +30,13 @@ export async function GET(req: NextRequest) {
     const status = searchParams.get("status") || "all";
     const skip = (page - 1) * limit;
 
-    const organizerId = organizerProfile._id;
+    const organizerIds = [
+      new mongoose.Types.ObjectId(authResult.id),
+      organizerProfile._id,
+    ].filter(Boolean);
 
     // Filter payments for this organizer
-    const filter: Record<string, unknown> = { organizerId };
+    const filter: Record<string, unknown> = { organizerId: { $in: organizerIds } };
     if (status !== "all" && Object.values(PAYMENT_STATUS).includes(status as typeof PAYMENT_STATUS[keyof typeof PAYMENT_STATUS])) {
       filter.paymentStatus = status;
     }
@@ -46,7 +49,7 @@ export async function GET(req: NextRequest) {
         .lean(),
       Payment.countDocuments(filter),
       Payment.aggregate([
-        { $match: { organizerId } },
+        { $match: { organizerId: { $in: organizerIds } } },
         {
           $group: {
             _id: null,

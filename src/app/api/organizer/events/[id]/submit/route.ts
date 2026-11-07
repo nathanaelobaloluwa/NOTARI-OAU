@@ -4,6 +4,7 @@ import { requireApprovedOrganizer } from "@/lib/auth/rbac";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { Event } from "@/models/Event";
 import { EVENT_STATUS } from "@/constants/oau";
+import { notificationService } from "@/services/notification.service";
 
 /**
  * POST /api/organizer/events/[id]/submit
@@ -70,6 +71,19 @@ export async function POST(
     event.rejectionReason = undefined;
 
     await event.save();
+
+    // Notify organizer of event submission
+    try {
+      await notificationService.notifyEventSubmitted({
+        organizerId: event.organizerId,
+        organizerEmail: userWithProfile.email,
+        organizerName: userWithProfile.name || "Organizer",
+        eventTitle: event.title,
+        eventId: event._id.toString(),
+      });
+    } catch (notifErr) {
+      console.error("⚠️ Failed to notify organizer of event submission:", notifErr);
+    }
 
     return NextResponse.json(
       {

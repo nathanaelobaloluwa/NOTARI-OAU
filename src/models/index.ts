@@ -12,3 +12,4 @@ export * from "./PayoutRequest";
 export * from "./RefundRequest";
 export * from "./FinancialLedger";
 export * from "./Notification";
+export * from "./EmailDelivery";

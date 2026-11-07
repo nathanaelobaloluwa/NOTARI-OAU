@@ -2,11 +2,13 @@ import { connectToDatabase } from "@/lib/database/mongoose";
 import { Payment, PAYMENT_STATUS } from "@/models/Payment";
 import { Booking } from "@/models/Booking";
 import { Ticket } from "@/models/Ticket";
+import { Event } from "@/models/Event";
 import { TicketSecurityService } from "@/lib/tickets/qr";
 import { PaystackVerifyResponse } from "@/lib/payments/paystack";
 import { reservePaidTickets, releasePaymentReservation } from "@/lib/payments/reservation";
 import { recordLedgerEntry } from "@/lib/financial/ledger";
 import { FINANCIAL_ENTRY_TYPES } from "@/models/FinancialLedger";
+import { notificationService } from "@/services/notification.service";
 
 export interface FulfillVerifiedPaymentParams {
   reference: string;
@@ -204,6 +206,32 @@ export async function fulfillVerifiedPayment({
     });
   } catch (ledgerErr) {
     console.error("⚠️ Failed to record financial ledger entry for payment:", ledgerErr);
+  }
+
+  // Asynchronously dispatch paid ticket receipt email & in-app notification
+  try {
+    const event = await Event.findById(payment.eventId).select("title venue startDate").lean();
+    await notificationService.notifyPaidTicketReceipt({
+      userId: payment.userId,
+      studentName: payment.customerName,
+      studentEmail: payment.customerEmail,
+      eventTitle: event?.title || "OAU Campus Event",
+      eventVenue: event?.venue || "Campus Venue",
+      eventDate: event?.startDate || new Date(),
+      bookingReference: booking?.bookingReference || payment.paymentReference,
+      paymentReference: payment.paymentReference,
+      tierName: payment.tierName,
+      quantity: payment.quantity,
+      amountInKobo: payment.amountInKobo,
+      paidAt: payment.paidAt || new Date(),
+      ticketCodes: createdTickets.map((t) => t.ticketCode),
+      tickets: createdTickets.map((t) => ({
+        code: t.ticketCode,
+        qrCodeUrl: t.qrCodeUrl,
+      })),
+    });
+  } catch (notifErr) {
+    console.error("⚠️ Failed to dispatch paid ticket receipt notification:", notifErr);
   }
 
   return {

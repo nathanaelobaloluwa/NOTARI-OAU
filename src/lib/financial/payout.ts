@@ -3,11 +3,13 @@ import mongoose from "mongoose";
 import { PayoutAccount, PAYOUT_ACCOUNT_STATUS, maskAccountNumber } from "@/models/PayoutAccount";
 import { PayoutRequest, PAYOUT_REQUEST_STATUS } from "@/models/PayoutRequest";
 import { OrganizerProfile } from "@/models/OrganizerProfile";
+import { User } from "@/models/User";
 import { ORGANIZER_STATUS } from "@/constants/roles";
 import { PaystackService } from "@/lib/payments/paystack";
 import { getOrganizerFinancialSummary } from "@/lib/financial/balance";
 import { recordLedgerEntry } from "@/lib/financial/ledger";
 import { FINANCIAL_ENTRY_TYPES } from "@/models/FinancialLedger";
+import { notificationService } from "@/services/notification.service";
 import {
   SubmitPayoutAccountInput,
   ReviewPayoutAccountInput,
@@ -203,7 +205,48 @@ export async function requestOrganizerPayout(
     description: `Payout reservation requested for ₦${amountInNaira.toLocaleString()} to ${account.bankName} (${account.accountNumberMasked})`,
   });
 
+  // Notify organizer of registered payout request
+  try {
+    const orgUser = await User.findById(orgObjectId).select("name email").lean();
+    if (orgUser?.email) {
+      await notificationService.notifyPayoutStatus({
+        organizerId: orgObjectId,
+        recipientEmail: orgUser.email,
+        organizerName: orgUser.name || "Organizer",
+        reference: payoutReference,
+        amountInNaira,
+        status: "pending",
+        bankName: account.bankName,
+        accountMasked: account.accountNumberMasked,
+      });
+    }
+  } catch (notifErr) {
+    console.error("⚠️ Failed to dispatch payout requested notification:", notifErr);
+  }
+
   return payoutRequest;
+}
+
+async function dispatchPayoutStatusNotification(payout: InstanceType<typeof PayoutRequest>) {
+  try {
+    const orgUser = await User.findById(payout.organizerId).select("name email").lean();
+    const account = await PayoutAccount.findById(payout.payoutAccountId).select("bankName accountNumberMasked").lean();
+    if (orgUser?.email) {
+      await notificationService.notifyPayoutStatus({
+        organizerId: payout.organizerId,
+        recipientEmail: orgUser.email,
+        organizerName: orgUser.name || "Organizer",
+        reference: payout.payoutReference,
+        amountInNaira: payout.amount,
+        status: payout.status,
+        reason: payout.failureReason,
+        bankName: account?.bankName,
+        accountMasked: account?.accountNumberMasked,
+      });
+    }
+  } catch (notifErr) {
+    console.error("⚠️ Failed to notify organizer of payout status:", notifErr);
+  }
 }
 
 /**
@@ -247,12 +290,14 @@ export async function reviewPayoutRequest(
       description: `Reversal of rejected payout request ${payout.payoutReference} (Funds restored to available balance)`,
     });
 
+    await dispatchPayoutStatusNotification(payout);
     return payout;
   }
 
   if (input.action === "approve") {
     payout.status = PAYOUT_REQUEST_STATUS.APPROVED;
     await payout.save();
+    await dispatchPayoutStatusNotification(payout);
     return payout;
   }
 
@@ -311,6 +356,7 @@ export async function reviewPayoutRequest(
         await payout.save();
       }
 
+      await dispatchPayoutStatusNotification(payout);
       return payout;
     } catch (transferErr: unknown) {
       const errorMsg = transferErr instanceof Error ? transferErr.message : String(transferErr);
@@ -328,6 +374,7 @@ export async function reviewPayoutRequest(
         description: `Reversal of failed transfer initiation: ${errorMsg}`,
       });
 
+      await dispatchPayoutStatusNotification(payout);
       return payout;
     }
   }
@@ -347,6 +394,7 @@ export async function reviewPayoutRequest(
       description: `Disbursement confirmed successful by administrator`,
     });
 
+    await dispatchPayoutStatusNotification(payout);
     return payout;
   }
 
@@ -365,8 +413,10 @@ export async function reviewPayoutRequest(
       description: `Reversal of failed payout ${payout.payoutReference} (Funds restored)`,
     });
 
+    await dispatchPayoutStatusNotification(payout);
     return payout;
   }
 
+  await dispatchPayoutStatusNotification(payout);
   return payout;
 }

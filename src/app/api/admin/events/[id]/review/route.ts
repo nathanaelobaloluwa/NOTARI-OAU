@@ -3,8 +3,10 @@ import mongoose from "mongoose";
 import { requireAdmin } from "@/lib/auth/rbac";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { Event } from "@/models/Event";
+import { User } from "@/models/User";
 import { adminEventReviewSchema } from "@/validators/event";
 import { EVENT_STATUS } from "@/constants/oau";
+import { notificationService } from "@/services/notification.service";
 
 /**
  * POST /api/admin/events/[id]/review
@@ -53,6 +55,24 @@ export async function POST(
 
       await event.save();
 
+      // Notify organizer of event publication
+      try {
+        const organizer = await User.findById(event.organizerId).select("name email").lean();
+        if (organizer?.email) {
+          await notificationService.notifyEventApproved({
+            organizerId: event.organizerId,
+            organizerEmail: organizer.email,
+            organizerName: organizer.name || "Organizer",
+            eventTitle: event.title,
+            eventId: event._id.toString(),
+            eventSlug: event.slug,
+            reviewerName: admin.name || "Superadmin",
+          });
+        }
+      } catch (notifErr) {
+        console.error("⚠️ Failed to notify organizer of event approval:", notifErr);
+      }
+
       return NextResponse.json(
         {
           success: true,
@@ -68,6 +88,24 @@ export async function POST(
       event.rejectionReason = reason;
 
       await event.save();
+
+      // Notify organizer of event revision feedback
+      try {
+        const organizer = await User.findById(event.organizerId).select("name email").lean();
+        if (organizer?.email) {
+          await notificationService.notifyEventRejected({
+            organizerId: event.organizerId,
+            organizerEmail: organizer.email,
+            organizerName: organizer.name || "Organizer",
+            eventTitle: event.title,
+            eventId: event._id.toString(),
+            reason: reason || "Please review event details and guidelines.",
+            reviewerName: admin.name || "Superadmin",
+          });
+        }
+      } catch (notifErr) {
+        console.error("⚠️ Failed to notify organizer of event rejection:", notifErr);
+      }
 
       return NextResponse.json(
         {

@@ -5,6 +5,7 @@ import { USER_ROLES } from "@/constants/roles";
 import { EVENT_STATUS } from "@/constants/oau";
 import { generateBookingReference } from "@/validators/booking";
 import { TicketSecurityService } from "@/lib/tickets/qr";
+import { notificationService } from "@/services/notification.service";
 
 export interface ProcessFreeRegistrationParams {
   studentId: string;
@@ -363,6 +364,28 @@ export async function processFreeRegistration({
 
   if (!bookingDoc) {
     throw new Error("Booking could not be finalized");
+  }
+
+  // Asynchronously dispatch free ticket email & in-app notification (isolated from core registration)
+  try {
+    await notificationService.notifyFreeTicketIssued({
+      userId: student._id,
+      studentName: student.name,
+      studentEmail: student.email,
+      eventTitle: event.title,
+      eventVenue: event.venue,
+      eventDate: event.startDate,
+      bookingReference: (bookingDoc as IBookingDocument).bookingReference,
+      tierName: tier.name,
+      quantity,
+      ticketCodes: createdTickets.map((t) => t.ticketCode),
+      tickets: createdTickets.map((t) => ({
+        code: t.ticketCode,
+        qrCodeUrl: t.qrCodeUrl,
+      })),
+    });
+  } catch (notifErr) {
+    console.error("⚠️ Failed to dispatch free ticket notification:", notifErr);
   }
 
   return {

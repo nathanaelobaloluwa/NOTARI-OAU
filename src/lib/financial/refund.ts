@@ -4,11 +4,13 @@ import { Booking } from "@/models/Booking";
 import { Payment, PAYMENT_STATUS } from "@/models/Payment";
 import { Ticket } from "@/models/Ticket";
 import { Event } from "@/models/Event";
+import { User } from "@/models/User";
 import { RefundRequest, REFUND_REQUEST_STATUS } from "@/models/RefundRequest";
 import { PaystackService } from "@/lib/payments/paystack";
 import { recordLedgerEntry } from "@/lib/financial/ledger";
 import { FINANCIAL_ENTRY_TYPES } from "@/models/FinancialLedger";
 import { CreateRefundRequestInput, ReviewRefundRequestInput } from "@/validators/financial";
+import { notificationService } from "@/services/notification.service";
 
 /**
  * Student requests a refund on an eligible paid booking
@@ -92,7 +94,49 @@ export async function requestStudentRefund(
     ticketsInvalidated: false,
   });
 
+  // Notify student of registered refund request
+  try {
+    const studentUser = await User.findById(studentObjectId).select("name email").lean();
+    if (studentUser?.email) {
+      await notificationService.notifyRefundStatus({
+        studentId: studentObjectId,
+        recipientEmail: studentUser.email,
+        studentName: studentUser.name || "Student",
+        reference: refundReference,
+        bookingReference: booking.bookingReference,
+        eventTitle: event.title,
+        amountInNaira: payment.amount,
+        status: "pending",
+      });
+    }
+  } catch (notifErr) {
+    console.error("⚠️ Failed to notify student of refund request:", notifErr);
+  }
+
   return refundRequest;
+}
+
+async function dispatchRefundStatusNotification(refund: InstanceType<typeof RefundRequest>) {
+  try {
+    const studentUser = await User.findById(refund.userId).select("name email").lean();
+    const event = await Event.findById(refund.eventId).select("title").lean();
+    const booking = await Booking.findById(refund.bookingId).select("bookingReference").lean();
+    if (studentUser?.email) {
+      await notificationService.notifyRefundStatus({
+        studentId: refund.userId,
+        recipientEmail: studentUser.email,
+        studentName: studentUser.name || "Student",
+        reference: refund.refundReference,
+        bookingReference: booking?.bookingReference,
+        eventTitle: event?.title,
+        amountInNaira: refund.amount,
+        status: refund.status as "pending" | "approved" | "processing" | "successful" | "rejected",
+        reason: refund.rejectionReason,
+      });
+    }
+  } catch (notifErr) {
+    console.error("⚠️ Failed to notify student of refund status:", notifErr);
+  }
 }
 
 /**
@@ -126,6 +170,7 @@ export async function reviewRefundRequest(
     refund.status = REFUND_REQUEST_STATUS.REJECTED;
     refund.rejectionReason = input.reason || "Refund declined by administrator";
     await refund.save();
+    await dispatchRefundStatusNotification(refund);
     return refund;
   }
 
@@ -191,6 +236,7 @@ export async function reviewRefundRequest(
       description: `Refund processed for booking ${refund.bookingId} (₦${refund.amount.toLocaleString()})`,
     });
 
+    await dispatchRefundStatusNotification(refund);
     return refund;
   }
 

@@ -30,7 +30,11 @@ export async function GET(
     }
 
     // Ownership check: must be the event owner or admin
-    if (user.role !== "admin" && event.organizerId.toString() !== user.id) {
+    const isOwner =
+      event.organizerId.toString() === user.id ||
+      Boolean(user.organizerProfile && event.organizerId.toString() === user.organizerProfile._id.toString());
+
+    if (user.role !== "admin" && !isOwner) {
       return NextResponse.json(
         { success: false, message: "Forbidden: You do not have permission to view this event." },
         { status: 403 }
@@ -90,7 +94,11 @@ export async function PUT(
     }
 
     // Ownership check
-    if (userWithProfile.role !== "admin" && event.organizerId.toString() !== userWithProfile.id) {
+    const isOwner =
+      event.organizerId.toString() === userWithProfile.id ||
+      Boolean(userWithProfile.organizerProfile && event.organizerId.toString() === userWithProfile.organizerProfile._id.toString());
+
+    if (userWithProfile.role !== "admin" && !isOwner) {
       return NextResponse.json(
         { success: false, message: "Forbidden: You cannot modify events owned by another organizer." },
         { status: 403 }
@@ -229,7 +237,11 @@ export async function DELETE(
       return NextResponse.json({ success: false, message: "Event not found." }, { status: 404 });
     }
 
-    if (user.role !== "admin" && event.organizerId.toString() !== user.id) {
+    const isOwner =
+      event.organizerId.toString() === user.id ||
+      Boolean(user.organizerProfile && event.organizerId.toString() === user.organizerProfile._id.toString());
+
+    if (user.role !== "admin" && !isOwner) {
       return NextResponse.json(
         { success: false, message: "Forbidden: You do not own this event." },
         { status: 403 }

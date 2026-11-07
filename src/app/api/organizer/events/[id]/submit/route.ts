@@ -30,7 +30,11 @@ export async function POST(
     }
 
     // Ownership check
-    if (userWithProfile.role !== "admin" && event.organizerId.toString() !== userWithProfile.id) {
+    const isOwner =
+      event.organizerId.toString() === userWithProfile.id ||
+      Boolean(userWithProfile.organizerProfile && event.organizerId.toString() === userWithProfile.organizerProfile._id.toString());
+
+    if (userWithProfile.role !== "admin" && !isOwner) {
       return NextResponse.json(
         { success: false, message: "Forbidden: You cannot submit events owned by another organizer." },
         { status: 403 }

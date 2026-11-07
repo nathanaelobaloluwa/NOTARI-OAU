@@ -29,7 +29,11 @@ export async function POST(
     }
 
     // Ownership check
-    if (user.role !== "admin" && event.organizerId.toString() !== user.id) {
+    const isOwner =
+      event.organizerId.toString() === user.id ||
+      Boolean(user.organizerProfile && event.organizerId.toString() === user.organizerProfile._id.toString());
+
+    if (user.role !== "admin" && !isOwner) {
       return NextResponse.json(
         { success: false, message: "Forbidden: You cannot cancel events owned by another organizer." },
         { status: 403 }

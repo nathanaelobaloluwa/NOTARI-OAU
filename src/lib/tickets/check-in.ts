@@ -3,6 +3,7 @@ import { connectToDatabase } from "@/lib/database/mongoose";
 import { Ticket, ITicketDocument } from "@/models/Ticket";
 import { Event } from "@/models/Event";
 import { User } from "@/models/User";
+import { OrganizerProfile } from "@/models/OrganizerProfile";
 import { TicketSecurityService } from "@/lib/tickets/qr";
 import { CheckInAttendeeQueryInput } from "@/validators/check-in";
 
@@ -96,6 +97,12 @@ async function verifyOperatorEventAuthorization(
   // Event owner organizer
   const isOwner = event.organizerId && event.organizerId.toString() === operatorId;
   if (isOwner) {
+    return { authorized: true, event };
+  }
+
+  // Also check if operator owns the OrganizerProfile if event was created with profile ID
+  const orgProfile = await OrganizerProfile.findOne({ userId: operatorId }).select("_id").lean();
+  if (orgProfile && event.organizerId && event.organizerId.toString() === orgProfile._id.toString()) {
     return { authorized: true, event };
   }
 

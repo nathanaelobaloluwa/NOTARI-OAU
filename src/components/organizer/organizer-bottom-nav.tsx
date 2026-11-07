@@ -56,6 +56,8 @@ export function OrganizerBottomNav() {
         {ORGANIZER_BOTTOM_NAV_ITEMS.map((item) => {
           const isActive = item.exact
             ? pathname === item.href
+            : item.href === "/organizer/events"
+            ? pathname.startsWith("/organizer/events") && pathname !== "/organizer/events/create"
             : pathname.startsWith(item.href);
           const Icon = item.icon;
 

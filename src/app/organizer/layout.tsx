@@ -64,7 +64,14 @@ export default function OrganizerLayout({
 
           <nav className="space-y-1">
             {ORGANIZER_NAV.map((item) => {
-              const isActive = pathname === item.href;
+              const isActive =
+                item.href === "/organizer"
+                  ? pathname === "/organizer"
+                  : item.href === "/organizer/events/create"
+                  ? pathname === "/organizer/events/create"
+                  : item.href === "/organizer/events"
+                  ? pathname.startsWith("/organizer/events") && pathname !== "/organizer/events/create"
+                  : pathname === item.href || (item.href !== "/organizer" && pathname.startsWith(item.href));
               const Icon = item.icon;
               return (
                 <Link

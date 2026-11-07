@@ -42,3 +42,16 @@ function parseEnv(): Env {
 }
 
 export const env = parseEnv();
+
+/**
+ * Returns true if a valid non-dummy Resend API key is present in configuration.
+ */
+export function isResendConfigured(): boolean {
+  if (!env.RESEND_API_KEY) return false;
+  const key = env.RESEND_API_KEY.trim();
+  if (key.length === 0) return false;
+  if (key.includes("dummy") || key.includes("placeholder") || key.includes("your_resend_api_key")) {
+    return false;
+  }
+  return true;
+}

@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { NotariLogo } from "@/components/shared/notari-logo";
 import { OrganizerBottomNav } from "@/components/organizer/organizer-bottom-nav";
+import { OrganizerHeaderSearch } from "@/components/organizer/OrganizerHeaderSearch";
 import { HeaderNotificationBell } from "@/components/shared/header/HeaderNotificationBell";
 import { HeaderProfileAvatar } from "@/components/shared/header/HeaderProfileAvatar";
 import {
@@ -123,14 +124,9 @@ export default function OrganizerLayout({
               <NotariLogo variant="organizer" />
             </div>
 
-            {/* Desktop Search Bar */}
-            <div className="relative hidden sm:flex items-center w-64 md:w-80">
-              <Search className="absolute left-3.5 w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search orders, tickets, attendees..."
-                className="w-full h-9 rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20"
-              />
+            {/* Search Bar with live search dropdown */}
+            <div className="hidden sm:flex items-center">
+              <OrganizerHeaderSearch />
             </div>
           </div>
 

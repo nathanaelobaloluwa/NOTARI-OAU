@@ -20,6 +20,7 @@ import {
   UserCheck,
   Megaphone,
   BarChart2,
+  Mail,
   Settings,
   LogOut,
   Search,
@@ -48,6 +49,7 @@ const ADMIN_NAV_ITEMS = [
   { name: "Users", href: "/admin/users", icon: UserCheck },
   { name: "Announcements", href: "/admin/announcements", icon: Megaphone },
   { name: "Reports & Analytics", href: "/admin/analytics", icon: BarChart2 },
+  { name: "Email Deliveries", href: "/admin/email-deliveries", icon: Mail },
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
 

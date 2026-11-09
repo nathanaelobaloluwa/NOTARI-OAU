@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Search, Loader2, X, Calendar, DollarSign, Users, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";

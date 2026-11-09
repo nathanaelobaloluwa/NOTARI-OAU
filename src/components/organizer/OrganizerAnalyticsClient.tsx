@@ -5,18 +5,14 @@ import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  BarChart3,
   DollarSign,
   Ticket,
   TrendingUp,
   Percent,
-  Calendar,
   GraduationCap,
-  Users,
   RefreshCw,
   Loader2,
   AlertCircle,
-  ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 

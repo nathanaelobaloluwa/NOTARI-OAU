@@ -8,11 +8,9 @@ import { Input } from "@/components/ui/input";
 import {
   Ticket,
   PlusCircle,
-  Calendar,
   DollarSign,
   Users,
   Trash2,
-  Edit,
   ExternalLink,
   Loader2,
   RefreshCw,
@@ -271,6 +269,18 @@ export function OrganizerTicketTiersClient() {
           <span>Add Ticket Tier</span>
         </Button>
       </div>
+
+      {error && (
+        <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center justify-between shadow-xs">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            <span>{error}</span>
+          </div>
+          <button onClick={() => setError(null)} className="font-bold ml-2">
+            ×
+          </button>
+        </div>
+      )}
 
       {actionSuccess && (
         <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between shadow-xs">

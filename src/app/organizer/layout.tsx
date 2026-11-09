@@ -20,7 +20,6 @@ import {
   BarChart3,
   Building,
   LogOut,
-  Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 

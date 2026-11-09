@@ -4,7 +4,6 @@ import { requireApprovedOrganizer } from "@/lib/auth/rbac";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { Event } from "@/models/Event";
 import { Ticket } from "@/models/Ticket";
-import { User } from "@/models/User";
 
 export async function GET(req: NextRequest) {
   try {

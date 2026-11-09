@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import fs from "fs";
 import path from "path";
 import mongoose from "mongoose";
@@ -9,9 +10,6 @@ import { Event } from "../models/Event";
 import { Ticket } from "../models/Ticket";
 import { Booking } from "../models/Booking";
 import { Payment, PAYMENT_STATUS } from "../models/Payment";
-import { PayoutAccount } from "../models/PayoutAccount";
-import { PayoutRequest, PAYOUT_REQUEST_STATUS } from "../models/PayoutRequest";
-import { RefundRequest, REFUND_REQUEST_STATUS } from "../models/RefundRequest";
 import { getOrganizerFinancialSummary } from "../lib/financial/balance";
 
 /**

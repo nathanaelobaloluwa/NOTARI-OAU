@@ -14,11 +14,9 @@ import {
   Search,
   Download,
   QrCode,
-  RefreshCw,
   Loader2,
   ChevronLeft,
   ChevronRight,
-  Filter,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 

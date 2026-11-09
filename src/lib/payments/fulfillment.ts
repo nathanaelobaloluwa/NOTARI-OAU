@@ -21,6 +21,7 @@ export interface FulfillVerifiedPaymentResult {
   status: number;
   message: string;
   alreadyFulfilled?: boolean;
+  reconciliationNeeded?: boolean;
   data?: {
     bookingReference: string;
     ticketCodes: string[];
@@ -105,9 +106,18 @@ export async function fulfillVerifiedPayment({
     console.error(
       `🚨 Security Alert: Amount mismatch for ref ${reference}. Expected ${payment.amountInKobo} kobo, received ${paystackData.amount} kobo.`
     );
+    payment.paymentStatus = PAYMENT_STATUS.RECONCILIATION_NEEDED;
+    payment.metadata = {
+      ...(payment.metadata || {}),
+      reconciliationReason: `Amount mismatch: expected ${payment.amountInKobo} kobo, received ${paystackData.amount} kobo`,
+      paystackData,
+    };
+    await payment.save();
+
     return {
       success: false,
       status: 400,
+      reconciliationNeeded: true,
       message: "Paid amount does not match expected order total.",
     };
   }

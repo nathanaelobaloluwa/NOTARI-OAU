@@ -110,7 +110,10 @@ export async function fulfillVerifiedPayment({
     payment.metadata = {
       ...(payment.metadata || {}),
       reconciliationReason: `Amount mismatch: expected ${payment.amountInKobo} kobo, received ${paystackData.amount} kobo`,
-      paystackData,
+      receivedAmountInKobo: paystackData.amount,
+      receivedCurrency: paystackData.currency,
+      paystackTransactionId: paystackData.id,
+      gatewayResponse: paystackData.gateway_response,
     };
     await payment.save();
 
@@ -138,7 +141,10 @@ export async function fulfillVerifiedPayment({
         ...(payment.metadata || {}),
         oversellPrevented: true,
         reconciliationReason: "Late payment arrived after event capacity was filled by other buyers",
-        paystackData,
+        receivedAmountInKobo: paystackData.amount,
+        receivedCurrency: paystackData.currency,
+        paystackTransactionId: paystackData.id,
+        gatewayResponse: paystackData.gateway_response,
       };
       await payment.save();
 

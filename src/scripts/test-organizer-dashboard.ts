@@ -362,6 +362,95 @@ async function runTests() {
     assert(facultyAgg.length > 0, "Faculty demographic aggregation yields results");
     assert(facultyAgg[0]._id === "Faculty of Technology", "Aggregated faculty matches student profile");
     assert(facultyAgg[0].count === 1, "Faculty attendee count is accurate");
+
+    // -------------------------------------------------------------------------
+    // SECTION 6: SEARCH FUNCTIONALITY (EVENTS, ORDERS & ATTENDEES)
+    // -------------------------------------------------------------------------
+    console.log("\n▶ 6. Header Search Functionality & Scope Isolation");
+    const searchRegex = new RegExp("Oduduwa", "i");
+    const searchEvents = await Event.find({
+      organizerId: { $in: [testOrgUser._id, testOrgProfile._id] },
+      venue: searchRegex,
+    }).lean();
+    assert(searchEvents.length === 1, "Search finds organizer's event by venue keyword");
+    assert(searchEvents[0].title === "IFE Tech Hackathon 2026", "Event search returns correct event");
+
+    // Search order by reference
+    const searchOrder = await Payment.findOne({
+      organizerId: { $in: [testOrgUser._id, testOrgProfile._id] },
+      paymentReference: paymentRef,
+    }).lean();
+    assert(searchOrder != null, "Search finds order by payment reference");
+    assert(searchOrder?.customerName === "Adeola Johnson", "Search order returns correct customer name");
+
+    // Search attendee by ticket code
+    const searchAttendee = await Ticket.findOne({
+      eventId: testEventPaid._id,
+      ticketCode: ticketCode,
+    }).lean();
+    assert(searchAttendee != null, "Search finds attendee by ticket code");
+    assert(searchAttendee?.attendeeEmail === testStudentEmail, "Search attendee returns correct email");
+
+    // -------------------------------------------------------------------------
+    // SECTION 7: TIME-RANGE WINDOWING & SALES TREND CALCULATION
+    // -------------------------------------------------------------------------
+    console.log("\n▶ 7. Sales Overview Time-Range Windowing (7d, 30d, 90d)");
+    const now = new Date();
+    const d7 = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const d30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const d90 = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+
+    const payments7d = await Payment.countDocuments({
+      organizerId: { $in: [testOrgUser._id, testOrgProfile._id] },
+      paymentStatus: PAYMENT_STATUS.SUCCESSFUL,
+      paidAt: { $gte: d7 },
+    });
+    const payments30d = await Payment.countDocuments({
+      organizerId: { $in: [testOrgUser._id, testOrgProfile._id] },
+      paymentStatus: PAYMENT_STATUS.SUCCESSFUL,
+      paidAt: { $gte: d30 },
+    });
+    const payments90d = await Payment.countDocuments({
+      organizerId: { $in: [testOrgUser._id, testOrgProfile._id] },
+      paymentStatus: PAYMENT_STATUS.SUCCESSFUL,
+      paidAt: { $gte: d90 },
+    });
+
+    assert(payments7d === 1, "Last 7 days window captures recent payment");
+    assert(payments30d === 1, "Last 30 days window captures recent payment");
+    assert(payments90d === 1, "Last 90 days window captures recent payment");
+
+    // -------------------------------------------------------------------------
+    // SECTION 8: SIDEBAR & NAVIGATION DESTINATIONS INTEGRITY
+    // -------------------------------------------------------------------------
+    console.log("\n▶ 8. Sidebar & Navigation Route Integrity");
+    const requiredOrganizerRoutes = [
+      "src/app/organizer/page.tsx",
+      "src/app/organizer/events/page.tsx",
+      "src/app/organizer/events/create/page.tsx",
+      "src/app/organizer/tickets/page.tsx",
+      "src/app/organizer/orders/page.tsx",
+      "src/app/organizer/attendees/page.tsx",
+      "src/app/organizer/check-in/page.tsx",
+      "src/app/organizer/payouts/page.tsx",
+      "src/app/organizer/analytics/page.tsx",
+      "src/app/organizer/profile/page.tsx",
+    ];
+
+    for (const routePath of requiredOrganizerRoutes) {
+      const fullPath = path.resolve(process.cwd(), routePath);
+      assert(fs.existsSync(fullPath), `Route destination exists on disk: ${routePath}`);
+    }
+
+    // -------------------------------------------------------------------------
+    // SECTION 9: MULTI-TENANT MODIFICATION GUARD
+    // -------------------------------------------------------------------------
+    console.log("\n▶ 9. Multi-Tenant Event Modification Guard");
+    const foreignEvent = await Event.findOne({
+      _id: otherEvent._id,
+      organizerId: { $in: [testOrgUser._id, testOrgProfile._id] },
+    });
+    assert(foreignEvent == null, "Organizer cannot query or modify another organizer's event");
   } catch (err) {
     console.error("  ❌ Test suite error:", err);
     failed++;

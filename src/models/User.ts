@@ -13,6 +13,10 @@ export interface IUserDocument extends Document {
   department?: string;
   phone?: string;
   isVerified: boolean;
+  emailPreferences?: {
+    eventReminders?: boolean;
+    campusAnnouncements?: boolean;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -48,6 +52,10 @@ const UserSchema = new Schema<IUserDocument>(
     department: { type: String, trim: true },
     phone: { type: String, trim: true },
     isVerified: { type: Boolean, default: false },
+    emailPreferences: {
+      eventReminders: { type: Boolean, default: true },
+      campusAnnouncements: { type: Boolean, default: true },
+    },
   },
   {
     timestamps: true,

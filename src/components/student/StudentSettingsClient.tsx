@@ -57,10 +57,16 @@ export function StudentSettingsClient({ initialProfile }: StudentSettingsClientP
   const [passwordSuccessMsg, setPasswordSuccessMsg] = useState<string | null>(null);
   const [passwordErrorMsg, setPasswordErrorMsg] = useState<string | null>(null);
 
-  // Preferences (local demo settings)
-  const [emailNotifs, setEmailNotifs] = useState(true);
-  const [eventReminders, setEventReminders] = useState(true);
-  const [marketing, setMarketing] = useState(false);
+  // Preferences state
+  const [eventReminders, setEventReminders] = useState(
+    initialProfile.emailPreferences?.eventReminders ?? true
+  );
+  const [campusAnnouncements, setCampusAnnouncements] = useState(
+    initialProfile.emailPreferences?.campusAnnouncements ?? true
+  );
+  const [isSavingPrefs, setIsSavingPrefs] = useState(false);
+  const [prefsSuccessMsg, setPrefsSuccessMsg] = useState<string | null>(null);
+  const [prefsErrorMsg, setPrefsErrorMsg] = useState<string | null>(null);
 
   const studentInitials =
     name
@@ -149,6 +155,41 @@ export function StudentSettingsClient({ initialProfile }: StudentSettingsClientP
       setPasswordErrorMsg("Network error occurred while changing password.");
     } finally {
       setIsSavingPassword(false);
+    }
+  };
+
+  // Handle Notification Preferences Update
+  const handlePreferencesSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingPrefs(true);
+    setPrefsSuccessMsg(null);
+    setPrefsErrorMsg(null);
+
+    try {
+      const res = await fetch("/api/student/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: profile.name,
+          emailPreferences: {
+            eventReminders,
+            campusAnnouncements,
+          },
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setPrefsErrorMsg(data.message || "Failed to update notification preferences.");
+      } else {
+        setProfile(data.data);
+        setPrefsSuccessMsg("Notification preferences updated successfully!");
+        router.refresh();
+      }
+    } catch {
+      setPrefsErrorMsg("Network error occurred while saving notification preferences.");
+    } finally {
+      setIsSavingPrefs(false);
     }
   };
 
@@ -441,53 +482,98 @@ export function StudentSettingsClient({ initialProfile }: StudentSettingsClientP
             </form>
           </Card>
 
-          {/* Preferences */}
+          {/* Notification Preferences */}
           <Card className="p-5 sm:p-6 border-slate-200/80 shadow-sm bg-white space-y-4 rounded-2xl">
             <h3 className="text-xs font-bold text-notari-dark uppercase tracking-wider flex items-center gap-2">
               <Bell className="w-4 h-4 text-notari-primary" />
-              <span>Notification Preferences</span>
+              <span>Email Notification Preferences</span>
             </h3>
 
-            <div className="space-y-3 pt-1 text-xs">
-              <label className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 cursor-pointer border border-transparent hover:border-slate-100 transition-colors">
-                <div className="space-y-0.5">
-                  <span className="font-semibold text-slate-700 block">Email Notifications</span>
-                  <span className="text-[11px] text-slate-400 block">Booking confirmations and ticket passes</span>
+            {/* Preferences Success / Error Alerts */}
+            {prefsSuccessMsg && (
+              <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>{prefsSuccessMsg}</span>
+              </div>
+            )}
+            {prefsErrorMsg && (
+              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                <span>{prefsErrorMsg}</span>
+              </div>
+            )}
+
+            <form onSubmit={handlePreferencesSubmit} className="space-y-3 pt-1 text-xs">
+              {/* Mandatory / Essential Transactional Emails */}
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 opacity-90">
+                <div className="space-y-0.5 pr-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-semibold text-slate-800 block">Transactional Emails</span>
+                    <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200/80 px-1.5 py-0.2 rounded flex items-center gap-0.5">
+                      <Lock className="w-2.5 h-2.5" /> Essential
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-slate-500 block">
+                    Ticket passes, payment receipts, and refund updates are mandatory per university policy.
+                  </span>
                 </div>
                 <input
                   type="checkbox"
-                  checked={emailNotifs}
-                  onChange={(e) => setEmailNotifs(e.target.checked)}
-                  className="rounded text-notari-primary focus:ring-notari-primary w-4 h-4"
+                  checked={true}
+                  disabled
+                  className="rounded text-notari-primary focus:ring-notari-primary w-4 h-4 cursor-not-allowed opacity-60"
                 />
-              </label>
+              </div>
 
+              {/* Event Reminders */}
               <label className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 cursor-pointer border border-transparent hover:border-slate-100 transition-colors">
-                <div className="space-y-0.5">
+                <div className="space-y-0.5 pr-2">
                   <span className="font-semibold text-slate-700 block">Event Reminders</span>
-                  <span className="text-[11px] text-slate-400 block">Day-before reminders for registered campus events</span>
+                  <span className="text-[11px] text-slate-400 block">
+                    Day-before reminders for your registered campus events.
+                  </span>
                 </div>
                 <input
                   type="checkbox"
                   checked={eventReminders}
                   onChange={(e) => setEventReminders(e.target.checked)}
-                  className="rounded text-notari-primary focus:ring-notari-primary w-4 h-4"
+                  className="rounded text-notari-primary focus:ring-notari-primary w-4 h-4 cursor-pointer"
                 />
               </label>
 
+              {/* Campus Announcements */}
               <label className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 cursor-pointer border border-transparent hover:border-slate-100 transition-colors">
-                <div className="space-y-0.5">
+                <div className="space-y-0.5 pr-2">
                   <span className="font-semibold text-slate-700 block">Campus Life Announcements</span>
-                  <span className="text-[11px] text-slate-400 block">OAU symposiums and Great Ife summits</span>
+                  <span className="text-[11px] text-slate-400 block">
+                    OAU student symposiums, summits, and campus news.
+                  </span>
                 </div>
                 <input
                   type="checkbox"
-                  checked={marketing}
-                  onChange={(e) => setMarketing(e.target.checked)}
-                  className="rounded text-notari-primary focus:ring-notari-primary w-4 h-4"
+                  checked={campusAnnouncements}
+                  onChange={(e) => setCampusAnnouncements(e.target.checked)}
+                  className="rounded text-notari-primary focus:ring-notari-primary w-4 h-4 cursor-pointer"
                 />
               </label>
-            </div>
+
+              <div className="pt-2">
+                <Button
+                  type="submit"
+                  disabled={isSavingPrefs}
+                  className="w-full h-10 rounded-xl text-xs font-semibold gap-2 shadow-sm"
+                >
+                  {isSavingPrefs ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Saving Preferences...</span>
+                    </>
+                  ) : (
+                    <span>Save Notification Preferences</span>
+                  )}
+                </Button>
+              </div>
+            </form>
           </Card>
         </div>
       </div>

@@ -25,6 +25,10 @@ export interface SanitizedStudentProfile {
   phone?: string;
   role: string;
   isVerified: boolean;
+  emailPreferences?: {
+    eventReminders: boolean;
+    campusAnnouncements: boolean;
+  };
   createdAt: string;
 }
 
@@ -97,6 +101,10 @@ export async function getStudentProfile(userId: string): Promise<StudentServiceR
     phone: student.phone || "",
     role: student.role,
     isVerified: Boolean(student.isVerified),
+    emailPreferences: {
+      eventReminders: student.emailPreferences?.eventReminders ?? true,
+      campusAnnouncements: student.emailPreferences?.campusAnnouncements ?? true,
+    },
     createdAt: student.createdAt ? new Date(student.createdAt).toISOString() : new Date().toISOString(),
   };
 
@@ -141,6 +149,18 @@ export async function updateStudentProfile(
   if (data.department !== undefined) {
     student.department = data.department.trim();
   }
+  if (data.emailPreferences !== undefined) {
+    student.emailPreferences = {
+      eventReminders:
+        data.emailPreferences.eventReminders !== undefined
+          ? data.emailPreferences.eventReminders
+          : (student.emailPreferences?.eventReminders ?? true),
+      campusAnnouncements:
+        data.emailPreferences.campusAnnouncements !== undefined
+          ? data.emailPreferences.campusAnnouncements
+          : (student.emailPreferences?.campusAnnouncements ?? true),
+    };
+  }
 
   await student.save();
 
@@ -154,6 +174,10 @@ export async function updateStudentProfile(
     phone: student.phone || "",
     role: student.role,
     isVerified: Boolean(student.isVerified),
+    emailPreferences: {
+      eventReminders: student.emailPreferences?.eventReminders ?? true,
+      campusAnnouncements: student.emailPreferences?.campusAnnouncements ?? true,
+    },
     createdAt: student.createdAt ? new Date(student.createdAt).toISOString() : new Date().toISOString(),
   };
 

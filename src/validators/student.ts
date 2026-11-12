@@ -14,6 +14,12 @@ export const studentProfileUpdateSchema = z.object({
     }),
   faculty: z.string().trim().optional(),
   department: z.string().trim().optional(),
+  emailPreferences: z
+    .object({
+      eventReminders: z.boolean().optional(),
+      campusAnnouncements: z.boolean().optional(),
+    })
+    .optional(),
 });
 
 export type StudentProfileUpdateInput = z.infer<typeof studentProfileUpdateSchema>;

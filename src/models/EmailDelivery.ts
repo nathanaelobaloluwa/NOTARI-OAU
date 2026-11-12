@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
-export type EmailDeliveryStatus = "pending" | "sent" | "failed" | "simulated";
+export type EmailDeliveryStatus = "pending" | "sent" | "failed" | "simulated" | "retry_scheduled" | "bounced";
 export type EmailProviderType = "resend" | "simulated" | "mock";
 export type EmailRelatedType =
   | "booking"
@@ -24,6 +24,7 @@ export interface IEmailDeliveryDocument extends Document {
   error?: string;
   retryCount: number;
   lastAttemptAt: Date;
+  deliveredAt?: Date;
   metadata?: Record<string, unknown>;
   createdAt: Date;
   updatedAt: Date;
@@ -56,7 +57,7 @@ const EmailDeliverySchema = new Schema<IEmailDeliveryDocument>(
     },
     status: {
       type: String,
-      enum: ["pending", "sent", "failed", "simulated"],
+      enum: ["pending", "sent", "failed", "simulated", "retry_scheduled", "bounced"],
       default: "pending",
       index: true,
     },
@@ -90,6 +91,9 @@ const EmailDeliverySchema = new Schema<IEmailDeliveryDocument>(
     lastAttemptAt: {
       type: Date,
       default: Date.now,
+    },
+    deliveredAt: {
+      type: Date,
     },
     metadata: {
       type: Schema.Types.Mixed,

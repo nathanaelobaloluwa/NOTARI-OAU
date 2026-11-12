@@ -11,6 +11,7 @@ export interface IUserDocument extends Document {
   matricNumber?: string;
   faculty?: string;
   department?: string;
+  level?: string;
   phone?: string;
   isVerified: boolean;
   emailPreferences?: {
@@ -50,6 +51,7 @@ const UserSchema = new Schema<IUserDocument>(
     },
     faculty: { type: String, trim: true },
     department: { type: String, trim: true },
+    level: { type: String, trim: true },
     phone: { type: String, trim: true },
     isVerified: { type: Boolean, default: false },
     emailPreferences: {

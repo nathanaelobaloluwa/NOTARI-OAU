@@ -22,6 +22,7 @@ export interface SanitizedStudentProfile {
   matricNumber?: string;
   faculty?: string;
   department?: string;
+  level?: string;
   phone?: string;
   role: string;
   isVerified: boolean;
@@ -98,6 +99,7 @@ export async function getStudentProfile(userId: string): Promise<StudentServiceR
     matricNumber: student.matricNumber,
     faculty: student.faculty || "",
     department: student.department || "",
+    level: student.level || "",
     phone: student.phone || "",
     role: student.role,
     isVerified: Boolean(student.isVerified),
@@ -149,6 +151,9 @@ export async function updateStudentProfile(
   if (data.department !== undefined) {
     student.department = data.department.trim();
   }
+  if (data.level !== undefined) {
+    student.level = data.level.trim();
+  }
   if (data.emailPreferences !== undefined) {
     student.emailPreferences = {
       eventReminders:
@@ -171,6 +176,7 @@ export async function updateStudentProfile(
     matricNumber: student.matricNumber,
     faculty: student.faculty || "",
     department: student.department || "",
+    level: student.level || "",
     phone: student.phone || "",
     role: student.role,
     isVerified: Boolean(student.isVerified),

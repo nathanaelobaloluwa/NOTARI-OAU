@@ -17,6 +17,8 @@ export type EmailRelatedType =
   | "application"
   | "payout"
   | "refund"
+  | "announcement"
+  | "reminder"
   | "system";
 
 export interface IEmailWebhookEvent {
@@ -105,7 +107,17 @@ const EmailDeliverySchema = new Schema<IEmailDeliveryDocument>(
     },
     relatedType: {
       type: String,
-      enum: ["booking", "payment", "event", "application", "payout", "refund", "system"],
+      enum: [
+        "booking",
+        "payment",
+        "event",
+        "application",
+        "payout",
+        "refund",
+        "announcement",
+        "reminder",
+        "system",
+      ],
       index: true,
     },
     relatedId: {

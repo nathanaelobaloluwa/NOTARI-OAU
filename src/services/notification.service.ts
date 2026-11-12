@@ -905,6 +905,157 @@ class NotificationService {
       };
     }
   }
+
+  /**
+   * Automated batch processor for scheduled email retries.
+   * Atomically acquires pending or retry-scheduled records due for re-dispatch,
+   * prevents concurrent retry execution via atomic conditional locking,
+   * enforces bounded exponential backoff, and skips non-retryable errors.
+   */
+  public async processPendingRetries(options?: {
+    batchSize?: number;
+  }): Promise<{
+    processed: number;
+    succeeded: number;
+    failed: number;
+    skipped: number;
+    details: Array<{ id: string; recipient: string; status: string; error?: string }>;
+  }> {
+    const batchSize = Math.min(100, Math.max(1, options?.batchSize || 20));
+    await connectToDatabase();
+
+    const now = new Date();
+
+    // 1. Query candidate records due for retry
+    const candidates = await EmailDelivery.find({
+      status: { $in: ["failed", "retry_scheduled"] },
+      retryCount: { $lt: 5 },
+      isNonRetryable: { $ne: true },
+      $or: [{ nextRetryAt: { $exists: false } }, { nextRetryAt: { $lte: now } }],
+    })
+      .sort({ nextRetryAt: 1, lastAttemptAt: 1 })
+      .limit(batchSize)
+      .lean();
+
+    let processed = 0;
+    let succeeded = 0;
+    let failed = 0;
+    let skipped = 0;
+    const details: Array<{ id: string; recipient: string; status: string; error?: string }> = [];
+
+    for (const candidate of candidates) {
+      // 2. Atomic lock: claim record to prevent parallel cron/admin workers from double-sending
+      const claimed = await EmailDelivery.findOneAndUpdate(
+        {
+          _id: candidate._id,
+          status: { $in: ["failed", "retry_scheduled"] },
+          retryCount: candidate.retryCount,
+        },
+        {
+          $set: {
+            status: "pending",
+            lastAttemptAt: new Date(),
+          },
+        },
+        { new: true }
+      );
+
+      if (!claimed) {
+        skipped++;
+        continue;
+      }
+
+      processed++;
+
+      const html = (claimed.metadata?.html as string) || `<p>${claimed.subject}</p>`;
+      const text = (claimed.metadata?.text as string) || claimed.subject;
+
+      try {
+        const sendResult = await sendEmail({
+          to: claimed.recipient,
+          subject: claimed.subject,
+          html,
+          text,
+        });
+
+        if (sendResult.success) {
+          claimed.status = sendResult.provider === "resend" ? "accepted" : "simulated";
+          claimed.provider = sendResult.provider;
+          claimed.providerMessageId = sendResult.id;
+          if (sendResult.provider !== "resend") {
+            claimed.deliveredAt = new Date();
+          }
+          claimed.error = undefined;
+          claimed.nextRetryAt = undefined;
+          await claimed.save();
+
+          succeeded++;
+          details.push({
+            id: claimed._id.toString(),
+            recipient: claimed.recipient,
+            status: claimed.status,
+          });
+        } else {
+          const isNonRetryable = isNonRetryableError(sendResult.error);
+          claimed.retryCount += 1;
+          claimed.isNonRetryable = isNonRetryable;
+          claimed.error = sendResult.error || "Automated retry failed";
+
+          if (isNonRetryable || claimed.retryCount >= 5) {
+            claimed.status = "failed";
+            claimed.nextRetryAt = undefined;
+          } else {
+            claimed.status = "retry_scheduled";
+            const backoffMinutes = Math.min(240, Math.pow(2, claimed.retryCount));
+            claimed.nextRetryAt = new Date(Date.now() + backoffMinutes * 60 * 1000);
+          }
+
+          await claimed.save();
+
+          failed++;
+          details.push({
+            id: claimed._id.toString(),
+            recipient: claimed.recipient,
+            status: claimed.status,
+            error: sendResult.error,
+          });
+        }
+      } catch (err: unknown) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        const isNonRetryable = isNonRetryableError(errorMsg);
+        claimed.retryCount += 1;
+        claimed.isNonRetryable = isNonRetryable;
+        claimed.error = errorMsg;
+
+        if (isNonRetryable || claimed.retryCount >= 5) {
+          claimed.status = "failed";
+          claimed.nextRetryAt = undefined;
+        } else {
+          claimed.status = "retry_scheduled";
+          const backoffMinutes = Math.min(240, Math.pow(2, claimed.retryCount));
+          claimed.nextRetryAt = new Date(Date.now() + backoffMinutes * 60 * 1000);
+        }
+
+        await claimed.save();
+
+        failed++;
+        details.push({
+          id: claimed._id.toString(),
+          recipient: claimed.recipient,
+          status: claimed.status,
+          error: errorMsg,
+        });
+      }
+    }
+
+    return {
+      processed,
+      succeeded,
+      failed,
+      skipped,
+      details,
+    };
+  }
 }
 
 export const notificationService = new NotificationService();

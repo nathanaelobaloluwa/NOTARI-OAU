@@ -19,6 +19,12 @@ import {
   renderPayoutStatusEmail,
 } from "@/lib/email/templates/organizer-templates";
 import { renderRefundStatusEmail } from "@/lib/email/templates/refund-templates";
+import { renderEventReminderEmail } from "@/lib/email/templates/reminder-templates";
+import {
+  renderCampusAnnouncementEmail,
+  renderOrganizerEventBroadcastEmail,
+} from "@/lib/email/templates/announcement-templates";
+import { User } from "@/models/User";
 
 export interface NotificationResult {
   success: boolean;
@@ -904,6 +910,257 @@ class NotificationService {
         delivery,
       };
     }
+  }
+
+  /**
+   * Dispatches automated event reminder (24h or 1h) to a student via in-app & email.
+   * Respects student emailPreferences.eventReminders.
+   */
+  async notifyEventReminder(params: {
+    userId: string | mongoose.Types.ObjectId;
+    studentName: string;
+    studentEmail: string;
+    eventId: string | mongoose.Types.ObjectId;
+    eventTitle: string;
+    eventVenue: string;
+    eventDate: Date | string;
+    stage: "24h" | "1h" | "custom";
+    bookingReference?: string;
+    ticketCodes?: string[];
+    onlineLink?: string;
+    customMessage?: string;
+  }): Promise<NotificationResult> {
+    const timestamp = new Date().toISOString();
+    const eventIdStr = params.eventId.toString();
+    const stageCallout = params.stage === "24h" ? "Tomorrow" : "In 1 Hour";
+
+    // 1. Always deliver in-app notification
+    await createInAppNotification({
+      userId: params.userId,
+      title: `Event Reminder (${stageCallout}): ${params.eventTitle}`,
+      message: `Your event "${params.eventTitle}" begins ${stageCallout.toLowerCase()} at ${params.eventVenue}. Have your digital QR ticket ready for fast admission.`,
+      type: "event",
+      linkUrl: `/student/tickets`,
+    });
+
+    // 2. Check student email preference
+    let emailAllowed = true;
+    try {
+      const userDoc = await User.findById(params.userId).select("emailPreferences");
+      if (userDoc?.emailPreferences?.eventReminders === false) {
+        emailAllowed = false;
+      }
+    } catch (err) {
+      console.warn("⚠️ [PREF_CHECK_WARN]: Could not check emailPreferences, defaulting to allowed:", err);
+    }
+
+    if (!emailAllowed) {
+      return {
+        success: true,
+        delivered: false,
+        provider: "simulated",
+        recipient: params.studentEmail,
+        subject: `Reminder: ${params.eventTitle}`,
+        timestamp,
+        alreadyDelivered: true,
+      };
+    }
+
+    // 3. Render and dispatch email with outbox audit
+    const { html, text, subject } = renderEventReminderEmail({
+      studentName: params.studentName,
+      eventTitle: params.eventTitle,
+      eventVenue: params.eventVenue,
+      eventDate: params.eventDate,
+      stage: params.stage,
+      bookingReference: params.bookingReference,
+      ticketCodes: params.ticketCodes,
+      onlineLink: params.onlineLink,
+      customMessage: params.customMessage,
+    });
+
+    return this.dispatchEmailWithAudit({
+      recipient: params.studentEmail,
+      userId: params.userId,
+      subject,
+      html,
+      text,
+      template: "event_reminder",
+      relatedType: "reminder",
+      relatedId: `${eventIdStr}:${params.stage}`,
+      metadata: {
+        eventId: eventIdStr,
+        stage: params.stage,
+        eventTitle: params.eventTitle,
+        bookingReference: params.bookingReference,
+      },
+    });
+  }
+
+  /**
+   * Dispatches campus announcement to an eligible student.
+   * Respects student emailPreferences.campusAnnouncements unless priority is "urgent".
+   */
+  async notifyCampusAnnouncement(params: {
+    userId: string | mongoose.Types.ObjectId;
+    recipientName: string;
+    recipientEmail: string;
+    announcementId: string | mongoose.Types.ObjectId;
+    title: string;
+    summary: string;
+    content: string;
+    category: string;
+    priority: "low" | "normal" | "high" | "urgent";
+    authorName?: string;
+    eventTitle?: string;
+  }): Promise<NotificationResult> {
+    const timestamp = new Date().toISOString();
+    const announcementIdStr = params.announcementId.toString();
+
+    // 1. Always deliver in-app notification
+    await createInAppNotification({
+      userId: params.userId,
+      title: `${params.priority === "urgent" ? "🚨 " : ""}${params.title}`,
+      message: params.summary,
+      type: "announcement",
+      linkUrl: `/student/announcements`,
+    });
+
+    // 2. Check student email preference (urgent campus safety notices bypass preference)
+    let emailAllowed = true;
+    if (params.priority !== "urgent") {
+      try {
+        const userDoc = await User.findById(params.userId).select("emailPreferences");
+        if (userDoc?.emailPreferences?.campusAnnouncements === false) {
+          emailAllowed = false;
+        }
+      } catch (err) {
+        console.warn("⚠️ [PREF_CHECK_WARN]: Could not check emailPreferences, defaulting to allowed:", err);
+      }
+    }
+
+    if (!emailAllowed) {
+      return {
+        success: true,
+        delivered: false,
+        provider: "simulated",
+        recipient: params.recipientEmail,
+        subject: params.title,
+        timestamp,
+        alreadyDelivered: true,
+      };
+    }
+
+    // 3. Render and dispatch email with outbox audit
+    const { html, text, subject } = renderCampusAnnouncementEmail({
+      recipientName: params.recipientName,
+      title: params.title,
+      summary: params.summary,
+      content: params.content,
+      category: params.category,
+      priority: params.priority,
+      authorName: params.authorName,
+      eventTitle: params.eventTitle,
+    });
+
+    return this.dispatchEmailWithAudit({
+      recipient: params.recipientEmail,
+      userId: params.userId,
+      subject,
+      html,
+      text,
+      template: "campus_announcement",
+      relatedType: "announcement",
+      relatedId: announcementIdStr,
+      metadata: {
+        announcementId: announcementIdStr,
+        category: params.category,
+        priority: params.priority,
+      },
+    });
+  }
+
+  /**
+   * Dispatches organizer event update broadcast to registered attendee.
+   */
+  async notifyOrganizerEventBroadcast(params: {
+    userId: string | mongoose.Types.ObjectId;
+    attendeeName: string;
+    attendeeEmail: string;
+    eventId: string | mongoose.Types.ObjectId;
+    eventTitle: string;
+    broadcastId: string;
+    updateType: "general" | "venue_change" | "time_change" | "cancellation" | "instructions";
+    subjectLine: string;
+    message: string;
+    organizerName: string;
+    newVenue?: string;
+    newTime?: string;
+  }): Promise<NotificationResult> {
+    const timestamp = new Date().toISOString();
+    const eventIdStr = params.eventId.toString();
+
+    // 1. Deliver in-app notification
+    await createInAppNotification({
+      userId: params.userId,
+      title: `Event Notice: ${params.eventTitle}`,
+      message: `${params.subjectLine} — ${params.message.slice(0, 120)}`,
+      type: "event",
+      linkUrl: `/student/tickets`,
+    });
+
+    // 2. Check student email preference (cancellations and critical time/venue changes bypass opt-out)
+    let emailAllowed = true;
+    if (params.updateType === "general") {
+      try {
+        const userDoc = await User.findById(params.userId).select("emailPreferences");
+        if (userDoc?.emailPreferences?.campusAnnouncements === false) {
+          emailAllowed = false;
+        }
+      } catch (err) {
+        console.warn("⚠️ [PREF_CHECK_WARN]: Could not check emailPreferences, defaulting to allowed:", err);
+      }
+    }
+
+    if (!emailAllowed) {
+      return {
+        success: true,
+        delivered: false,
+        provider: "simulated",
+        recipient: params.attendeeEmail,
+        subject: params.subjectLine,
+        timestamp,
+        alreadyDelivered: true,
+      };
+    }
+
+    // 3. Render and dispatch email
+    const { html, text, subject } = renderOrganizerEventBroadcastEmail({
+      attendeeName: params.attendeeName,
+      eventTitle: params.eventTitle,
+      updateType: params.updateType,
+      subjectLine: params.subjectLine,
+      message: params.message,
+      organizerName: params.organizerName,
+      newVenue: params.newVenue,
+      newTime: params.newTime,
+    });
+
+    return this.dispatchEmailWithAudit({
+      recipient: params.attendeeEmail,
+      userId: params.userId,
+      subject,
+      html,
+      text,
+      template: "organizer_event_broadcast",
+      relatedType: "announcement",
+      relatedId: `${eventIdStr}:${params.broadcastId}`,
+      metadata: {
+        eventId: eventIdStr,
+        broadcastId: params.broadcastId,
+        updateType: params.updateType,
+      },
+    });
   }
 
   /**

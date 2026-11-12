@@ -13,3 +13,4 @@ export * from "./RefundRequest";
 export * from "./FinancialLedger";
 export * from "./Notification";
 export * from "./EmailDelivery";
+export * from "./EventReminderDispatch";

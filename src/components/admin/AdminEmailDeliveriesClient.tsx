@@ -20,7 +20,15 @@ interface EmailDeliveryItem {
   recipient: string;
   subject: string;
   template: string;
-  status: "pending" | "sent" | "failed" | "simulated" | "retry_scheduled" | "bounced";
+  status:
+    | "pending"
+    | "accepted"
+    | "sent"
+    | "delivered"
+    | "failed"
+    | "simulated"
+    | "retry_scheduled"
+    | "bounced";
   provider: "resend" | "simulated" | "mock";
   providerMessageId?: string;
   relatedType?: string;
@@ -28,14 +36,20 @@ interface EmailDeliveryItem {
   error?: string;
   retryCount: number;
   lastAttemptAt: string;
+  deliveredAt?: string;
+  nextRetryAt?: string;
+  isNonRetryable?: boolean;
   createdAt: string;
 }
 
 interface DeliverySummary {
   total: number;
-  sent: number;
+  accepted?: number;
+  delivered?: number;
+  sent?: number;
   failed: number;
   simulated: number;
+  bounced?: number;
 }
 
 export function AdminEmailDeliveriesClient() {
@@ -126,11 +140,19 @@ export function AdminEmailDeliveriesClient() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "sent":
+      case "delivered":
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
             <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-            <span>Sent (Resend)</span>
+            <span>Delivered</span>
+          </span>
+        );
+      case "accepted":
+      case "sent":
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200">
+            <Send className="w-3 h-3 text-sky-600" />
+            <span>Accepted (Resend)</span>
           </span>
         );
       case "simulated":
@@ -157,7 +179,7 @@ export function AdminEmailDeliveriesClient() {
       case "bounced":
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-300">
-            <AlertCircle className="w-3 h-3 text-slate-600" />
+            <ShieldAlert className="w-3 h-3 text-slate-600" />
             <span>Bounced</span>
           </span>
         );
@@ -193,8 +215,8 @@ export function AdminEmailDeliveriesClient() {
       </div>
 
       {/* Summary KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500">Total Notifications</span>
             <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center">
@@ -206,19 +228,33 @@ export function AdminEmailDeliveriesClient() {
           </div>
         </div>
 
-        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Delivered via Resend</span>
+            <span className="text-xs font-semibold text-slate-500">Confirmed Delivered</span>
             <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
             </div>
           </div>
           <div className="mt-2">
-            <span className="text-2xl font-bold text-emerald-700">{summary.sent}</span>
+            <span className="text-2xl font-bold text-emerald-700">{summary.delivered || 0}</span>
           </div>
         </div>
 
-        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500">Accepted by Resend</span>
+            <div className="w-8 h-8 rounded-xl bg-sky-50 flex items-center justify-center">
+              <Send className="w-4 h-4 text-sky-600" />
+            </div>
+          </div>
+          <div className="mt-2">
+            <span className="text-2xl font-bold text-sky-700">
+              {summary.accepted ?? summary.sent ?? 0}
+            </span>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500">Simulated (Dev/Test)</span>
             <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center">
@@ -230,15 +266,17 @@ export function AdminEmailDeliveriesClient() {
           </div>
         </div>
 
-        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs col-span-2 sm:col-span-1">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Failed Deliveries</span>
+            <span className="text-xs font-semibold text-slate-500">Failed & Bounced</span>
             <div className="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center">
               <ShieldAlert className="w-4 h-4 text-rose-600" />
             </div>
           </div>
           <div className="mt-2">
-            <span className="text-2xl font-bold text-rose-700">{summary.failed}</span>
+            <span className="text-2xl font-bold text-rose-700">
+              {(summary.failed || 0) + (summary.bounced || 0)}
+            </span>
           </div>
         </div>
       </div>
@@ -270,12 +308,13 @@ export function AdminEmailDeliveriesClient() {
             className="h-9 px-3 text-xs font-medium rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:outline-hidden cursor-pointer w-full md:w-auto"
           >
             <option value="all">All Statuses</option>
-            <option value="sent">Sent via Resend</option>
-            <option value="simulated">Simulated</option>
+            <option value="delivered">Delivered (Confirmed)</option>
+            <option value="accepted">Accepted (Resend Queue)</option>
+            <option value="simulated">Simulated (Dev/Test)</option>
             <option value="failed">Failed</option>
             <option value="retry_scheduled">Retry Scheduled</option>
+            <option value="bounced">Bounced (Non-retryable)</option>
             <option value="pending">Pending</option>
-            <option value="bounced">Bounced</option>
           </select>
         </div>
       </div>
@@ -379,8 +418,15 @@ export function AdminEmailDeliveriesClient() {
                       )}
                     </td>
                     <td className="py-3 px-4 text-right whitespace-nowrap">
-                      {["failed", "pending", "retry_scheduled"].includes(item.status) &&
-                      item.retryCount < 5 ? (
+                      {item.isNonRetryable || item.status === "bounced" ? (
+                        <span className="text-[10px] text-slate-400 font-medium">
+                          Non-retryable
+                        </span>
+                      ) : item.retryCount >= 5 ? (
+                        <span className="text-[10px] text-slate-400 font-medium">
+                          Max retries (5)
+                        </span>
+                      ) : ["failed", "pending", "retry_scheduled"].includes(item.status) ? (
                         <button
                           onClick={() => handleRetry(item.id)}
                           disabled={retryingId === item.id}
@@ -392,10 +438,6 @@ export function AdminEmailDeliveriesClient() {
                           />
                           <span>{retryingId === item.id ? "Retrying..." : "Retry"}</span>
                         </button>
-                      ) : item.retryCount >= 5 ? (
-                        <span className="text-[10px] text-slate-400 font-medium">
-                          Max retries (5)
-                        </span>
                       ) : (
                         <span className="text-slate-400 text-[11px]">—</span>
                       )}

@@ -27,7 +27,16 @@ export async function GET(req: NextRequest) {
 
     if (
       status !== "all" &&
-      ["sent", "failed", "pending", "simulated", "retry_scheduled", "bounced"].includes(status)
+      [
+        "sent",
+        "accepted",
+        "delivered",
+        "failed",
+        "pending",
+        "simulated",
+        "retry_scheduled",
+        "bounced",
+      ].includes(status)
     ) {
       query.status = status;
     }
@@ -45,19 +54,29 @@ export async function GET(req: NextRequest) {
     }
 
     // 3. Execute queries concurrently
-    const [deliveries, totalFiltered, totalAll, sentCount, failedCount, simulatedCount] =
-      await Promise.all([
-        EmailDelivery.find(query)
-          .sort({ createdAt: -1 })
-          .skip(skip)
-          .limit(limit)
-          .lean(),
-        EmailDelivery.countDocuments(query),
-        EmailDelivery.countDocuments({}),
-        EmailDelivery.countDocuments({ status: "sent" }),
-        EmailDelivery.countDocuments({ status: "failed" }),
-        EmailDelivery.countDocuments({ status: "simulated" }),
-      ]);
+    const [
+      deliveries,
+      totalFiltered,
+      totalAll,
+      acceptedCount,
+      deliveredCount,
+      failedCount,
+      simulatedCount,
+      bouncedCount,
+    ] = await Promise.all([
+      EmailDelivery.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      EmailDelivery.countDocuments(query),
+      EmailDelivery.countDocuments({}),
+      EmailDelivery.countDocuments({ status: { $in: ["accepted", "sent"] } }),
+      EmailDelivery.countDocuments({ status: "delivered" }),
+      EmailDelivery.countDocuments({ status: { $in: ["failed", "retry_scheduled"] } }),
+      EmailDelivery.countDocuments({ status: "simulated" }),
+      EmailDelivery.countDocuments({ status: "bounced" }),
+    ]);
 
     const serializedDeliveries = deliveries.map((d) => ({
       id: d._id.toString(),
@@ -72,6 +91,9 @@ export async function GET(req: NextRequest) {
       error: d.error,
       retryCount: d.retryCount,
       lastAttemptAt: d.lastAttemptAt?.toISOString(),
+      deliveredAt: d.deliveredAt?.toISOString(),
+      nextRetryAt: d.nextRetryAt?.toISOString(),
+      isNonRetryable: Boolean(d.isNonRetryable),
       createdAt: d.createdAt.toISOString(),
     }));
 
@@ -86,9 +108,11 @@ export async function GET(req: NextRequest) {
       },
       summary: {
         total: totalAll,
-        sent: sentCount,
+        accepted: acceptedCount,
+        delivered: deliveredCount,
         failed: failedCount,
         simulated: simulatedCount,
+        bounced: bouncedCount,
       },
     });
   } catch (err: unknown) {

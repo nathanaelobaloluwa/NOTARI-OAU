@@ -31,6 +31,22 @@ export interface NotificationResult {
   error?: string;
 }
 
+function isNonRetryableError(errorMsg?: string): boolean {
+  if (!errorMsg) return false;
+  const msg = errorMsg.toLowerCase();
+  return (
+    msg.includes("invalid email") ||
+    msg.includes("syntax error") ||
+    msg.includes("mailbox unavailable") ||
+    msg.includes("does not exist") ||
+    msg.includes("blacklisted") ||
+    msg.includes("suppressed") ||
+    msg.includes("unsubscribed") ||
+    msg.includes("domain not found") ||
+    msg.includes("recipient rejected")
+  );
+}
+
 class NotificationService {
   /**
    * Safe email dispatch helper with outbox tracking, idempotency, and error isolation.
@@ -58,17 +74,29 @@ class NotificationService {
           ? new mongoose.Types.ObjectId(params.userId)
           : undefined;
 
-      // 1. Idempotency Check: prevent duplicate emails from webhook retries
-      if (params.relatedId && params.relatedType) {
+      const idempotencyKey =
+        params.relatedId && params.relatedType
+          ? `${recipient}:${params.relatedType}:${params.relatedId}:${params.template}`
+          : undefined;
+
+      // 1. Idempotency Check: prevent duplicate emails from webhook retries or parallel dispatches
+      if (idempotencyKey) {
         const existing = await EmailDelivery.findOne({
-          recipient,
-          relatedType: params.relatedType,
-          relatedId: params.relatedId,
-          template: params.template,
-          status: { $in: ["sent", "simulated"] },
+          $or: [
+            { idempotencyKey },
+            {
+              recipient,
+              relatedType: params.relatedType,
+              relatedId: params.relatedId,
+              template: params.template,
+            },
+          ],
         });
 
-        if (existing) {
+        if (
+          existing &&
+          ["sent", "accepted", "delivered", "simulated"].includes(existing.status)
+        ) {
           console.log(
             `ℹ️ [EMAIL_IDEMPOTENCY] Email already sent to ${recipient} for ${params.template} (${params.relatedId}). Skipping duplicate dispatch.`
           );
@@ -84,23 +112,50 @@ class NotificationService {
         }
       }
 
-      // 2. Create pending outbox audit record
-      const deliveryRecord = await EmailDelivery.create({
-        recipient,
-        userId: userObjectId,
-        subject: params.subject,
-        template: params.template,
-        status: "pending",
-        provider: "simulated",
-        relatedType: params.relatedType || "system",
-        relatedId: params.relatedId,
-        metadata: {
-          ...params.metadata,
-          html: params.html,
-          text: params.text,
-        },
-        lastAttemptAt: new Date(),
-      });
+      // 2. Create pending outbox audit record protected by unique idempotency key
+      let deliveryRecord: IEmailDeliveryDocument;
+      try {
+        deliveryRecord = await EmailDelivery.create({
+          recipient,
+          userId: userObjectId,
+          subject: params.subject,
+          template: params.template,
+          status: "pending",
+          provider: "simulated",
+          idempotencyKey,
+          relatedType: params.relatedType || "system",
+          relatedId: params.relatedId,
+          metadata: {
+            ...params.metadata,
+            html: params.html,
+            text: params.text,
+          },
+          lastAttemptAt: new Date(),
+        });
+      } catch (insertErr: unknown) {
+        // E11000 duplicate key error means a concurrent request already registered this outbox entry!
+        if (
+          insertErr &&
+          typeof insertErr === "object" &&
+          "code" in insertErr &&
+          (insertErr as { code?: number }).code === 11000
+        ) {
+          console.log(
+            `ℹ️ [EMAIL_CONCURRENCY_LOCKED] Concurrent dispatch intercepted by unique idempotency key for ${recipient} (${idempotencyKey}).`
+          );
+          const concurrentDoc = await EmailDelivery.findOne({ idempotencyKey });
+          return {
+            success: true,
+            delivered: true,
+            alreadyDelivered: true,
+            provider: concurrentDoc?.provider || "simulated",
+            recipient,
+            subject: params.subject,
+            timestamp,
+          };
+        }
+        throw insertErr;
+      }
 
       // 3. Dispatch via email client (Resend, simulation, or mock)
       const sendResult = await sendEmail({
@@ -112,14 +167,20 @@ class NotificationService {
 
       // 4. Update audit record with outcome
       if (sendResult.success) {
+        // Provider accepted the message (or simulated in local dev/test)
         const finalStatus: EmailDeliveryStatus =
-          sendResult.provider === "resend" ? "sent" : "simulated";
+          sendResult.provider === "resend" ? "accepted" : "simulated";
 
         deliveryRecord.status = finalStatus;
         deliveryRecord.provider = sendResult.provider;
         deliveryRecord.providerMessageId = sendResult.id;
-        deliveryRecord.deliveredAt = new Date();
+        // In local simulation/mock, delivery is immediate.
+        // For production Resend, deliveredAt is set when confirmed by webhook!
+        if (sendResult.provider !== "resend") {
+          deliveryRecord.deliveredAt = new Date();
+        }
         deliveryRecord.error = undefined;
+        deliveryRecord.nextRetryAt = undefined;
         await deliveryRecord.save();
 
         return {
@@ -131,13 +192,26 @@ class NotificationService {
           timestamp,
         };
       } else {
-        deliveryRecord.status = "failed";
+        const isNonRetryable = isNonRetryableError(sendResult.error);
+        deliveryRecord.retryCount += 1;
         deliveryRecord.provider = sendResult.provider;
         deliveryRecord.error = sendResult.error || "Unknown delivery failure";
-        deliveryRecord.retryCount += 1;
+        deliveryRecord.isNonRetryable = isNonRetryable;
+
+        if (isNonRetryable || deliveryRecord.retryCount >= 5) {
+          deliveryRecord.status = "failed";
+          deliveryRecord.nextRetryAt = undefined;
+        } else {
+          deliveryRecord.status = "retry_scheduled";
+          const backoffMinutes = Math.min(240, Math.pow(2, deliveryRecord.retryCount));
+          deliveryRecord.nextRetryAt = new Date(Date.now() + backoffMinutes * 60 * 1000);
+        }
+
         await deliveryRecord.save();
 
-        console.warn(`⚠️ [EMAIL_DELIVERY_FAILURE] Failed to deliver ${params.template} to ${recipient}: ${sendResult.error}`);
+        console.warn(
+          `⚠️ [EMAIL_DELIVERY_FAILURE] Failed to deliver ${params.template} to ${recipient} (retryable: ${!isNonRetryable}): ${sendResult.error}`
+        );
 
         return {
           success: false,
@@ -718,11 +792,26 @@ class NotificationService {
       return { success: false, status: 404, message: "Email delivery record not found" };
     }
 
-    if (delivery.status === "sent" || delivery.status === "simulated") {
+    if (
+      delivery.status === "sent" ||
+      delivery.status === "accepted" ||
+      delivery.status === "delivered" ||
+      delivery.status === "simulated"
+    ) {
       return {
         success: false,
         status: 400,
         message: "Email delivery has already been successfully dispatched.",
+        delivery,
+      };
+    }
+
+    if (delivery.isNonRetryable) {
+      return {
+        success: false,
+        status: 422,
+        message:
+          "This delivery failure is non-retryable (e.g. permanent bounce or invalid recipient address).",
         delivery,
       };
     }
@@ -750,11 +839,14 @@ class NotificationService {
       });
 
       if (sendResult.success) {
-        delivery.status = sendResult.provider === "resend" ? "sent" : "simulated";
+        delivery.status = sendResult.provider === "resend" ? "accepted" : "simulated";
         delivery.provider = sendResult.provider;
         delivery.providerMessageId = sendResult.id;
-        delivery.deliveredAt = new Date();
+        if (sendResult.provider !== "resend") {
+          delivery.deliveredAt = new Date();
+        }
         delivery.error = undefined;
+        delivery.nextRetryAt = undefined;
         await delivery.save();
 
         return {
@@ -764,9 +856,20 @@ class NotificationService {
           delivery,
         };
       } else {
+        const isNonRetryable = isNonRetryableError(sendResult.error);
         delivery.retryCount += 1;
-        delivery.status = delivery.retryCount >= 5 ? "failed" : "retry_scheduled";
+        delivery.isNonRetryable = isNonRetryable;
         delivery.error = sendResult.error || "Retry dispatch failed";
+
+        if (isNonRetryable || delivery.retryCount >= 5) {
+          delivery.status = "failed";
+          delivery.nextRetryAt = undefined;
+        } else {
+          delivery.status = "retry_scheduled";
+          const backoffMinutes = Math.min(240, Math.pow(2, delivery.retryCount));
+          delivery.nextRetryAt = new Date(Date.now() + backoffMinutes * 60 * 1000);
+        }
+
         await delivery.save();
 
         return {
@@ -778,9 +881,20 @@ class NotificationService {
       }
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : String(err);
+      const isNonRetryable = isNonRetryableError(errorMsg);
       delivery.retryCount += 1;
-      delivery.status = delivery.retryCount >= 5 ? "failed" : "retry_scheduled";
+      delivery.isNonRetryable = isNonRetryable;
       delivery.error = errorMsg;
+
+      if (isNonRetryable || delivery.retryCount >= 5) {
+        delivery.status = "failed";
+        delivery.nextRetryAt = undefined;
+      } else {
+        delivery.status = "retry_scheduled";
+        const backoffMinutes = Math.min(240, Math.pow(2, delivery.retryCount));
+        delivery.nextRetryAt = new Date(Date.now() + backoffMinutes * 60 * 1000);
+      }
+
       await delivery.save();
 
       return {

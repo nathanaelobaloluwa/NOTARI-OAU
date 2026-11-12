@@ -36,6 +36,8 @@ import {
   Phone,
   Info,
   Ban,
+  Megaphone,
+  Radio,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -131,6 +133,57 @@ export function OrganizerEventDetailClient({ eventId }: { eventId: string }) {
   const [editContactPhone, setEditContactPhone] = useState("");
   const [editInstructions, setEditInstructions] = useState("");
   const [editTiers, setEditTiers] = useState<TicketTier[]>([]);
+
+  // Attendee Broadcast Modal State
+  const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
+  const [broadcastSubject, setBroadcastSubject] = useState("");
+  const [broadcastMessage, setBroadcastMessage] = useState("");
+  const [broadcastType, setBroadcastType] = useState<"general" | "venue_change" | "time_change" | "cancellation" | "instructions">("general");
+  const [broadcastNewVenue, setBroadcastNewVenue] = useState("");
+  const [broadcastNewTime, setBroadcastNewTime] = useState("");
+  const [broadcastLoading, setBroadcastLoading] = useState(false);
+  const [broadcastError, setBroadcastError] = useState<string | null>(null);
+
+  const handleSendBroadcast = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!broadcastSubject.trim() || !broadcastMessage.trim()) {
+      setBroadcastError("Please provide both a subject line and announcement message.");
+      return;
+    }
+
+    setBroadcastLoading(true);
+    setBroadcastError(null);
+
+    try {
+      const res = await fetch(`/api/organizer/events/${eventId}/broadcast`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          updateType: broadcastType,
+          subjectLine: broadcastSubject.trim(),
+          message: broadcastMessage.trim(),
+          newVenue: broadcastType === "venue_change" ? broadcastNewVenue.trim() : undefined,
+          newTime: broadcastType === "time_change" ? broadcastNewTime.trim() : undefined,
+        }),
+      });
+
+      const json = await res.json();
+      if (res.ok && json.success) {
+        setActionSuccess("Announcement broadcast successfully dispatched to all registered attendees!");
+        setIsBroadcastModalOpen(false);
+        setBroadcastSubject("");
+        setBroadcastMessage("");
+        setBroadcastNewVenue("");
+        setBroadcastNewTime("");
+      } else {
+        setBroadcastError(json.message || "Failed to broadcast announcement.");
+      }
+    } catch {
+      setBroadcastError("Network error while dispatching broadcast notice.");
+    } finally {
+      setBroadcastLoading(false);
+    }
+  };
   const [editFieldErrors, setEditFieldErrors] = useState<Record<string, string[]>>({});
 
   const fetchEvent = useCallback(async () => {
@@ -618,6 +671,14 @@ export function OrganizerEventDetailClient({ eventId }: { eventId: string }) {
           {/* Published Actions */}
           {isPublished && (
             <>
+              <Button
+                size="sm"
+                onClick={() => setIsBroadcastModalOpen(true)}
+                className="gap-1.5 text-xs rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold shadow-xs"
+              >
+                <Megaphone className="w-3.5 h-3.5" />
+                <span>Broadcast Notice</span>
+              </Button>
               <Button
                 size="sm"
                 variant="outline"
@@ -1319,6 +1380,133 @@ export function OrganizerEventDetailClient({ eventId }: { eventId: string }) {
                 >
                   <Save className="w-3.5 h-3.5" />
                   <span>{actionLoading ? "Saving..." : "Save Changes"}</span>
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* ATTENDEE BROADCAST MODAL */}
+      {isBroadcastModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl p-6 border border-slate-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <Megaphone className="w-5 h-5 text-indigo-600" />
+                <h3 className="text-base font-bold text-[#101C3A]">Broadcast Notice to Attendees</h3>
+              </div>
+              <button
+                onClick={() => setIsBroadcastModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 p-1"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-500 mt-2">
+              Send an urgent notice, venue adjustment, schedule change, or preparation instruction directly to all confirmed attendees of <strong>{event?.title}</strong>.
+            </p>
+
+            {broadcastError && (
+              <div className="mt-3 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs">
+                {broadcastError}
+              </div>
+            )}
+
+            <form onSubmit={handleSendBroadcast} className="mt-4 space-y-3.5 text-xs">
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Notice Type *</label>
+                <select
+                  value={broadcastType}
+                  onChange={(e) => setBroadcastType(e.target.value as any)}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-800"
+                >
+                  <option value="general">General Notice / Announcement</option>
+                  <option value="venue_change">Venue Change / Relocation</option>
+                  <option value="time_change">Schedule / Time Adjustment</option>
+                  <option value="instructions">Entry & Arrival Instructions</option>
+                  <option value="cancellation">Emergency Event Cancellation</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Subject Line *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Venue Moved to Oduduwa Hall Main Auditorium"
+                  value={broadcastSubject}
+                  onChange={(e) => setBroadcastSubject(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-800"
+                />
+              </div>
+
+              {broadcastType === "venue_change" && (
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">New Venue Address</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Oduduwa Hall, OAU Campus"
+                    value={broadcastNewVenue}
+                    onChange={(e) => setBroadcastNewVenue(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-800"
+                  />
+                </div>
+              )}
+
+              {broadcastType === "time_change" && (
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">New Date & Time Description</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Saturday, Nov 15 at 2:00 PM (WAT)"
+                    value={broadcastNewTime}
+                    onChange={(e) => setBroadcastNewTime(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-800"
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Message to Attendees *</label>
+                <textarea
+                  rows={4}
+                  required
+                  placeholder="Provide complete information and guidance for attendees..."
+                  value={broadcastMessage}
+                  onChange={(e) => setBroadcastMessage(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-800"
+                />
+              </div>
+
+              <div className="p-3 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-900 text-[11px] flex items-start gap-2">
+                <Radio className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+                <span>
+                  This broadcast will automatically deliver in-app notifications and branded emails to all registered ticket holders.
+                </span>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsBroadcastModalOpen(false)}
+                  disabled={broadcastLoading}
+                  className="text-xs"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={broadcastLoading}
+                  className="text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-semibold gap-1.5"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>{broadcastLoading ? "Dispatching..." : "Send Broadcast"}</span>
                 </Button>
               </div>
             </form>

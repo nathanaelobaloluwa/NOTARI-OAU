@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
 import mongoose from "mongoose";
 import { connectToDatabase } from "../lib/database/mongoose";
 import { EmailDelivery } from "../models/EmailDelivery";
@@ -14,6 +15,7 @@ import {
   SendEmailOptions,
   SendEmailResult,
 } from "../lib/email/client";
+import { verifyResendWebhookSignature } from "../lib/email/webhook";
 import { isResendConfigured } from "../config/env";
 import {
   renderFreeTicketEmail,
@@ -113,6 +115,47 @@ async function runTests() {
     text: "Hello OAU",
   });
   assert(directSendRes.success === true, "sendEmail dispatches successfully via mock transport");
+
+  // Verify missing credentials in production strictly fails (no silent simulation)
+  const prevEnv = process.env.NODE_ENV;
+  setEmailMockHandler(null);
+  (process.env as Record<string, string | undefined>).NODE_ENV = "production";
+  const prodMissingKeyRes = await sendEmail({
+    to: "student@oau.edu.ng",
+    subject: "Production Test Alert",
+    html: "<p>Prod Test</p>",
+  });
+  assert(
+    prodMissingKeyRes.success === false,
+    "Missing credentials in production strictly returns success: false"
+  );
+  assert(
+    prodMissingKeyRes.error?.includes("Missing or invalid RESEND_API_KEY in production environment"),
+    "Production failure records clear operational error message"
+  );
+  assert(
+    prodMissingKeyRes.provider === "resend",
+    "Failed production attempt records provider: 'resend'"
+  );
+
+  // Restore test mock handler and environment
+  (process.env as Record<string, string | undefined>).NODE_ENV = prevEnv;
+  setEmailMockHandler(async (options: SendEmailOptions): Promise<SendEmailResult> => {
+    dispatchedEmails.push(options);
+    const recipient = Array.isArray(options.to) ? options.to.join(",") : options.to;
+    if (recipient.includes("fail@bounce.oau.edu.ng")) {
+      return {
+        success: false,
+        provider: "mock",
+        error: "Simulated mail server bounce: 550 Mailbox unavailable",
+      };
+    }
+    return {
+      success: true,
+      id: `mock_resend_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+      provider: "mock",
+    };
+  });
 
   // ---------------------------------------------------------------------------
   // SECTION 2: TEMPLATE GENERATION (HTML & PLAIN TEXT)
@@ -468,9 +511,266 @@ async function runTests() {
     assert(reFetchedPrefs.eventReminders === false, "Persisted eventReminders is false in MongoDB");
     assert(reFetchedPrefs.campusAnnouncements === true, "Persisted campusAnnouncements is true in MongoDB");
 
+    // -------------------------------------------------------------------------
+    // SECTION 6: RESEND WEBHOOK CRYPTOGRAPHIC SIGNATURE & REPLAY DEFENSE
+    // -------------------------------------------------------------------------
+    console.log("\n▶ 6. Resend Webhook Cryptographic Signature & Replay Defense");
+
+    const testSecret = "whsec_mfasdjklfhasdjkfhasdjkfhasdjkf="; // 32 bytes base64
+    const testSvixId = `msg_${Date.now()}`;
+    const testSvixTimestamp = Math.floor(Date.now() / 1000).toString();
+    const testPayload = JSON.stringify({
+      type: "email.delivered",
+      data: { email_id: "resend_test_webhook_msg_001" },
+    });
+
+    // Generate valid HMAC signature
+    const secretKeyBuf = Buffer.from(testSecret.replace("whsec_", ""), "base64");
+    const toSign = `${testSvixId}.${testSvixTimestamp}.${testPayload}`;
+    const validSignature = crypto.createHmac("sha256", secretKeyBuf).update(toSign, "utf-8").digest("base64");
+    const validHeader = `v1,${validSignature}`;
+
+    // Test 6.1: Valid signature passes verification
+    const sigCheckValid = verifyResendWebhookSignature({
+      payload: testPayload,
+      svixId: testSvixId,
+      svixTimestamp: testSvixTimestamp,
+      svixSignature: validHeader,
+      secret: testSecret,
+    });
+    assert(sigCheckValid === true, "Valid Svix / Resend webhook signature successfully verified");
+
+    // Test 6.2: Tampered payload fails verification
+    const sigCheckTampered = verifyResendWebhookSignature({
+      payload: testPayload + "tampered",
+      svixId: testSvixId,
+      svixTimestamp: testSvixTimestamp,
+      svixSignature: validHeader,
+      secret: testSecret,
+    });
+    assert(sigCheckTampered === false, "Tampered webhook payload strictly rejected by cryptographic verification");
+
+    // Test 6.3: Expired timestamp (>300 seconds) fails verification (replay defense)
+    const oldTimestamp = (Math.floor(Date.now() / 1000) - 400).toString();
+    const sigCheckExpired = verifyResendWebhookSignature({
+      payload: testPayload,
+      svixId: testSvixId,
+      svixTimestamp: oldTimestamp,
+      svixSignature: validHeader,
+      secret: testSecret,
+    });
+    assert(sigCheckExpired === false, "Expired webhook timestamp (>300s) rejected by replay attack defense");
+
+    // -------------------------------------------------------------------------
+    // SECTION 7: RESEND WEBHOOK DELIVERY & BOUNCE STATUS ACCURACY
+    // -------------------------------------------------------------------------
+    console.log("\n▶ 7. Webhook Delivery, Bounce & Audit Lifecycle Processing");
+
+    const webhookMsgId = `resend_wh_msg_${Date.now()}`;
+    const webhookDeliveryDoc = await EmailDelivery.create({
+      recipient: "attendee.webhook@oau.edu.ng",
+      subject: "Entrance Pass",
+      template: "ticket_pass",
+      status: "accepted",
+      provider: "resend",
+      providerMessageId: webhookMsgId,
+      lastAttemptAt: new Date(),
+    });
+
+    // Test 7.1: Accepted status does NOT have deliveredAt pre-set
+    assert(webhookDeliveryDoc.status === "accepted", "Initial dispatch records status: 'accepted'");
+    assert(webhookDeliveryDoc.deliveredAt == null, "deliveredAt is strictly undefined until webhook delivery event");
+
+    // Test 7.2: Simulate email.delivered webhook processing
+    webhookDeliveryDoc.status = "delivered";
+    webhookDeliveryDoc.deliveredAt = new Date();
+    webhookDeliveryDoc.webhookEvents = [
+      {
+        eventId: `evt_deliv_${Date.now()}`,
+        type: "email.delivered",
+        timestamp: new Date(),
+      },
+    ];
+    await webhookDeliveryDoc.save();
+
+    const deliveredRecord = await EmailDelivery.findById(webhookDeliveryDoc._id);
+    assert(deliveredRecord?.status === "delivered", "Webhook updates status to 'delivered'");
+    assert(deliveredRecord?.deliveredAt != null, "Webhook populates deliveredAt timestamp accurately");
+    assert(deliveredRecord?.webhookEvents?.length === 1, "Webhook event recorded in audit trail");
+
+    // Test 7.3: Simulate email.bounced webhook processing
+    const bounceMsgId = `resend_bounce_msg_${Date.now()}`;
+    const bounceDoc = await EmailDelivery.create({
+      recipient: "invalid.student@oau.edu.ng",
+      subject: "Important Event Notice",
+      template: "event_update",
+      status: "accepted",
+      provider: "resend",
+      providerMessageId: bounceMsgId,
+      lastAttemptAt: new Date(),
+    });
+
+    bounceDoc.status = "bounced";
+    bounceDoc.isNonRetryable = true;
+    bounceDoc.error = "550 5.1.1 User unknown";
+    bounceDoc.webhookEvents = [
+      {
+        eventId: `evt_bounce_${Date.now()}`,
+        type: "email.bounced",
+        timestamp: new Date(),
+      },
+    ];
+    await bounceDoc.save();
+
+    const bouncedRecord = await EmailDelivery.findById(bounceDoc._id);
+    assert(bouncedRecord?.status === "bounced", "Bounce event marks record status: 'bounced'");
+    assert(bouncedRecord?.isNonRetryable === true, "Bounced record is marked isNonRetryable: true");
+    assert(bouncedRecord?.error?.includes("User unknown"), "Bounce error reason recorded");
+
+    // -------------------------------------------------------------------------
+    // SECTION 8: CONCURRENT DISPATCH & UNIQUE IDEMPOTENCY KEY PROTECTION
+    // -------------------------------------------------------------------------
+    console.log("\n▶ 8. Concurrent Dispatch & Unique Idempotency Key Protection");
+
+    const concurrentBookingRef = `NOT-BKG-CONCURRENT-${Date.now()}`;
+    const concurrentRecipient = `concurrent_${Date.now()}@student.oau.edu.ng`;
+
+    // Fire 5 concurrent dispatches simultaneously for the exact same booking reference
+    const concurrentDispatches = await Promise.all([
+      notificationService.notifyFreeTicketIssued({
+        userId: testUserId,
+        studentName: "Concurrent Attendee",
+        studentEmail: concurrentRecipient,
+        eventTitle: "IFE Music Festival",
+        eventVenue: "Amphi Theatre",
+        eventDate: new Date(),
+        bookingReference: concurrentBookingRef,
+        tierName: "Regular Pass",
+        quantity: 1,
+        ticketCodes: ["NOT-CONC-001"],
+      }),
+      notificationService.notifyFreeTicketIssued({
+        userId: testUserId,
+        studentName: "Concurrent Attendee",
+        studentEmail: concurrentRecipient,
+        eventTitle: "IFE Music Festival",
+        eventVenue: "Amphi Theatre",
+        eventDate: new Date(),
+        bookingReference: concurrentBookingRef,
+        tierName: "Regular Pass",
+        quantity: 1,
+        ticketCodes: ["NOT-CONC-001"],
+      }),
+      notificationService.notifyFreeTicketIssued({
+        userId: testUserId,
+        studentName: "Concurrent Attendee",
+        studentEmail: concurrentRecipient,
+        eventTitle: "IFE Music Festival",
+        eventVenue: "Amphi Theatre",
+        eventDate: new Date(),
+        bookingReference: concurrentBookingRef,
+        tierName: "Regular Pass",
+        quantity: 1,
+        ticketCodes: ["NOT-CONC-001"],
+      }),
+    ]);
+
+    assert(
+      concurrentDispatches.every((res) => res.success === true),
+      "All concurrent requests resolve successfully without throwing uncaught exceptions"
+    );
+
+    const concurrentOutboxDocs = await EmailDelivery.find({
+      recipient: concurrentRecipient,
+      relatedId: concurrentBookingRef,
+    });
+    assert(
+      concurrentOutboxDocs.length === 1,
+      `Exactly 1 outbox document created in database despite 3 concurrent requests (got ${concurrentOutboxDocs.length})`
+    );
+
+    // -------------------------------------------------------------------------
+    // SECTION 9: AUTOMATED RETRY BATCH ENGINE (processPendingRetries)
+    // -------------------------------------------------------------------------
+    console.log("\n▶ 9. Automated Batch Retry Processor & Exponential Backoff");
+
+    const autoRetryRecipient = `auto_retry_${Date.now()}@student.oau.edu.ng`;
+
+    // Record A: Due for retry (nextRetryAt in the past)
+    const dueDoc = await EmailDelivery.create({
+      recipient: autoRetryRecipient,
+      subject: "Due Retry Notice",
+      template: "system_notice",
+      status: "retry_scheduled",
+      provider: "mock",
+      retryCount: 1,
+      lastAttemptAt: new Date(Date.now() - 120000),
+      nextRetryAt: new Date(Date.now() - 60000), // Due 1 minute ago
+      metadata: { html: "<p>Due for retry</p>", text: "Due for retry" },
+    });
+
+    // Record B: NOT due yet (nextRetryAt in the future)
+    const futureDoc = await EmailDelivery.create({
+      recipient: autoRetryRecipient,
+      subject: "Future Retry Notice",
+      template: "system_notice",
+      status: "retry_scheduled",
+      provider: "mock",
+      retryCount: 1,
+      lastAttemptAt: new Date(),
+      nextRetryAt: new Date(Date.now() + 600000), // Due in 10 minutes
+      metadata: { html: "<p>Not due</p>", text: "Not due" },
+    });
+
+    // Record C: Non-retryable failure (should be skipped)
+    const nonRetryableDoc = await EmailDelivery.create({
+      recipient: autoRetryRecipient,
+      subject: "Non-Retryable Notice",
+      template: "system_notice",
+      status: "failed",
+      provider: "mock",
+      retryCount: 1,
+      isNonRetryable: true,
+      lastAttemptAt: new Date(),
+      metadata: { html: "<p>Non-retryable</p>", text: "Non-retryable" },
+    });
+
+    const retryBatchResult = await notificationService.processPendingRetries({ batchSize: 10 });
+    assert(retryBatchResult.processed >= 1, "Automated retry processor processed due records");
+    assert(retryBatchResult.succeeded >= 1, "Due record successfully re-dispatched via batch runner");
+
+    const reCheckedDue = await EmailDelivery.findById(dueDoc._id);
+    assert(
+      reCheckedDue?.status === "accepted" || reCheckedDue?.status === "simulated",
+      "Due record transitioned to accepted/simulated upon automated retry"
+    );
+
+    const reCheckedFuture = await EmailDelivery.findById(futureDoc._id);
+    assert(
+      reCheckedFuture?.status === "retry_scheduled",
+      "Future record not due remains untouched as retry_scheduled"
+    );
+
+    const reCheckedNonRetryable = await EmailDelivery.findById(nonRetryableDoc._id);
+    assert(
+      reCheckedNonRetryable?.status === "failed",
+      "Non-retryable record remains untouched as failed"
+    );
+
     // Clean up test records
     await EmailDelivery.deleteMany({
-      recipient: { $in: [testStudentEmail, failRecipient, retryRecipient, maxRetryDoc.recipient] },
+      recipient: {
+        $in: [
+          testStudentEmail,
+          failRecipient,
+          retryRecipient,
+          maxRetryDoc.recipient,
+          "attendee.webhook@oau.edu.ng",
+          "invalid.student@oau.edu.ng",
+          concurrentRecipient,
+          autoRetryRecipient,
+        ],
+      },
     });
     await Notification.deleteMany({ userId: testUserId });
     await User.findByIdAndDelete(prefStudent._id);

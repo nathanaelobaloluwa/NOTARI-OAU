@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { connectToDatabase } from "@/lib/database/mongoose";
-import { EmailDelivery, EmailRelatedType, EmailDeliveryStatus } from "@/models/EmailDelivery";
+import { EmailDelivery, EmailRelatedType, EmailDeliveryStatus, IEmailDeliveryDocument } from "@/models/EmailDelivery";
 import { createInAppNotification } from "@/lib/notifications/in-app";
 import { sendEmail } from "@/lib/email/client";
 import {
@@ -94,7 +94,11 @@ class NotificationService {
         provider: "simulated",
         relatedType: params.relatedType || "system",
         relatedId: params.relatedId,
-        metadata: params.metadata,
+        metadata: {
+          ...params.metadata,
+          html: params.html,
+          text: params.text,
+        },
         lastAttemptAt: new Date(),
       });
 
@@ -114,6 +118,7 @@ class NotificationService {
         deliveryRecord.status = finalStatus;
         deliveryRecord.provider = sendResult.provider;
         deliveryRecord.providerMessageId = sendResult.id;
+        deliveryRecord.deliveredAt = new Date();
         deliveryRecord.error = undefined;
         await deliveryRecord.save();
 
@@ -690,6 +695,101 @@ class NotificationService {
       relatedType: "refund",
       relatedId: params.reference,
     });
+  }
+
+  /**
+   * Admin-initiated retry for a failed or pending email delivery.
+   * Enforces exponential backoff / retry bounding (max 5 attempts).
+   */
+  public async retryFailedDelivery(deliveryId: string): Promise<{
+    success: boolean;
+    status: number;
+    message: string;
+    delivery?: IEmailDeliveryDocument | null;
+  }> {
+    if (!mongoose.Types.ObjectId.isValid(deliveryId)) {
+      return { success: false, status: 400, message: "Invalid delivery identifier" };
+    }
+
+    await connectToDatabase();
+
+    const delivery = await EmailDelivery.findById(deliveryId);
+    if (!delivery) {
+      return { success: false, status: 404, message: "Email delivery record not found" };
+    }
+
+    if (delivery.status === "sent" || delivery.status === "simulated") {
+      return {
+        success: false,
+        status: 400,
+        message: "Email delivery has already been successfully dispatched.",
+        delivery,
+      };
+    }
+
+    if (delivery.retryCount >= 5) {
+      return {
+        success: false,
+        status: 422,
+        message: "Maximum delivery retry attempts (5) exceeded for this message.",
+        delivery,
+      };
+    }
+
+    const html = (delivery.metadata?.html as string) || `<p>${delivery.subject}</p>`;
+    const text = (delivery.metadata?.text as string) || delivery.subject;
+
+    delivery.lastAttemptAt = new Date();
+
+    try {
+      const sendResult = await sendEmail({
+        to: delivery.recipient,
+        subject: delivery.subject,
+        html,
+        text,
+      });
+
+      if (sendResult.success) {
+        delivery.status = sendResult.provider === "resend" ? "sent" : "simulated";
+        delivery.provider = sendResult.provider;
+        delivery.providerMessageId = sendResult.id;
+        delivery.deliveredAt = new Date();
+        delivery.error = undefined;
+        await delivery.save();
+
+        return {
+          success: true,
+          status: 200,
+          message: "Email delivery re-dispatched successfully.",
+          delivery,
+        };
+      } else {
+        delivery.retryCount += 1;
+        delivery.status = delivery.retryCount >= 5 ? "failed" : "retry_scheduled";
+        delivery.error = sendResult.error || "Retry dispatch failed";
+        await delivery.save();
+
+        return {
+          success: false,
+          status: 502,
+          message: `Retry dispatch failed: ${sendResult.error}`,
+          delivery,
+        };
+      }
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      delivery.retryCount += 1;
+      delivery.status = delivery.retryCount >= 5 ? "failed" : "retry_scheduled";
+      delivery.error = errorMsg;
+      await delivery.save();
+
+      return {
+        success: false,
+        status: 500,
+        message: `Retry dispatch exception: ${errorMsg}`,
+        delivery,
+      };
+    }
   }
 }
 

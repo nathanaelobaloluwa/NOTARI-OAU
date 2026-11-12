@@ -25,7 +25,10 @@ export async function GET(req: NextRequest) {
     // 2. Build Filter Query
     const query: Record<string, unknown> = {};
 
-    if (status !== "all" && ["sent", "failed", "pending", "simulated"].includes(status)) {
+    if (
+      status !== "all" &&
+      ["sent", "failed", "pending", "simulated", "retry_scheduled", "bounced"].includes(status)
+    ) {
       query.status = status;
     }
 

@@ -20,7 +20,7 @@ interface EmailDeliveryItem {
   recipient: string;
   subject: string;
   template: string;
-  status: "pending" | "sent" | "failed" | "simulated";
+  status: "pending" | "sent" | "failed" | "simulated" | "retry_scheduled" | "bounced";
   provider: "resend" | "simulated" | "mock";
   providerMessageId?: string;
   relatedType?: string;
@@ -51,6 +51,11 @@ export function AdminEmailDeliveriesClient() {
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [retryingId, setRetryingId] = useState<string | null>(null);
+  const [actionFeedback, setActionFeedback] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
 
   const fetchDeliveries = useCallback(async () => {
     setLoading(true);
@@ -89,6 +94,36 @@ export function AdminEmailDeliveriesClient() {
     fetchDeliveries();
   };
 
+  const handleRetry = async (deliveryId: string) => {
+    setRetryingId(deliveryId);
+    setActionFeedback(null);
+    try {
+      const res = await fetch(`/api/admin/email-deliveries/${deliveryId}/retry`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setActionFeedback({
+          type: "success",
+          message: data.message || "Email delivery re-dispatched successfully.",
+        });
+        await fetchDeliveries();
+      } else {
+        setActionFeedback({
+          type: "error",
+          message: data.message || "Failed to retry email delivery.",
+        });
+      }
+    } catch {
+      setActionFeedback({
+        type: "error",
+        message: "Network error occurred while attempting retry.",
+      });
+    } finally {
+      setRetryingId(null);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "sent":
@@ -110,6 +145,20 @@ export function AdminEmailDeliveriesClient() {
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
             <AlertCircle className="w-3 h-3 text-rose-600" />
             <span>Failed</span>
+          </span>
+        );
+      case "retry_scheduled":
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+            <RefreshCw className="w-3 h-3 text-amber-600" />
+            <span>Retry Scheduled</span>
+          </span>
+        );
+      case "bounced":
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-300">
+            <AlertCircle className="w-3 h-3 text-slate-600" />
+            <span>Bounced</span>
           </span>
         );
       default:
@@ -224,10 +273,38 @@ export function AdminEmailDeliveriesClient() {
             <option value="sent">Sent via Resend</option>
             <option value="simulated">Simulated</option>
             <option value="failed">Failed</option>
+            <option value="retry_scheduled">Retry Scheduled</option>
             <option value="pending">Pending</option>
+            <option value="bounced">Bounced</option>
           </select>
         </div>
       </div>
+
+      {/* Action Feedback Banner */}
+      {actionFeedback && (
+        <div
+          className={`p-3.5 rounded-xl border text-xs flex items-center justify-between gap-3 ${
+            actionFeedback.type === "success"
+              ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+              : "bg-rose-50 border-rose-200 text-rose-800"
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            {actionFeedback.type === "success" ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            ) : (
+              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            )}
+            <span>{actionFeedback.message}</span>
+          </div>
+          <button
+            onClick={() => setActionFeedback(null)}
+            className="text-xs opacity-60 hover:opacity-100 cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Deliveries Table */}
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
@@ -241,19 +318,20 @@ export function AdminEmailDeliveriesClient() {
                 <th className="py-3 px-4">Status</th>
                 <th className="py-3 px-4">Reference</th>
                 <th className="py-3 px-4">Error / Notes</th>
+                <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-400">
+                  <td colSpan={7} className="py-12 text-center text-slate-400">
                     <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-indigo-500" />
                     <span>Loading email delivery audit logs...</span>
                   </td>
                 </tr>
               ) : deliveries.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-400">
+                  <td colSpan={7} className="py-12 text-center text-slate-400">
                     <Mail className="w-6 h-6 mx-auto mb-2 text-slate-300" />
                     <p className="font-medium text-slate-600">No email delivery records found.</p>
                     <p className="text-[11px] text-slate-400 mt-1">
@@ -298,6 +376,28 @@ export function AdminEmailDeliveriesClient() {
                         </span>
                       ) : (
                         <span className="text-slate-400">—</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 text-right whitespace-nowrap">
+                      {["failed", "pending", "retry_scheduled"].includes(item.status) &&
+                      item.retryCount < 5 ? (
+                        <button
+                          onClick={() => handleRetry(item.id)}
+                          disabled={retryingId === item.id}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 font-semibold text-[11px] disabled:opacity-50 cursor-pointer transition-colors"
+                          title="Retry sending this notification"
+                        >
+                          <RefreshCw
+                            className={`w-3 h-3 ${retryingId === item.id ? "animate-spin" : ""}`}
+                          />
+                          <span>{retryingId === item.id ? "Retrying..." : "Retry"}</span>
+                        </button>
+                      ) : item.retryCount >= 5 ? (
+                        <span className="text-[10px] text-slate-400 font-medium">
+                          Max retries (5)
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 text-[11px]">—</span>
                       )}
                     </td>
                   </tr>

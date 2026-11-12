@@ -4,6 +4,9 @@ import mongoose from "mongoose";
 import { connectToDatabase } from "../lib/database/mongoose";
 import { EmailDelivery } from "../models/EmailDelivery";
 import { Notification } from "../models/Notification";
+import { User } from "../models/User";
+import { USER_ROLES } from "../constants/roles";
+import { getStudentProfile, updateStudentProfile } from "../lib/student/service";
 import { notificationService } from "../services/notification.service";
 import {
   sendEmail,
@@ -358,9 +361,119 @@ async function runTests() {
     assert(failedAudit?.error?.includes("Mailbox unavailable"), "Error message recorded in audit record");
     assert(failedAudit?.retryCount === 1, "Retry count initialized to 1");
 
+    // -------------------------------------------------------------------------
+    // SECTION 4: DELIVERY RETRY SYSTEM & BOUNDING SAFEGUARDS
+    // -------------------------------------------------------------------------
+    console.log("\n▶ 4. Admin Delivery Recovery & Bounded Retry Safeguards");
+
+    const retryRecipient = `retry_${Date.now()}@student.oau.edu.ng`;
+    const failedDoc = await EmailDelivery.create({
+      recipient: retryRecipient,
+      subject: "Important Event Update",
+      template: "event_update",
+      status: "failed",
+      provider: "mock",
+      retryCount: 1,
+      lastAttemptAt: new Date(),
+      error: "Temporary network timeout",
+      metadata: {
+        html: "<p>Important event venue update for OAU students.</p>",
+        text: "Important event venue update for OAU students.",
+      },
+    });
+
+    // Test 4.1: Successful Retry Execution
+    const retrySuccess = await notificationService.retryFailedDelivery(failedDoc._id.toString());
+    assert(retrySuccess.success === true, "Admin retry request succeeds for failed delivery");
+    assert(retrySuccess.status === 200, "Retry status code is 200 OK");
+    assert(
+      retrySuccess.delivery?.status === "sent" || retrySuccess.delivery?.status === "simulated",
+      "Retried delivery status transitions to sent or simulated"
+    );
+    assert(retrySuccess.delivery?.deliveredAt != null, "deliveredAt timestamp is recorded upon successful retry");
+    assert(retrySuccess.delivery?.error === undefined, "Delivery error is cleared upon successful retry");
+
+    // Test 4.2: Guard Against Re-Sending Already Dispatched Emails
+    const duplicateRetry = await notificationService.retryFailedDelivery(failedDoc._id.toString());
+    assert(duplicateRetry.success === false, "Retry rejected for already delivered notification");
+    assert(duplicateRetry.status === 400, "Already-delivered retry returns 400 Bad Request");
+    assert(
+      duplicateRetry.message.includes("already been successfully dispatched"),
+      "Helpful error message explains email was already dispatched"
+    );
+
+    // Test 4.3: Max Retry Attempt Bounding (Cap at 5)
+    const maxRetryDoc = await EmailDelivery.create({
+      recipient: `max_retries_${Date.now()}@oau.edu.ng`,
+      subject: "Persistent Failure Notice",
+      template: "system_notice",
+      status: "failed",
+      provider: "mock",
+      retryCount: 5,
+      lastAttemptAt: new Date(),
+      error: "Persistent destination rejection",
+      metadata: { html: "<p>Notice</p>", text: "Notice" },
+    });
+
+    const maxRetryAttempt = await notificationService.retryFailedDelivery(maxRetryDoc._id.toString());
+    assert(maxRetryAttempt.success === false, "Retry rejected when retryCount >= 5");
+    assert(maxRetryAttempt.status === 422, "Max retries exceeded returns 422 Unprocessable Entity");
+    assert(
+      maxRetryAttempt.message.includes("Maximum delivery retry attempts (5) exceeded"),
+      "Message explains max delivery retries safeguard"
+    );
+
+    // Test 4.4: Invalid ID Validation
+    const invalidIdRetry = await notificationService.retryFailedDelivery("non_existent_id");
+    assert(invalidIdRetry.success === false, "Invalid delivery ID returns success: false");
+    assert(invalidIdRetry.status === 400, "Invalid ID returns 400 status");
+
+    // -------------------------------------------------------------------------
+    // SECTION 5: STUDENT EMAIL PREFERENCES & AUDIT PERSISTENCE
+    // -------------------------------------------------------------------------
+    console.log("\n▶ 5. User Email Preferences Persistence & Validation");
+
+    const prefStudent = await User.create({
+      name: "Pref Test Student",
+      email: `pref_student_${Date.now()}@student.oau.edu.ng`,
+      role: USER_ROLES.STUDENT,
+      matricNumber: `CSC/2022/${Math.floor(100 + Math.random() * 900)}`,
+      password: "hashed_dummy_password",
+      isVerified: true,
+    });
+
+    // Test 5.1: Default preferences when unset
+    const initialProfile = await getStudentProfile(prefStudent._id.toString());
+    assert(initialProfile.success === true, "Fetched initial student profile");
+    const initPrefs = (initialProfile.data as { emailPreferences: { eventReminders: boolean; campusAnnouncements: boolean } }).emailPreferences;
+    assert(initPrefs.eventReminders === true, "Default eventReminders is true");
+    assert(initPrefs.campusAnnouncements === true, "Default campusAnnouncements is true");
+
+    // Test 5.2: Update preferences (Opt out of reminders, keep announcements)
+    const updatePrefsRes = await updateStudentProfile(prefStudent._id.toString(), {
+      name: "Pref Test Student",
+      emailPreferences: {
+        eventReminders: false,
+        campusAnnouncements: true,
+      },
+    });
+    assert(updatePrefsRes.success === true, "Updated student email preferences");
+    const updatedPrefs = (updatePrefsRes.data as { emailPreferences: { eventReminders: boolean; campusAnnouncements: boolean } }).emailPreferences;
+    assert(updatedPrefs.eventReminders === false, "eventReminders updated to false");
+    assert(updatedPrefs.campusAnnouncements === true, "campusAnnouncements remains true");
+
+    // Test 5.3: Verify persistence via re-fetching
+    const reFetchedProfile = await getStudentProfile(prefStudent._id.toString());
+    const reFetchedPrefs = (reFetchedProfile.data as { emailPreferences: { eventReminders: boolean; campusAnnouncements: boolean } }).emailPreferences;
+    assert(reFetchedPrefs.eventReminders === false, "Persisted eventReminders is false in MongoDB");
+    assert(reFetchedPrefs.campusAnnouncements === true, "Persisted campusAnnouncements is true in MongoDB");
+
     // Clean up test records
-    await EmailDelivery.deleteMany({ recipient: { $in: [testStudentEmail, failRecipient] } });
+    await EmailDelivery.deleteMany({
+      recipient: { $in: [testStudentEmail, failRecipient, retryRecipient, maxRetryDoc.recipient] },
+    });
     await Notification.deleteMany({ userId: testUserId });
+    await User.findByIdAndDelete(prefStudent._id);
     console.log("  🧹 Cleaned up test database records.");
   } catch (dbErr) {
     console.error("  ❌ Database test error:", dbErr);

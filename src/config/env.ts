@@ -22,9 +22,23 @@ const envSchema = z.object({
   CLOUDINARY_API_KEY: z.string().optional(),
   CLOUDINARY_API_SECRET: z.string().optional(),
 
-  // Email (Resend) - Optional during scaffold
+  // Email (Resend)
   RESEND_API_KEY: z.string().optional(),
-  EMAIL_FROM: z.string().default("NOTARI OAU <notifications@notari.oau.edu.ng>"),
+  EMAIL_FROM: z
+    .string()
+    .min(3)
+    .refine(
+      (val) => {
+        const trimmed = val.trim();
+        const displayPattern = /^.+<[^\s@]+@[^\s@]+\.[^\s@]+>$/;
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return displayPattern.test(trimmed) || emailPattern.test(trimmed);
+      },
+      { message: "EMAIL_FROM must be a valid email or 'Display Name <email@domain>'." }
+    )
+    .default("NOTARI OAU <notifications@notari.oau.edu.ng>"),
+  RESEND_WEBHOOK_SECRET: z.string().optional(),
+  CRON_SECRET: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

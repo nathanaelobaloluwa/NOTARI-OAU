@@ -71,6 +71,18 @@ export async function sendEmail(options: SendEmailOptions): Promise<SendEmailRes
   const client = getResendClient();
 
   if (!client) {
+    // In production, missing credentials MUST produce a clearly recorded failure and operationally visible error!
+    if (process.env.NODE_ENV === "production") {
+      const errorMsg =
+        "CRITICAL: Missing or invalid RESEND_API_KEY in production environment. Email delivery aborted.";
+      console.error(`🚨 [EMAIL_CONFIG_ERROR] ${errorMsg}`);
+      return {
+        success: false,
+        provider: "resend",
+        error: errorMsg,
+      };
+    }
+
     console.log(
       `📧 [Email Simulated (No Resend Key)] To: ${recipient} | Subject: "${options.subject}"`
     );

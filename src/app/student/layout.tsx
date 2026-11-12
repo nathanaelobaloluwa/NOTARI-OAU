@@ -18,11 +18,13 @@ import {
   LogOut,
   Search,
   Sparkles,
+  Megaphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const STUDENT_NAV = [
   { name: "Dashboard", href: "/student", icon: LayoutDashboard },
+  { name: "Announcements", href: "/student/announcements", icon: Megaphone },
   { name: "My Events", href: "/student/my-events", icon: Calendar },
   { name: "My Tickets", href: "/student/tickets", icon: Ticket },
   { name: "Event History", href: "/student/history", icon: History },

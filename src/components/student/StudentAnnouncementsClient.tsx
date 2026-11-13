@@ -1,23 +1,15 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
 import {
   Megaphone,
   Search,
-  Filter,
   Calendar,
   Pin,
-  Clock,
-  CheckCircle,
-  ExternalLink,
   ChevronLeft,
   ChevronRight,
   X,
-  Sparkles,
-  Users,
   AlertCircle,
-  Bell,
   Check,
 } from "lucide-react";
 import { ANNOUNCEMENT_CATEGORIES } from "@/models/Announcement";

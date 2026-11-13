@@ -3,20 +3,16 @@ import { connectToDatabase } from "@/lib/database/mongoose";
 import {
   Announcement,
   IAnnouncementDocument,
-  AnnouncementCategory,
   AnnouncementPriority,
-  AudienceType,
 } from "@/models/Announcement";
-import { User, IUserDocument } from "@/models/User";
+import { User } from "@/models/User";
 import { Event } from "@/models/Event";
 import { Ticket } from "@/models/Ticket";
-import { Booking } from "@/models/Booking";
 import { USER_ROLES } from "@/constants/roles";
 import { notificationService } from "./notification.service";
 import { reminderService } from "./reminder.service";
 import {
   AnnouncementCreateInput,
-  AnnouncementUpdateInput,
   AnnouncementReviewInput,
   OrganizerBroadcastInput,
   AnnouncementQueryInput,

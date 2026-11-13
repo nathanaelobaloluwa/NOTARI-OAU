@@ -1,19 +1,19 @@
 import fs from "fs";
 import path from "path";
 import { connectToDatabase } from "@/lib/database/mongoose";
-import { User, IUserDocument } from "@/models/User";
-import { Event, IEventDocument } from "@/models/Event";
-import { Booking, IBookingDocument } from "@/models/Booking";
-import { Ticket, ITicketDocument } from "@/models/Ticket";
-import { Announcement, IAnnouncementDocument } from "@/models/Announcement";
+import { User } from "@/models/User";
+import { Event } from "@/models/Event";
+import { Booking } from "@/models/Booking";
+import { Ticket } from "@/models/Ticket";
+import { Announcement } from "@/models/Announcement";
 import { EventReminderDispatch } from "@/models/EventReminderDispatch";
 import { EmailDelivery } from "@/models/EmailDelivery";
 import { Notification } from "@/models/Notification";
 import { reminderService } from "@/services/reminder.service";
 import { announcementService } from "@/services/announcement.service";
-import { notificationService } from "@/services/notification.service";
 import { setEmailMockHandler, SendEmailOptions, SendEmailResult } from "@/lib/email/client";
 import { USER_ROLES } from "@/constants/roles";
+import { AnnouncementReviewInput } from "@/validators/announcement";
 import mongoose from "mongoose";
 
 /**
@@ -600,7 +600,7 @@ async function runTests() {
     const invalidReviewRes = await announcementService.reviewAnnouncement(
       pendingAnnouncement._id.toString(),
       adminUser._id.toString(),
-      { action: "reject", rejectionReason: "No" } as any // Less than 5 chars
+      { action: "reject", rejectionReason: "No" } as unknown as AnnouncementReviewInput // Less than 5 chars
     );
     assert(
       invalidReviewRes.success === false || invalidReviewRes.status === 400 || invalidReviewRes.status === 422,

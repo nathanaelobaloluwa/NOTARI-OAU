@@ -3,7 +3,6 @@ import { connectToDatabase } from "@/lib/database/mongoose";
 import { Event, IEventDocument } from "@/models/Event";
 import { Booking } from "@/models/Booking";
 import { Ticket } from "@/models/Ticket";
-import { User } from "@/models/User";
 import {
   EventReminderDispatch,
   ReminderStage,
@@ -195,9 +194,7 @@ export class ReminderService {
     };
 
     // Calculate time windows (Africa/Lagos UTC)
-    const twentyThreeHoursFromNow = new Date(now.getTime() + 23 * 60 * 60 * 1000);
     const twentyFiveHoursFromNow = new Date(now.getTime() + 25 * 60 * 60 * 1000);
-    const oneHourFifteenMinsFromNow = new Date(now.getTime() + 75 * 60 * 1000);
 
     // 1. Query upcoming published events in both the 24h and 1h horizons
     const candidateEvents = await Event.find({

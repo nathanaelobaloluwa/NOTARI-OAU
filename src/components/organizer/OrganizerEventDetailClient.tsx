@@ -1418,7 +1418,16 @@ export function OrganizerEventDetailClient({ eventId }: { eventId: string }) {
                 <label className="block font-semibold text-slate-700 mb-1">Notice Type *</label>
                 <select
                   value={broadcastType}
-                  onChange={(e) => setBroadcastType(e.target.value as any)}
+                  onChange={(e) =>
+                    setBroadcastType(
+                      e.target.value as
+                        | "general"
+                        | "venue_change"
+                        | "time_change"
+                        | "cancellation"
+                        | "instructions"
+                    )
+                  }
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-800"
                 >
                   <option value="general">General Notice / Announcement</option>

@@ -3,7 +3,6 @@ import {
   ANNOUNCEMENT_CATEGORIES,
   ANNOUNCEMENT_PRIORITIES,
   AUDIENCE_TYPES,
-  ANNOUNCEMENT_STATUSES,
 } from "@/models/Announcement";
 
 export const targetAudienceSchema = z.object({

@@ -54,9 +54,11 @@ export class AnnouncementService {
       };
     }
 
+    const targetAudience = input.targetAudience || { type: "all_students" };
+
     // Organizers must scope announcements to an event they own
     if (!isSuperOrAdmin && isOrganizer) {
-      if (input.targetAudience.type !== "event_attendees" || !input.targetAudience.eventId) {
+      if (targetAudience.type !== "event_attendees" || !targetAudience.eventId) {
         return {
           success: false,
           status: 400,
@@ -64,7 +66,7 @@ export class AnnouncementService {
         };
       }
 
-      const event = await Event.findById(input.targetAudience.eventId);
+      const event = await Event.findById(targetAudience.eventId);
       if (!event) {
         return { success: false, status: 404, message: "Target event not found." };
       }
@@ -97,7 +99,7 @@ export class AnnouncementService {
     }
 
     // Organizers' general announcements may require admin approval unless direct event broadcast
-    if (!isSuperOrAdmin && finalStatus === "published" && input.targetAudience.type !== "event_attendees") {
+    if (!isSuperOrAdmin && finalStatus === "published" && targetAudience.type !== "event_attendees") {
       finalStatus = "pending_review";
       publishedAt = undefined;
     }
@@ -108,14 +110,14 @@ export class AnnouncementService {
       content: input.content,
       category: input.category,
       coverImage: input.coverImage,
-      priority: input.priority,
+      priority: input.priority || "normal",
       targetAudience: {
-        type: input.targetAudience.type,
-        faculty: input.targetAudience.faculty,
-        department: input.targetAudience.department,
-        level: input.targetAudience.level,
-        eventId: input.targetAudience.eventId
-          ? new mongoose.Types.ObjectId(input.targetAudience.eventId)
+        type: targetAudience.type,
+        faculty: targetAudience.faculty,
+        department: targetAudience.department,
+        level: targetAudience.level,
+        eventId: targetAudience.eventId
+          ? new mongoose.Types.ObjectId(targetAudience.eventId)
           : undefined,
       },
       status: finalStatus,
@@ -403,10 +405,18 @@ export class AnnouncementService {
         announcement,
       };
     } else if (input.action === "reject") {
+      if (!input.rejectionReason || input.rejectionReason.trim().length < 5) {
+        return {
+          success: false,
+          status: 400,
+          message: "A detailed rejection reason (at least 5 characters) is required when rejecting an announcement.",
+        };
+      }
+
       announcement.status = "rejected";
       announcement.reviewedBy = reviewerObjId;
       announcement.reviewedAt = new Date();
-      announcement.rejectionReason = input.rejectionReason;
+      announcement.rejectionReason = input.rejectionReason.trim();
 
       await announcement.save();
 

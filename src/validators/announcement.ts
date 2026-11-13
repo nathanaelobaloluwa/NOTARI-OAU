@@ -42,7 +42,7 @@ export const announcementCreateSchema = z.object({
   tags: z.array(z.string().trim()).optional().default([]),
 });
 
-export type AnnouncementCreateInput = z.infer<typeof announcementCreateSchema>;
+export type AnnouncementCreateInput = z.input<typeof announcementCreateSchema>;
 
 export const announcementUpdateSchema = announcementCreateSchema.partial();
 export type AnnouncementUpdateInput = z.infer<typeof announcementUpdateSchema>;

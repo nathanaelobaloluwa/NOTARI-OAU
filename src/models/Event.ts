@@ -48,6 +48,7 @@ export interface IEventDocument extends Document {
   registeredCount: number;
   status: EventStatus;
   isFeatured: boolean;
+  scheduleVersion: number;
   rejectionReason?: string;
   submittedAt?: Date;
   approvedAt?: Date;
@@ -114,6 +115,7 @@ const EventSchema = new Schema<IEventDocument>(
     ticketTiers: [TicketTierSchema],
     totalCapacity: { type: Number, default: 0 },
     registeredCount: { type: Number, default: 0 },
+    scheduleVersion: { type: Number, default: 1, min: 1, index: true },
     status: {
       type: String,
       enum: Object.values(EVENT_STATUS),
@@ -130,6 +132,13 @@ const EventSchema = new Schema<IEventDocument>(
     timestamps: true,
   }
 );
+
+EventSchema.pre("save", function (next) {
+  if (this.isModified("startDate") && !this.isNew) {
+    this.scheduleVersion = (this.scheduleVersion || 1) + 1;
+  }
+  next();
+});
 
 EventSchema.index({ organizerId: 1, createdAt: -1 });
 EventSchema.index({ status: 1, startDate: 1 });

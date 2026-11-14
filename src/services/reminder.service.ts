@@ -26,6 +26,31 @@ export interface EligibleAttendee {
   ticketCodes: string[];
 }
 
+let legacyIndexChecked = false;
+async function ensureModernReminderIndexes() {
+  if (legacyIndexChecked) return;
+  try {
+    await EventReminderDispatch.collection.dropIndex("userId_1_eventId_1_stage_1");
+  } catch {
+    // Index did not exist or was already migrated
+  }
+  legacyIndexChecked = true;
+}
+
+/**
+ * Deterministically formats the unique schedule identifier for an event.
+ * Changes whenever the event's schedule version increments or startDate moves.
+ */
+export function getEventScheduleKey(event: {
+  _id: unknown;
+  startDate: Date | string;
+  scheduleVersion?: number;
+}): string {
+  const version = event.scheduleVersion || 1;
+  const time = new Date(event.startDate).getTime();
+  return `v${version}_${time}`;
+}
+
 export class ReminderService {
   /**
    * Identifies all eligible attendees for an event:
@@ -112,10 +137,13 @@ export class ReminderService {
   }): Promise<{ dispatched: boolean; alreadyDispatched: boolean; error?: string }> {
     const { event, attendee, stage, customMessage } = params;
     const eventId = event._id.toString();
-    const idempotencyKey = `${eventId}:${attendee.userId}:${stage}`;
+    const scheduleVersion = event.scheduleVersion || 1;
+    const scheduleKey = getEventScheduleKey(event);
+    const idempotencyKey = `${eventId}:${attendee.userId}:${stage}:${scheduleKey}`;
 
     try {
       await connectToDatabase();
+      await ensureModernReminderIndexes();
 
       // 1. Attempt atomic creation of EventReminderDispatch
       let dispatchRecord;
@@ -124,6 +152,7 @@ export class ReminderService {
           eventId: event._id,
           userId: new mongoose.Types.ObjectId(attendee.userId),
           stage,
+          scheduleVersion,
           recipientEmail: attendee.email,
           recipientName: attendee.name,
           eventTitle: event.title,
@@ -135,9 +164,22 @@ export class ReminderService {
       } catch (err: unknown) {
         // E11000 duplicate key error means this reminder was already claimed/sent
         if (typeof err === "object" && err !== null && "code" in err && (err as { code: number }).code === 11000) {
-          return { dispatched: false, alreadyDispatched: true };
+          // Worker Crash Recovery: check if an uncompleted record was stranded > 2 minutes ago
+          const existing = await EventReminderDispatch.findOne({ idempotencyKey });
+          if (existing && !existing.inAppSent && !existing.emailSent) {
+            const ageMs = Date.now() - new Date(existing.dispatchedAt).getTime();
+            if (ageMs > 2 * 60 * 1000) {
+              console.warn(`🔄 [REMINDER_RECOVERY] Recovering stranded reminder for ${attendee.email} (${idempotencyKey})`);
+              dispatchRecord = existing;
+            } else {
+              return { dispatched: false, alreadyDispatched: true };
+            }
+          } else {
+            return { dispatched: false, alreadyDispatched: true };
+          }
+        } else {
+          throw err;
         }
-        throw err;
       }
 
       // 2. Dispatch via notificationService (in-app + email)

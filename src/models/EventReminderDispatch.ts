@@ -7,6 +7,7 @@ export interface IEventReminderDispatchDocument extends Document {
   userId: mongoose.Types.ObjectId;
   bookingId?: mongoose.Types.ObjectId;
   stage: ReminderStage;
+  scheduleVersion: number;
   recipientEmail: string;
   recipientName: string;
   eventTitle: string;
@@ -33,6 +34,7 @@ const EventReminderDispatchSchema = new Schema<IEventReminderDispatchDocument>(
       required: true,
       index: true,
     },
+    scheduleVersion: { type: Number, default: 1, min: 1, index: true },
     recipientEmail: { type: String, required: true, lowercase: true, trim: true },
     recipientName: { type: String, required: true, trim: true },
     eventTitle: { type: String, required: true, trim: true },
@@ -55,9 +57,13 @@ const EventReminderDispatchSchema = new Schema<IEventReminderDispatchDocument>(
   }
 );
 
-// Compound indexes to optimize reminder lookups and prevent race-condition duplicates
+// Compound indexes to optimize reminder lookups and prevent race-condition duplicates across schedules
 EventReminderDispatchSchema.index({ eventId: 1, stage: 1 });
-EventReminderDispatchSchema.index({ userId: 1, eventId: 1, stage: 1 }, { unique: true });
+EventReminderDispatchSchema.index({ userId: 1, eventId: 1, stage: 1 });
+EventReminderDispatchSchema.index(
+  { userId: 1, eventId: 1, stage: 1, scheduleVersion: 1 },
+  { unique: true }
+);
 
 export const EventReminderDispatch: Model<IEventReminderDispatchDocument> =
   mongoose.models.EventReminderDispatch ||

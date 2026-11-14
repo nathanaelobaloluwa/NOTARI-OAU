@@ -447,20 +447,31 @@ export class AnnouncementService {
     const dueAnnouncements = await Announcement.find({
       status: "scheduled",
       scheduledFor: { $lte: now },
-    });
+    })
+      .limit(50)
+      .exec();
 
     let publishedCount = 0;
     const errors: string[] = [];
 
     for (const announcement of dueAnnouncements) {
       try {
-        announcement.status = "published";
-        announcement.publishedAt = now;
-        await announcement.save();
+        // Atomic transition: ensures parallel cron workers cannot claim and broadcast the same announcement
+        const claimed = await Announcement.findOneAndUpdate(
+          { _id: announcement._id, status: "scheduled" },
+          { $set: { status: "published", publishedAt: now } },
+          { new: true }
+        );
+
+        if (!claimed) {
+          // Another concurrent cron worker already claimed this announcement
+          continue;
+        }
+
         publishedCount++;
 
         // Broadcast notifications
-        await this.broadcastAnnouncementNotifications(announcement._id.toString());
+        await this.broadcastAnnouncementNotifications(claimed._id.toString());
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         console.error(`❌ Error publishing scheduled announcement ${announcement._id}:`, msg);

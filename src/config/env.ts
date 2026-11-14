@@ -61,11 +61,46 @@ export const env = parseEnv();
  * Returns true if a valid non-dummy Resend API key is present in configuration.
  */
 export function isResendConfigured(): boolean {
-  if (!env.RESEND_API_KEY) return false;
-  const key = env.RESEND_API_KEY.trim();
+  const rawKey = process.env.RESEND_API_KEY || env.RESEND_API_KEY;
+  if (!rawKey) return false;
+  const key = rawKey.trim();
   if (key.length === 0) return false;
-  if (key.includes("dummy") || key.includes("placeholder") || key.includes("your_resend_api_key")) {
+  const lower = key.toLowerCase();
+  if (
+    lower.includes("dummy") ||
+    lower.includes("placeholder") ||
+    lower.includes("your_resend_api_key") ||
+    lower.includes("replace_me") ||
+    lower === "undefined" ||
+    lower === "null" ||
+    lower === "test" ||
+    lower === "fake" ||
+    key.length < 10
+  ) {
     return false;
   }
   return true;
+}
+
+/**
+ * Returns true if a valid sender email address or Display Name <email> is configured.
+ */
+export function isEmailFromConfigured(): boolean {
+  const rawFrom = process.env.EMAIL_FROM || env.EMAIL_FROM;
+  if (!rawFrom) return false;
+  const trimmed = rawFrom.trim();
+  if (trimmed.length < 3) return false;
+  const lower = trimmed.toLowerCase();
+  if (
+    lower.includes("dummy") ||
+    lower.includes("placeholder") ||
+    lower.includes("your_email") ||
+    lower === "undefined" ||
+    lower === "null"
+  ) {
+    return false;
+  }
+  const displayPattern = /^.+<[^\s@]+@[^\s@]+\.[^\s@]+>$/;
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return displayPattern.test(trimmed) || emailPattern.test(trimmed);
 }

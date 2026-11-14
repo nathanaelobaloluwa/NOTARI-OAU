@@ -33,16 +33,40 @@ export function setEmailMockHandler(handler: EmailMockHandler | null) {
 /**
  * Singleton Resend instance, initialized lazily when credentials are valid.
  */
+let cachedApiKey: string | null = null;
 let resendInstance: Resend | null = null;
 
 function getResendClient(): Resend | null {
   if (!isResendConfigured()) {
     return null;
   }
-  if (!resendInstance) {
-    resendInstance = new Resend(env.RESEND_API_KEY);
+  const currentKey = (process.env.RESEND_API_KEY || env.RESEND_API_KEY || "").trim();
+  if (!resendInstance || cachedApiKey !== currentKey) {
+    resendInstance = new Resend(currentKey);
+    cachedApiKey = currentKey;
   }
   return resendInstance;
+}
+
+/**
+ * Validates whether an email address format or "Display Name <email>" string is well-formed.
+ */
+function isValidSenderEmail(from: string): boolean {
+  if (!from || from.trim().length < 3) return false;
+  const trimmed = from.trim();
+  const lower = trimmed.toLowerCase();
+  if (
+    lower.includes("placeholder") ||
+    lower.includes("dummy") ||
+    lower.includes("your_email") ||
+    lower === "undefined" ||
+    lower === "null"
+  ) {
+    return false;
+  }
+  const displayPattern = /^.+<[^\s@]+@[^\s@]+\.[^\s@]+>$/;
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return displayPattern.test(trimmed) || emailPattern.test(trimmed);
 }
 
 /**
@@ -50,14 +74,27 @@ function getResendClient(): Resend | null {
  */
 export async function sendEmail(options: SendEmailOptions): Promise<SendEmailResult> {
   const recipient = Array.isArray(options.to) ? options.to.join(", ") : options.to;
-  const fromEmail = options.from || env.EMAIL_FROM;
+  const rawFrom = options.from || process.env.EMAIL_FROM || env.EMAIL_FROM;
+  const fromEmail = rawFrom ? rawFrom.trim() : "";
 
   // 1. If a test mock handler is registered, delegate to it
   if (customMockHandler) {
     return customMockHandler(options);
   }
 
-  // 2. In test environment without explicit mock, simulate delivery
+  // 2. Sender Identity Validation
+  if (!isValidSenderEmail(fromEmail)) {
+    const errorMsg =
+      "CRITICAL: Missing or invalid sender identity (EMAIL_FROM). Email delivery aborted.";
+    console.error(`🚨 [EMAIL_CONFIG_ERROR] ${errorMsg}`);
+    return {
+      success: false,
+      provider: "resend",
+      error: errorMsg,
+    };
+  }
+
+  // 3. In test environment without explicit mock, simulate delivery
   if (process.env.NODE_ENV === "test") {
     console.log(`[Email Mock (test)] To: ${recipient} | Subject: "${options.subject}"`);
     return {
@@ -67,11 +104,11 @@ export async function sendEmail(options: SendEmailOptions): Promise<SendEmailRes
     };
   }
 
-  // 3. Check if Resend is configured with a real API key
+  // 4. Check if Resend is configured with a real API key
   const client = getResendClient();
 
   if (!client) {
-    // In production, missing credentials MUST produce a clearly recorded failure and operationally visible error!
+    // In production, missing or invalid credentials MUST produce a clearly recorded failure and operationally visible error!
     if (process.env.NODE_ENV === "production") {
       const errorMsg =
         "CRITICAL: Missing or invalid RESEND_API_KEY in production environment. Email delivery aborted.";

@@ -94,12 +94,13 @@ export default async function StudentEventsDiscoveryPage({ searchParams }: Stude
               >
                 <div>
                   <div className="relative aspect-[16/10] bg-slate-100 overflow-hidden">
-                    {evt.flyerUrl ? (
+                    {evt.flyerUrl || (evt as { flyerImage?: string }).flyerImage ? (
                       <Image
-                        src={evt.flyerUrl}
+                        src={evt.flyerUrl || (evt as { flyerImage?: string }).flyerImage || ""}
                         alt={evt.title}
                         fill
                         className="object-cover"
+                        unoptimized={(evt.flyerUrl || (evt as { flyerImage?: string }).flyerImage || "").startsWith("http")}
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-indigo-50 text-notari-primary font-bold text-xs uppercase">

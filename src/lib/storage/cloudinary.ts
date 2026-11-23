@@ -90,6 +90,7 @@ export class CloudinaryService {
         return await this.uploadToCloudinary(buffer, validation.detectedMime, {
           width,
           height,
+          organizerId: options?.organizerId,
         });
       } catch (err) {
         if (!isProduction) {
@@ -133,14 +134,16 @@ export class CloudinaryService {
   private static async uploadToCloudinary(
     buffer: Buffer,
     mimeType: AllowedImageType,
-    dimensions: { width?: number; height?: number }
+    dimensions: { width?: number; height?: number; organizerId?: string }
   ): Promise<FlyerUploadResult> {
     const cloudName = this.cloudName!;
     const apiKey = this.apiKey!;
     const apiSecret = this.apiSecret!;
 
     const timestamp = Math.floor(Date.now() / 1000);
-    const folder = "notari/flyers";
+    const folder = dimensions.organizerId
+      ? `notari/flyers/${dimensions.organizerId}`
+      : "notari/flyers";
 
     // Signed parameters in alphabetical order
     const paramsToSign = `folder=${folder}&timestamp=${timestamp}${apiSecret}`;
@@ -193,7 +196,8 @@ export class CloudinaryService {
     await fs.mkdir(uploadsDir, { recursive: true });
 
     const randomSuffix = crypto.randomBytes(8).toString("hex");
-    const filename = `flyer_${Date.now()}_${randomSuffix}.${ext}`;
+    const orgPart = dimensions.organizerId ? `org_${dimensions.organizerId}_` : "";
+    const filename = `flyer_${orgPart}${Date.now()}_${randomSuffix}.${ext}`;
     const filePath = path.join(uploadsDir, filename);
 
     await fs.writeFile(filePath, buffer);
@@ -227,6 +231,11 @@ export class CloudinaryService {
       return { success: false, error: "Invalid asset path: traversal detected." };
     }
 
+    // Never delete campus presets or external images
+    if (publicIdOrUrl.startsWith("/images/oau/") || publicIdOrUrl.includes("images.unsplash.com")) {
+      return { success: false, error: "Cannot delete system presets or external imagery." };
+    }
+
     try {
       // 1. If it's a local file upload (/uploads/flyers/filename.ext)
       if (publicIdOrUrl.startsWith("/uploads/flyers/")) {
@@ -255,7 +264,20 @@ export class CloudinaryService {
           const match = publicIdOrUrl.match(/notari\/flyers\/[^.]+/);
           if (match) {
             publicId = match[0];
+          } else {
+            return {
+              success: false,
+              error: "Security violation: only assets within notari/flyers/ can be managed.",
+            };
           }
+        }
+
+        // Strict guard: publicId MUST start with "notari/flyers/"
+        if (!publicId.startsWith("notari/flyers/")) {
+          return {
+            success: false,
+            error: "Security violation: arbitrary Cloudinary asset deletion is blocked.",
+          };
         }
 
         const timestamp = Math.floor(Date.now() / 1000);

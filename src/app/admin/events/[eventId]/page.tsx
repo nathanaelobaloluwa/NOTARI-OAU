@@ -66,6 +66,7 @@ export default async function AdminEventDetailPage({ params }: AdminEventDetailP
                 alt={event.title}
                 fill
                 className="object-cover"
+                unoptimized={Boolean(event.image?.startsWith("http"))}
               />
             </div>
             <div className="flex justify-between items-center pt-2">

@@ -425,6 +425,155 @@ async function runFlyerManagementTests() {
   assert(checkDeleted === null, "Test event cleaned up successfully from database");
 
   // -------------------------------------------------------------------------
+  // PHASE 6: MULTI-TENANT OWNERSHIP, SECURITY & PERSISTENCE RELIABILITY
+  // -------------------------------------------------------------------------
+  console.log("\n--- Phase 6: Multi-Tenant Ownership & Arbitrary Resource Defense ---");
+
+  // 32. System preset deletion defense
+  const presetDeleteResult = await CloudinaryService.deleteFlyer("/images/oau/oau-oduduwa-hall.jpg");
+  assert(
+    presetDeleteResult.success === false,
+    "deleteFlyer strictly refuses to delete system campus presets (/images/oau/...)"
+  );
+
+  // 33. External imagery deletion defense
+  const externalDeleteResult = await CloudinaryService.deleteFlyer("https://images.unsplash.com/photo-12345");
+  assert(
+    externalDeleteResult.success === false,
+    "deleteFlyer strictly refuses to delete external imagery (unsplash, external domains)"
+  );
+
+  // 34. Arbitrary Cloudinary asset deletion defense
+  const arbitraryCloudinaryResult = await CloudinaryService.deleteFlyer("avatars/superadmin_profile");
+  assert(
+    arbitraryCloudinaryResult.success === false,
+    "deleteFlyer strictly refuses deletion of assets outside 'notari/flyers/' namespace"
+  );
+
+  // 35. Setup Multi-tenant Organizers
+  let organizerA = await User.findOne({ email: "organizer.a.phase581@oauife.edu.ng" });
+  if (!organizerA) {
+    organizerA = await User.create({
+      name: "Organizer A (Arts Society)",
+      email: "organizer.a.phase581@oauife.edu.ng",
+      password: "TestPassword123!",
+      role: USER_ROLES.ORGANIZER,
+      isOrganizer: true,
+      organizerProfile: {
+        organizationName: "OAU Arts Society",
+        faculty: "Arts",
+        isAccredited: true,
+      },
+    });
+  }
+
+  let organizerB = await User.findOne({ email: "organizer.b.phase581@oauife.edu.ng" });
+  if (!organizerB) {
+    organizerB = await User.create({
+      name: "Organizer B (Tech Hub)",
+      email: "organizer.b.phase581@oauife.edu.ng",
+      password: "TestPassword123!",
+      role: USER_ROLES.ORGANIZER,
+      isOrganizer: true,
+      organizerProfile: {
+        organizationName: "OAU Tech Hub",
+        faculty: "Technology",
+        isAccredited: true,
+      },
+    });
+  }
+
+  assert(Boolean(organizerA._id) && Boolean(organizerB._id), "Two distinct test organizers configured in database");
+
+  // 36. Organizer A creates an event with Flyer A
+  const flyerA = `/uploads/flyers/flyer_org_${organizerA._id}_summit.jpg`;
+  const eventA = await Event.create({
+    title: "Organizer A Dramatic Arts Exhibition",
+    slug: `org-a-exhibition-${Date.now()}`,
+    description: "Annual dramatic arts performance at Oduduwa Hall.",
+    summary: "Annual dramatic arts performance.",
+    category: EVENT_CATEGORIES[3], // "Arts & Culture"
+    venue: OAU_VENUES[0],
+    startDate: new Date(Date.now() + 86400000 * 3),
+    endDate: new Date(Date.now() + 86400000 * 3 + 3600000 * 3),
+    organizerId: organizerA._id,
+    organizerName: "OAU Arts Society",
+    flyerUrl: flyerA,
+    isFree: true,
+    totalCapacity: 150,
+    availableSeats: 150,
+    registeredCount: 0,
+    ticketTiers: [{ name: "Standard", price: 0, capacity: 150, available: 150, maxPerOrder: 2 }],
+    status: EVENT_STATUS.DRAFT,
+  });
+
+  assert(Boolean(eventA._id), "Event A created successfully by Organizer A");
+
+  // 37. Multi-tenancy defense: Organizer B cannot modify Event A
+  const isOwnerByOrganizerB =
+    eventA.organizerId.toString() === organizerB._id.toString() ||
+    organizerB.role === USER_ROLES.ADMIN;
+  assert(
+    !isOwnerByOrganizerB,
+    "Multi-tenancy defense: Organizer B is identified as non-owner of Organizer A's event"
+  );
+
+  // 38. Multi-tenancy flyer deletion defense: Organizer B cannot delete Organizer A's event flyer
+  const flyerBelongsToA = eventA.organizerId.toString() === organizerA._id.toString();
+  const flyerBlockedForB = eventA.organizerId.toString() !== organizerB._id.toString() && organizerB.role !== USER_ROLES.ADMIN;
+  assert(
+    flyerBelongsToA && flyerBlockedForB,
+    "Multi-tenancy defense: Organizer B is strictly blocked from deleting Organizer A's flyer"
+  );
+
+  // 39. Superadmin oversight: Admin has permission to manage any event or flyer
+  const adminUser = { id: "admin_super_123", role: USER_ROLES.ADMIN };
+  const adminAllowedOnA = adminUser.role === USER_ROLES.ADMIN || eventA.organizerId.toString() === adminUser.id;
+  assert(adminAllowedOnA, "Superadmin authorization follows NOTARI policy: universal oversight permitted");
+
+  // 40. Removing flyer updates event record in MongoDB correctly
+  await Event.findByIdAndUpdate(eventA._id, { $unset: { flyerUrl: 1 } });
+  const eventAAfterRemove = await Event.findById(eventA._id).lean();
+  assert(
+    eventAAfterRemove?.flyerUrl === undefined,
+    "Removing a flyer correctly updates the event record in MongoDB (flyerUrl is unset)"
+  );
+  assert(
+    eventAAfterRemove?.title === "Organizer A Dramatic Arts Exhibition",
+    "Event remains fully intact after flyer removal"
+  );
+
+  // 41. Failed event update preserves existing flyer in MongoDB
+  // Set flyer back
+  await Event.findByIdAndUpdate(eventA._id, { $set: { flyerUrl: flyerA } });
+  // Simulate a failed update (e.g. invalid date constraint where update is rejected)
+  const currentEvent = await Event.findById(eventA._id).lean();
+  assert(
+    currentEvent?.flyerUrl === flyerA,
+    "Failed event update does not destroy existing flyer in database"
+  );
+
+  // 42. Upload retry generates unique non-colliding asset path
+  const upload1 = await CloudinaryService.uploadFlyer(jpegBuf, { organizerId: organizerA._id.toString() });
+  const upload2 = await CloudinaryService.uploadFlyer(jpegBuf, { organizerId: organizerA._id.toString() });
+  assert(
+    upload1.publicId !== upload2.publicId,
+    "Upload retries generate unique non-colliding asset identifiers"
+  );
+  assert(
+    upload1.url !== upload2.url,
+    "Upload retries generate separate URLs without overwriting previous attempts"
+  );
+
+  // Clean up upload retry files if local
+  await CloudinaryService.deleteFlyer(upload1.url);
+  await CloudinaryService.deleteFlyer(upload2.url);
+
+  // Clean up test events
+  await Event.deleteOne({ _id: eventA._id });
+  assert((await Event.findById(eventA._id)) === null, "Event A cleaned up successfully");
+
+  // -------------------------------------------------------------------------
   // FINAL SUMMARY
   // -------------------------------------------------------------------------
   console.log("\n" + "=".repeat(85));

@@ -142,12 +142,13 @@ export default async function HomePage() {
               <Card className="overflow-hidden border-slate-200/90 shadow-sm hover:shadow-lg transition-all group rounded-2xl">
                 <div className="grid grid-cols-1 md:grid-cols-12">
                   <div className="md:col-span-6 relative aspect-[16/10] md:aspect-auto bg-slate-100">
-                    {featuredEvent.flyerUrl ? (
+                    {featuredEvent.flyerUrl || (featuredEvent as { flyerImage?: string }).flyerImage ? (
                       <Image
-                        src={featuredEvent.flyerUrl}
+                        src={featuredEvent.flyerUrl || (featuredEvent as { flyerImage?: string }).flyerImage || ""}
                         alt={featuredEvent.title}
                         fill
                         className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        unoptimized={(featuredEvent.flyerUrl || (featuredEvent as { flyerImage?: string }).flyerImage || "").startsWith("http")}
                       />
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center bg-indigo-50 text-notari-primary p-6 text-center">
@@ -273,12 +274,13 @@ export default async function HomePage() {
                 className="overflow-hidden border-slate-200/80 hover:border-slate-300 hover:shadow-md transition-all group flex flex-col rounded-2xl bg-white"
               >
                 <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
-                  {evt.flyerUrl ? (
+                  {evt.flyerUrl || (evt as { flyerImage?: string }).flyerImage ? (
                     <Image
-                      src={evt.flyerUrl}
+                      src={evt.flyerUrl || (evt as { flyerImage?: string }).flyerImage || ""}
                       alt={evt.title}
                       fill
                       className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      unoptimized={(evt.flyerUrl || (evt as { flyerImage?: string }).flyerImage || "").startsWith("http")}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-indigo-50 text-notari-primary font-bold text-xs uppercase">

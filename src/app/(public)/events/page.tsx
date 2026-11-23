@@ -292,12 +292,13 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
                 <div>
                   {/* Event Cover Image */}
                   <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
-                    {evt.flyerUrl ? (
+                    {evt.flyerUrl || (evt as { flyerImage?: string }).flyerImage ? (
                       <Image
-                        src={evt.flyerUrl}
+                        src={evt.flyerUrl || (evt as { flyerImage?: string }).flyerImage || ""}
                         alt={evt.title}
                         fill
                         className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        unoptimized={(evt.flyerUrl || (evt as { flyerImage?: string }).flyerImage || "").startsWith("http")}
                       />
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-indigo-100 via-indigo-50 to-purple-100 text-notari-primary p-4 text-center">

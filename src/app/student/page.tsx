@@ -344,12 +344,13 @@ export default async function StudentDashboardPage() {
                   >
                     <div className="flex items-center gap-4 min-w-0">
                       <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-slate-100 shrink-0">
-                        {evt.flyerUrl ? (
+                        {evt.flyerUrl || (evt as { flyerImage?: string }).flyerImage ? (
                           <Image
-                            src={evt.flyerUrl}
+                            src={evt.flyerUrl || (evt as { flyerImage?: string }).flyerImage || ""}
                             alt={evt.title}
                             fill
                             className="object-cover"
+                            unoptimized={(evt.flyerUrl || (evt as { flyerImage?: string }).flyerImage || "").startsWith("http")}
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-indigo-50 text-notari-primary font-bold text-sm">

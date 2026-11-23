@@ -104,7 +104,7 @@ async function runHardeningTests() {
     const originalEmailFrom = process.env.EMAIL_FROM;
 
     try {
-      process.env.NODE_ENV = "production";
+      (process.env as Record<string, string | undefined>).NODE_ENV = "production";
       delete process.env.RESEND_API_KEY;
 
       const missingKeyResult = await sendEmail({
@@ -151,7 +151,7 @@ async function runHardeningTests() {
       );
 
       // Test 1.6: Development simulation permits mock/simulated dispatch
-      process.env.NODE_ENV = "development";
+      (process.env as Record<string, string | undefined>).NODE_ENV = "development";
       delete process.env.RESEND_API_KEY;
       process.env.EMAIL_FROM = "NOTARI OAU <notifications@notari.oau.edu.ng>";
 
@@ -164,7 +164,7 @@ async function runHardeningTests() {
       assert(devSimulationResult.success === true, "Development environment permits simulated dispatch when key is absent");
       assert(devSimulationResult.provider === "simulated", "Development simulation records provider: 'simulated'");
     } finally {
-      process.env.NODE_ENV = originalNodeEnv;
+      (process.env as Record<string, string | undefined>).NODE_ENV = originalNodeEnv;
       if (originalResendKey !== undefined) process.env.RESEND_API_KEY = originalResendKey;
       else delete process.env.RESEND_API_KEY;
       if (originalEmailFrom !== undefined) process.env.EMAIL_FROM = originalEmailFrom;

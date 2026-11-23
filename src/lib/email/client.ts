@@ -74,7 +74,12 @@ function isValidSenderEmail(from: string): boolean {
  */
 export async function sendEmail(options: SendEmailOptions): Promise<SendEmailResult> {
   const recipient = Array.isArray(options.to) ? options.to.join(", ") : options.to;
-  const rawFrom = options.from || process.env.EMAIL_FROM || env.EMAIL_FROM;
+  const rawFrom =
+    options.from !== undefined
+      ? options.from
+      : process.env.EMAIL_FROM !== undefined
+      ? process.env.EMAIL_FROM
+      : env.EMAIL_FROM;
   const fromEmail = rawFrom ? rawFrom.trim() : "";
 
   // 1. If a test mock handler is registered, delegate to it

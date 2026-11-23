@@ -925,6 +925,8 @@ class NotificationService {
     eventVenue: string;
     eventDate: Date | string;
     stage: "24h" | "1h" | "custom";
+    scheduleVersion?: number;
+    scheduleKey?: string;
     bookingReference?: string;
     ticketCodes?: string[];
     onlineLink?: string;
@@ -933,6 +935,9 @@ class NotificationService {
     const timestamp = new Date().toISOString();
     const eventIdStr = params.eventId.toString();
     const stageCallout = params.stage === "24h" ? "Tomorrow" : "In 1 Hour";
+    const scheduleIdentifier =
+      params.scheduleKey ||
+      `v${params.scheduleVersion || 1}_${new Date(params.eventDate).getTime()}`;
 
     // 1. Always deliver in-app notification
     await createInAppNotification({
@@ -987,7 +992,7 @@ class NotificationService {
       text,
       template: "event_reminder",
       relatedType: "reminder",
-      relatedId: `${eventIdStr}:${params.stage}`,
+      relatedId: `${eventIdStr}:${params.stage}:${scheduleIdentifier}`,
       metadata: {
         eventId: eventIdStr,
         stage: params.stage,

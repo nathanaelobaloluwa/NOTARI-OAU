@@ -192,6 +192,8 @@ export class ReminderService {
         eventVenue: event.venue,
         eventDate: event.startDate,
         stage,
+        scheduleVersion,
+        scheduleKey,
         bookingReference: attendee.bookingReference,
         ticketCodes: attendee.ticketCodes,
         onlineLink: event.onlineDetails?.link,

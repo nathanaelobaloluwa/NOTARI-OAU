@@ -2,12 +2,11 @@ import fs from "fs";
 import path from "path";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { User } from "@/models/User";
-import { Event } from "@/models/Event";
+import { Event, IEventDocument } from "@/models/Event";
 import { Booking } from "@/models/Booking";
 import { Ticket } from "@/models/Ticket";
 import { Announcement } from "@/models/Announcement";
 import { EventReminderDispatch } from "@/models/EventReminderDispatch";
-import { EmailDelivery } from "@/models/EmailDelivery";
 import { reminderService, getEventScheduleKey } from "@/services/reminder.service";
 import { announcementService } from "@/services/announcement.service";
 import { sendEmail, setEmailMockHandler, SendEmailOptions, SendEmailResult } from "@/lib/email/client";
@@ -72,7 +71,6 @@ async function runHardeningTests() {
   const createdTicketIds: mongoose.Types.ObjectId[] = [];
   const createdAnnouncementIds: mongoose.Types.ObjectId[] = [];
   const createdDispatchIds: mongoose.Types.ObjectId[] = [];
-  const createdDeliveryIds: mongoose.Types.ObjectId[] = [];
 
   // Track dispatched emails in mock handler
   const dispatchedEmails: SendEmailOptions[] = [];
@@ -428,7 +426,7 @@ async function runHardeningTests() {
       _id: event._id,
       scheduleVersion: 4,
       startDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
-    } as any;
+    } as unknown as IEventDocument;
 
     const crashScheduleKey = getEventScheduleKey(crashEvent);
     const crashIdempotencyKey = `${event._id}:${student._id}:24h:${crashScheduleKey}`;
@@ -539,13 +537,18 @@ async function runHardeningTests() {
     assert(Array.isArray(vercelConfig.crons), "vercel.json defines crons array");
     assert(vercelConfig.crons.length === 3, `vercel.json defines exactly 3 cron jobs (got ${vercelConfig.crons.length})`);
 
-    const reminderCron = vercelConfig.crons.find((c: any) => c.path === "/api/cron/event-reminders");
+    interface VercelCronJob {
+      path: string;
+      schedule: string;
+    }
+
+    const reminderCron = vercelConfig.crons.find((c: VercelCronJob) => c.path === "/api/cron/event-reminders");
     assert(reminderCron?.schedule === "*/15 * * * *", `event-reminders schedule matches '*/15 * * * *' (got '${reminderCron?.schedule}')`);
 
-    const announcementCron = vercelConfig.crons.find((c: any) => c.path === "/api/cron/scheduled-announcements");
+    const announcementCron = vercelConfig.crons.find((c: VercelCronJob) => c.path === "/api/cron/scheduled-announcements");
     assert(announcementCron?.schedule === "*/10 * * * *", `scheduled-announcements schedule matches '*/10 * * * *' (got '${announcementCron?.schedule}')`);
 
-    const retryCron = vercelConfig.crons.find((c: any) => c.path === "/api/cron/email-retries");
+    const retryCron = vercelConfig.crons.find((c: VercelCronJob) => c.path === "/api/cron/email-retries");
     assert(retryCron?.schedule === "*/30 * * * *", `email-retries schedule matches '*/30 * * * *' (got '${retryCron?.schedule}')`);
 
   } finally {

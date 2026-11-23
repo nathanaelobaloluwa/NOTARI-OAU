@@ -3,34 +3,40 @@
 @tailwind utilities;
 
 :root {
-  --background: #F5F7FC;
-  --foreground: #101C3A;
+  --background: #F4F6FA;
+  --foreground: #151C35;
   --surface: #FFFFFF;
   
   --card: #FFFFFF;
-  --card-foreground: #101C3A;
+  --card-foreground: #151C35;
   
   --popover: #FFFFFF;
-  --popover-foreground: #101C3A;
+  --popover-foreground: #151C35;
   
-  --primary: #4F46E5;
+  --primary: #4169E1;
   --primary-foreground: #FFFFFF;
   
   --secondary: #7C3AED;
   --secondary-foreground: #FFFFFF;
+
+  /* Centralized Brand Color Tokens */
+  --brand-midnight: #151C35;
+  --brand-electric: #4169E1;
+  --brand-teal: #20BFA9;
+  --brand-cloud: #F4F6FA;
   
   --muted: #F1F5F9;
   --muted-foreground: #64748B;
   
   --accent: #EEF2FF;
-  --accent-foreground: #4F46E5;
+  --accent-foreground: #4169E1;
   
   --destructive: #EF4444;
   --destructive-foreground: #FFFFFF;
   
   --border: #E2E8F0;
   --input: #E2E8F0;
-  --ring: #4F46E5;
+  --ring: #4169E1;
   
   --radius: 0.75rem;
 }
@@ -114,4 +120,22 @@ body {
 /* Touch responsiveness */
 * {
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Reduced motion accessibility support */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-notari-pulse,
+  .animate-notari-shimmer,
+  .animate-notari-reveal,
+  .animate-notari-indeterminate {
+    animation: none !important;
+    transform: none !important;
+  }
 }

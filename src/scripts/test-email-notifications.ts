@@ -118,7 +118,9 @@ async function runTests() {
 
   // Verify missing credentials in production strictly fails (no silent simulation)
   const prevEnv = process.env.NODE_ENV;
+  const prevKey = process.env.RESEND_API_KEY;
   setEmailMockHandler(null);
+  delete (process.env as Record<string, string | undefined>).RESEND_API_KEY;
   (process.env as Record<string, string | undefined>).NODE_ENV = "production";
   const prodMissingKeyRes = await sendEmail({
     to: "student@oau.edu.ng",
@@ -140,6 +142,7 @@ async function runTests() {
 
   // Restore test mock handler and environment
   (process.env as Record<string, string | undefined>).NODE_ENV = prevEnv;
+  if (prevKey !== undefined) (process.env as Record<string, string | undefined>).RESEND_API_KEY = prevKey;
   setEmailMockHandler(async (options: SendEmailOptions): Promise<SendEmailResult> => {
     dispatchedEmails.push(options);
     const recipient = Array.isArray(options.to) ? options.to.join(",") : options.to;

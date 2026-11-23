@@ -174,10 +174,9 @@ export async function PUT(
     if (payload.instructions !== undefined) event.instructions = payload.instructions || undefined;
     if (payload.startDate !== undefined) {
       const newStartDate = new Date(payload.startDate);
-      if (event.startDate && event.startDate.getTime() !== newStartDate.getTime()) {
-        event.scheduleVersion = (event.scheduleVersion || 1) + 1;
+      if (!event.startDate || event.startDate.getTime() !== newStartDate.getTime()) {
+        event.startDate = newStartDate;
       }
-      event.startDate = newStartDate;
     }
     if (payload.endDate !== undefined) event.endDate = new Date(payload.endDate);
     if (payload.salesStartDate !== undefined) event.salesStartDate = payload.salesStartDate ? new Date(payload.salesStartDate) : undefined;

@@ -133,32 +133,37 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
       </div>
 
       {/* 2. Hero Cover Banner */}
-      <div className="relative aspect-[16/9] sm:aspect-[21/9] w-full rounded-3xl overflow-hidden shadow-md bg-slate-100">
-        {(event.flyerUrl || (event as any).flyerImage) ? (
-          <Image
-            src={event.flyerUrl || (event as any).flyerImage}
-            alt={event.title}
-            fill
-            className="object-cover"
-            priority
-            unoptimized={(event.flyerUrl || (event as any).flyerImage || "").startsWith("http")}
-          />
-        ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-indigo-700 via-indigo-800 to-purple-900 text-white p-6 text-center">
-            <Sparkles className="w-12 h-12 mb-3 text-indigo-300" />
-            <span className="text-sm font-bold tracking-widest uppercase text-indigo-200">{event.category}</span>
-            <h2 className="text-xl sm:text-3xl font-extrabold mt-1 max-w-2xl">{event.title}</h2>
-          </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
+      {(() => {
+        const flyerVisual = event.flyerUrl || (event as { flyerImage?: string }).flyerImage;
+        return (
+          <div className="relative aspect-[16/9] sm:aspect-[21/9] w-full rounded-3xl overflow-hidden shadow-md bg-slate-100">
+            {flyerVisual ? (
+              <Image
+                src={flyerVisual}
+                alt={event.title}
+                fill
+                className="object-cover"
+                priority
+                unoptimized={flyerVisual.startsWith("http")}
+              />
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-indigo-700 via-indigo-800 to-purple-900 text-white p-6 text-center">
+                <Sparkles className="w-12 h-12 mb-3 text-indigo-300" />
+                <span className="text-sm font-bold tracking-widest uppercase text-indigo-200">{event.category}</span>
+                <h2 className="text-xl sm:text-3xl font-extrabold mt-1 max-w-2xl">{event.title}</h2>
+              </div>
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
 
-        <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 flex items-center justify-between text-white">
-          <Badge className="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white border-white/20 text-xs font-semibold px-3 py-1">
-            {event.category}
-          </Badge>
-          {event.isFree && <StatusPill status="free" />}
-        </div>
-      </div>
+            <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 flex items-center justify-between text-white">
+              <Badge className="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white border-white/20 text-xs font-semibold px-3 py-1">
+                {event.category}
+              </Badge>
+              {event.isFree && <StatusPill status="free" />}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* 3. Main Event Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">

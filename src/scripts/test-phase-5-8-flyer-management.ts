@@ -1,6 +1,5 @@
 import fs from "fs";
 import path from "path";
-import crypto from "crypto";
 import { NextRequest } from "next/server";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { User } from "@/models/User";
@@ -285,7 +284,7 @@ async function runFlyerManagementTests() {
   const originalEnv = process.env.NODE_ENV;
   const originalCloudName = process.env.CLOUDINARY_CLOUD_NAME;
   try {
-    process.env.NODE_ENV = "production";
+    (process.env as Record<string, string | undefined>).NODE_ENV = "production";
     delete process.env.CLOUDINARY_CLOUD_NAME;
     let prodErrorThrown = false;
     try {
@@ -298,7 +297,7 @@ async function runFlyerManagementTests() {
       "Strict production guard: unconfigured Cloudinary in production throws descriptive error"
     );
   } finally {
-    process.env.NODE_ENV = originalEnv;
+    (process.env as Record<string, string | undefined>).NODE_ENV = originalEnv;
     if (originalCloudName) {
       process.env.CLOUDINARY_CLOUD_NAME = originalCloudName;
     }
@@ -316,7 +315,8 @@ async function runFlyerManagementTests() {
     body: new FormData(),
   });
   const emptyRes = await uploadFlyerRoute(emptyReq);
-  const emptyData = await emptyRes.json();
+  const _emptyData = await emptyRes.json();
+  void _emptyData;
   assert(
     emptyRes.status === 400 || emptyRes.status === 401 || emptyRes.status === 403,
     `Upload route safely handles empty body with status ${emptyRes.status}`

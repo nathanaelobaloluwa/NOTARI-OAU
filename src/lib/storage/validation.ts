@@ -116,12 +116,32 @@ export function extractImageDimensions(
 
     // WebP: VP8 / VP8L / VP8X chunk scanning
     if (buffer.length >= 30 && buffer.toString("ascii", 0, 4) === "RIFF") {
-      const format = buffer.toString("ascii", 12, 16);
-      if (format === "VP8X") {
+      const chunkType = buffer.toString("ascii", 12, 16);
+      if (chunkType === "VP8X" && buffer.length >= 30) {
         // Extended format
         const width = 1 + buffer.readUIntLE(24, 3);
         const height = 1 + buffer.readUIntLE(27, 3);
         return { width, height };
+      }
+      if (chunkType === "VP8 " && buffer.length >= 30) {
+        // Lossy keyframe: start code 0x9D 0x01 0x2A at byte 23
+        if (buffer[23] === 0x9d && buffer[24] === 0x01 && buffer[25] === 0x2a) {
+          const width = buffer.readUInt16LE(26) & 0x3fff;
+          const height = buffer.readUInt16LE(28) & 0x3fff;
+          return { width, height };
+        }
+      }
+      if (chunkType === "VP8L" && buffer.length >= 25) {
+        // Lossless: signature 0x2F at byte 20
+        if (buffer[20] === 0x2f) {
+          const b1 = buffer[21];
+          const b2 = buffer[22];
+          const b3 = buffer[23];
+          const b4 = buffer[24];
+          const width = 1 + (((b2 & 0x3f) << 8) | b1);
+          const height = 1 + (((b4 & 0x0f) << 10) | (b3 << 2) | ((b2 & 0xc0) >> 6));
+          return { width, height };
+        }
       }
     }
   } catch (err) {

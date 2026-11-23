@@ -81,17 +81,34 @@ export class CloudinaryService {
 
     const { width, height } = extractImageDimensions(buffer);
 
+    const isProduction =
+      (process.env.NODE_ENV || env.NODE_ENV) === "production";
+
     // 2. If Cloudinary is configured, upload via Cloudinary REST API
     if (this.isConfigured()) {
-      return this.uploadToCloudinary(buffer, validation.detectedMime, {
-        width,
-        height,
-      });
+      try {
+        return await this.uploadToCloudinary(buffer, validation.detectedMime, {
+          width,
+          height,
+        });
+      } catch (err) {
+        if (!isProduction) {
+          console.warn(
+            "⚠️ Cloudinary upload failed in non-production, falling back to local storage:",
+            (err as Error).message
+          );
+          return this.uploadToLocalStorage(
+            buffer,
+            validation.detectedExt,
+            validation.detectedMime,
+            { width, height, organizerId: options?.organizerId }
+          );
+        }
+        throw err;
+      }
     }
 
     // 3. In production, unconfigured storage must strictly fail
-    const isProduction =
-      (process.env.NODE_ENV || env.NODE_ENV) === "production";
     if (isProduction) {
       console.error(
         "🚨 [STORAGE_CONFIG_ERROR] Cloudinary credentials are required in production."
@@ -201,14 +218,19 @@ export class CloudinaryService {
   public static async deleteFlyer(publicIdOrUrl: string): Promise<{ success: boolean; error?: string }> {
     if (!publicIdOrUrl) return { success: false, error: "No asset specified." };
 
+    // Prevent path traversal attacks
+    if (
+      publicIdOrUrl.includes("..") ||
+      publicIdOrUrl.includes("\0") ||
+      (publicIdOrUrl.includes("://") && !publicIdOrUrl.startsWith("https://res.cloudinary.com"))
+    ) {
+      return { success: false, error: "Invalid asset path: traversal detected." };
+    }
+
     try {
       // 1. If it's a local file upload (/uploads/flyers/filename.ext)
       if (publicIdOrUrl.startsWith("/uploads/flyers/")) {
         const basename = path.basename(publicIdOrUrl);
-        // Ensure no path traversal
-        if (basename.includes("..") || basename.includes("/") || basename.includes("\\")) {
-          return { success: false, error: "Invalid filename." };
-        }
         const filePath = path.join(process.cwd(), "public", "uploads", "flyers", basename);
         try {
           await fs.unlink(filePath);

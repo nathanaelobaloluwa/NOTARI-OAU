@@ -30,7 +30,12 @@ export class ForbiddenError extends Error {
  * Ensures user is authenticated on the server side
  */
 export async function requireAuth(): Promise<AuthenticatedUser> {
-  const session = await auth();
+  let session;
+  try {
+    session = await auth();
+  } catch {
+    throw new AuthorizationError("Authentication required. Please log in.");
+  }
 
   if (!session?.user?.id) {
     throw new AuthorizationError("Authentication required. Please log in.");

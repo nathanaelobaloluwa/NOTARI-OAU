@@ -89,9 +89,9 @@ export function renderAlertBox(alert: EmailAlert): string {
  */
 export function renderCtaButton(cta: EmailCta): string {
   const isSecondary = cta.variant === "secondary";
-  const bg = isSecondary ? "#F1F5F9" : "#4F46E5";
-  const text = isSecondary ? "#1E293B" : "#FFFFFF";
-  const border = isSecondary ? "1px solid #CBD5E1" : "1px solid #4338CA";
+  const bg = isSecondary ? "#F1F5F9" : "#4169E1";
+  const text = isSecondary ? "#151C35" : "#FFFFFF";
+  const border = isSecondary ? "1px solid #CBD5E1" : "1px solid #3358C8";
 
   return `
     <table role="presentation" cellpadding="0" cellspacing="0" style="display: inline-block; margin: 16px 0;">
@@ -171,14 +171,14 @@ export function renderEmailLayout(options: BaseLayoutOptions): string {
           
           <!-- Brand Header -->
           <tr>
-            <td style="background-color: #0B132B; padding: 24px 28px; text-align: left; border-bottom: 3px solid #4F46E5;">
+            <td style="background-color: #151C35; padding: 24px 28px; text-align: left; border-bottom: 3px solid #4169E1;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td>
-                    <span style="font-size: 20px; font-weight: 800; color: #FFFFFF; letter-spacing: -0.02em;">
-                      NOTARI<span style="color: #818CF8;"> 2.0</span>
+                    <span style="font-size: 20px; font-weight: 800; color: #FFFFFF; letter-spacing: 0.04em;">
+                      NOTARI<span style="color: #20BFA9;"> 2.0</span>
                     </span>
-                    <div style="font-size: 11px; font-weight: 500; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 3px;">
+                    <div style="font-size: 11px; font-weight: 600; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.12em; margin-top: 4px;">
                       Obafemi Awolowo University &bull; Great Ife
                     </div>
                   </td>

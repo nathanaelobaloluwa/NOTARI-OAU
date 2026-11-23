@@ -8,8 +8,8 @@ export default function manifest(): MetadataRoute.Manifest {
       "Modern event discovery, digital ticketing, and community management platform for Obafemi Awolowo University (OAU), Ile-Ife, Nigeria.",
     start_url: "/",
     display: "standalone",
-    background_color: "#F5F7FC",
-    theme_color: "#4F46E5",
+    background_color: "#F4F6FA",
+    theme_color: "#151C35",
     icons: [
       {
         src: "/icon",

@@ -82,7 +82,6 @@ export function NotariLoader({
 }: NotariLoaderProps) {
   const { icon: pxSize, box, text: textSize } = SIZE_MAP[size];
   const colors = VARIANT_COLORS[variant];
-  const uniqueId = React.useId().replace(/:/g, "");
 
   // For compact buttons (xs, sm), render a high-performance circular shield crest spinner
   if (size === "xs" || size === "sm") {

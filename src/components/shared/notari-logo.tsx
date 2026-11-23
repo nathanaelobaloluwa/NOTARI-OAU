@@ -18,14 +18,14 @@ export interface NotariLogoProps {
    * Layout orientation of the logo
    * - "horizontal": Symbol on left, wordmark + subtitle on right (default)
    * - "stacked": Symbol centered above wordmark + subtitle
-   * - "symbol-only": Standalone university crest symbol
+   * - "symbol-only": Standalone geometric N brand symbol
    */
   layout?: NotariLayout;
 
   /**
    * Size scale
-   * - "sm": Compact for mobile bars or small action cards (symbol 28px)
-   * - "md": Standard header, sidebar, and navbar size (symbol 38px)
+   * - "sm": Compact for mobile bars or small action cards (symbol 26px)
+   * - "md": Standard header, sidebar, and navbar size (symbol 36px)
    * - "lg": Prominent modals and dashboard headers (symbol 48px)
    * - "xl": Auth splash, hero sections, and welcome banners (symbol 64px)
    */
@@ -46,6 +46,21 @@ export interface NotariLogoProps {
    * Destination URL when clicked. Set to false to render a non-interactive <div>.
    */
   href?: string | false;
+
+  /**
+   * Monogram color variant: "brand" (default multi-facet), "white", or "dark"
+   */
+  symbolVariant?: "brand" | "white" | "dark";
+
+  /**
+   * Whether to display a Midnight Navy squircle badge behind the monogram
+   */
+  showBadge?: boolean;
+
+  /**
+   * Whether to render an ambient lighting glow behind the monogram
+   */
+  showGlow?: boolean;
 
   /**
    * Additional root container class name
@@ -85,9 +100,9 @@ const SYMBOL_SIZES: Record<NotariLogoSize, number> = {
 
 const WORDMARK_SIZES: Record<NotariLogoSize, string> = {
   sm: "text-sm sm:text-base tracking-[0.14em]",
-  md: "text-base sm:text-xl tracking-[0.14em]",
-  lg: "text-xl sm:text-2xl tracking-[0.15em]",
-  xl: "text-2xl sm:text-3xl tracking-[0.16em]",
+  md: "text-base sm:text-xl tracking-[0.16em]",
+  lg: "text-xl sm:text-2xl tracking-[0.16em]",
+  xl: "text-2xl sm:text-3xl tracking-[0.18em]",
 };
 
 const SUBTITLE_SIZES: Record<NotariLogoSize, string> = {
@@ -99,7 +114,7 @@ const SUBTITLE_SIZES: Record<NotariLogoSize, string> = {
 
 /**
  * Official NOTARI 2.0 Brand Logo Component
- * Combines the Great Ife University Crest with the modern NOTARI wordmark
+ * Pairs the user's elevated geometric N monogram with the modern NOTARI wordmark
  */
 export function NotariLogo({
   variant = "public",
@@ -108,6 +123,9 @@ export function NotariLogo({
   isDark = false,
   showSubtitle = true,
   href,
+  symbolVariant,
+  showBadge = false,
+  showGlow = false,
   className,
   symbolClassName,
 }: NotariLogoProps) {
@@ -120,6 +138,9 @@ export function NotariLogo({
     const symbolContent = (
       <NotariSymbol
         size={symbolPx}
+        variant={symbolVariant ?? (isDark ? "brand" : "brand")}
+        showBadge={showBadge}
+        showGlow={showGlow}
         className={cn("transition-transform duration-200 group-hover:scale-105", symbolClassName)}
       />
     );
@@ -153,6 +174,9 @@ export function NotariLogo({
     <>
       <NotariSymbol
         size={symbolPx}
+        variant={symbolVariant ?? (isDark ? "brand" : "brand")}
+        showBadge={showBadge}
+        showGlow={showGlow}
         className={cn(
           "transition-transform duration-200 group-hover:scale-105 shrink-0",
           symbolClassName
@@ -170,7 +194,7 @@ export function NotariLogo({
             "font-black font-sans transition-colors uppercase truncate",
             WORDMARK_SIZES[size],
             isDark
-              ? "text-white group-hover:text-teal-300"
+              ? "text-white group-hover:text-[#20BFA9]"
               : "text-[#151C35] group-hover:text-[#4169E1]"
           )}
         >
@@ -182,7 +206,7 @@ export function NotariLogo({
             className={cn(
               "font-semibold uppercase truncate mt-0.5",
               SUBTITLE_SIZES[size],
-              isDark ? "text-slate-400" : "text-slate-500"
+              isDark ? "text-[#20BFA9]/90" : "text-slate-500"
             )}
           >
             {subtitleText}

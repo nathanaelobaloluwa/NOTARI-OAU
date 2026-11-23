@@ -75,28 +75,37 @@ async function runBrandSuite() {
   });
 
   // ---------------------------------------------------------------------------
-  // 2. NotariSymbol SVG Artwork & OAU Heritage
+  // 2. NotariSymbol SVG Artwork & Monogram Geometry
   // ---------------------------------------------------------------------------
-  console.log("\nSuite 2: NotariSymbol SVG Artwork & University Heritage");
+  console.log("\nSuite 2: NotariSymbol Geometric N Monogram & Site Colors");
 
-  it("NotariSymbol renders valid SVG with Great Ife heraldic shield elements", () => {
-    const element = React.createElement(NotariSymbol, { size: 48, showGlow: true, animated: true });
+  it("NotariSymbol renders valid React element with size, variant, and glow props", () => {
+    const element = React.createElement(NotariSymbol, {
+      size: 48,
+      showGlow: true,
+      animated: true,
+      variant: "brand",
+      showBadge: false,
+    });
     assert.ok(React.isValidElement(element), "NotariSymbol must be a valid React element");
     assert.strictEqual(element.type, NotariSymbol);
     assert.strictEqual(element.props.size, 48);
     assert.strictEqual(element.props.showGlow, true);
     assert.strictEqual(element.props.animated, true);
+    assert.strictEqual(element.props.variant, "brand");
   });
 
-  it("src/components/shared/notari-symbol.tsx contains full academic crest charge markup", () => {
+  it("src/components/shared/notari-symbol.tsx contains authentic geometric N monogram path and site colors", () => {
     const symbolPath = path.join(process.cwd(), "src/components/shared/notari-symbol.tsx");
     const content = fs.readFileSync(symbolPath, "utf-8");
 
-    assert.ok(content.includes("academic-book"), "Symbol must include academic book markup");
-    assert.ok(content.includes("knowledge-torch"), "Symbol must include knowledge torch markup");
-    assert.ok(content.includes("ife-bronze-heritage"), "Symbol must include Ori Olokun/Ife bronze markup");
-    assert.ok(content.includes("goldRim"), "Symbol must include gold metallic gradient");
-    assert.ok(content.includes("viewBox=\"0 0 100 115\""), "Symbol must have standard 100x115 viewBox");
+    assert.ok(content.includes("NOTARI_MONOGRAM_PATH"), "Symbol must export NOTARI_MONOGRAM_PATH");
+    assert.ok(content.includes("notari-monogram-core"), "Symbol must include notari-monogram-core group");
+    assert.ok(content.includes("notari-brand-facets"), "Symbol must include notari-brand-facets layer");
+    assert.ok(content.includes("academic-beacon"), "Symbol must include academic-beacon golden spark");
+    assert.ok(content.includes("#4169E1"), "Symbol must include Electric Blue #4169E1");
+    assert.ok(content.includes("#20BFA9"), "Symbol must include Campus Teal #20BFA9");
+    assert.ok(content.includes("M0,0 L95,93"), "Symbol must contain the authentic monogram diagonal cut");
   });
 
   // ---------------------------------------------------------------------------
@@ -177,14 +186,14 @@ async function runBrandSuite() {
   // ---------------------------------------------------------------------------
   console.log("\nSuite 5: Dynamic Metadata Icons & Web Manifest");
 
-  it("src/app/icon.tsx renders 192x192 ImageResponse with crest emblem", () => {
+  it("src/app/icon.tsx renders 192x192 ImageResponse with geometric N monogram emblem", () => {
     assert.strictEqual(iconSize.width, 192);
     assert.strictEqual(iconSize.height, 192);
     const res = Icon();
     assert.ok(res !== null && typeof res === "object", "Icon() must return ImageResponse");
   });
 
-  it("src/app/apple-icon.tsx renders 180x180 ImageResponse with crest emblem", () => {
+  it("src/app/apple-icon.tsx renders 180x180 ImageResponse with geometric N monogram emblem", () => {
     assert.strictEqual(appleIconSize.width, 180);
     assert.strictEqual(appleIconSize.height, 180);
     const res = AppleIcon();

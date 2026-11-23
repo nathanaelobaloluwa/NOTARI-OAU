@@ -1,6 +1,6 @@
 import React from "react";
 import { cn } from "@/lib/utils";
-import { NotariSymbol } from "./notari-symbol";
+import { NotariSymbol, NOTARI_MONOGRAM_PATH } from "./notari-symbol";
 
 export type NotariLoaderSize = "xs" | "sm" | "md" | "lg" | "xl";
 export type NotariLoaderVariant = "electric" | "teal" | "white" | "midnight";
@@ -70,7 +70,7 @@ const VARIANT_COLORS: Record<NotariLoaderVariant, { ring: string; track: string;
 
 /**
  * NotariLoader
- * Premium, lightweight SVG animated loader with OAU university crest aesthetics.
+ * Premium, lightweight SVG animated loader with NOTARI geometric N brand monogram aesthetics.
  * Pure SVG + CSS keyframes with 0 runtime dependencies and reduced-motion support.
  */
 export function NotariLoader({
@@ -83,7 +83,7 @@ export function NotariLoader({
   const { icon: pxSize, box, text: textSize } = SIZE_MAP[size];
   const colors = VARIANT_COLORS[variant];
 
-  // For compact buttons (xs, sm), render a high-performance circular shield crest spinner
+  // For compact buttons (xs, sm), render a high-performance circular spinner orbiting the N monogram
   if (size === "xs" || size === "sm") {
     return (
       <span
@@ -114,12 +114,14 @@ export function NotariLoader({
             strokeWidth="2.5"
             strokeLinecap="round"
           />
-          {/* Central university shield dot */}
-          <path
-            d="M12 8 L14 9.5 C14 12 13 14 12 15 C11 14 10 12 10 9.5 Z"
-            fill={colors.ring}
-            opacity="0.9"
-          />
+          {/* Central geometric N brand monogram silhouette */}
+          <g transform="translate(7.8, 6.2) scale(0.084)">
+            <path
+              d={NOTARI_MONOGRAM_PATH}
+              fill={colors.ring}
+              opacity="0.95"
+            />
+          </g>
         </svg>
 
         {text && <span className={cn("font-medium", textSize)}>{text}</span>}
@@ -128,7 +130,7 @@ export function NotariLoader({
     );
   }
 
-  // For larger containers (md, lg, xl), render the NOTARI Crest with orbital sweep & pulse
+  // For larger containers (md, lg, xl), render the NOTARI Monogram with orbital sweep & pulse
   return (
     <div
       role="status"
@@ -137,7 +139,7 @@ export function NotariLoader({
     >
       <div
         className="relative flex items-center justify-center"
-        style={{ width: `${pxSize}px`, height: `${Math.round(pxSize * 1.15)}px` }}
+        style={{ width: `${pxSize}px`, height: `${Math.round(pxSize * 1.38)}px` }}
       >
         {/* Ambient Outer Halo */}
         <div
@@ -145,7 +147,7 @@ export function NotariLoader({
           style={{ backgroundColor: colors.glow }}
         />
 
-        {/* Orbiting Ring around the Crest */}
+        {/* Orbiting Ring around the Monogram */}
         <svg
           viewBox="0 0 100 100"
           className="absolute inset-[-15%] w-[130%] h-[130%] pointer-events-none animate-spin"
@@ -170,12 +172,12 @@ export function NotariLoader({
           <circle cx="94" cy="50" r="3.5" fill={variant === "electric" ? "#20BFA9" : "#FBBF24"} />
         </svg>
 
-        {/* Central Notari University Crest */}
+        {/* Central Notari Brand Monogram */}
         <NotariSymbol size={pxSize} animated />
       </div>
 
       {text && (
-        <span className={cn("font-medium text-slate-600 animate-pulse tracking-wide", textSize)}>
+        <span className={cn("font-medium text-slate-600 dark:text-slate-300 animate-pulse tracking-wide", textSize)}>
           {text}
         </span>
       )}

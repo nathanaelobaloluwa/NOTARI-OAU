@@ -6,39 +6,60 @@ export interface NotariSymbolProps {
   size?: number | string;
   showGlow?: boolean;
   animated?: boolean;
+  /**
+   * Color variant:
+   * - "brand": Multi-facet gradient with site colors (Electric Blue, Campus Teal, Midnight Navy, Gold apex)
+   * - "white": Pure high-contrast white silhouette (authentic to user's uploaded art)
+   * - "dark": Deep Midnight Navy / slate silhouette for subtle watermarks
+   */
+  variant?: "brand" | "white" | "dark";
+  /**
+   * Whether to wrap the monogram in a rounded Midnight Navy squircle badge
+   * Ideal for high-contrast presentation on white/light surfaces
+   */
+  showBadge?: boolean;
 }
 
 /**
- * Official NOTARI 2.0 Academic University Crest
- * Features:
- * - Traditional heraldic shield geometry with polished golden border
- * - Obafemi Awolowo University (Great Ife) heritage: bronze Ife head charge and torch of knowledge
- * - Spread academic volume symbolizing academic excellence and wisdom
- * - Campus Teal and Electric Blue inner radiance
+ * Official NOTARI 2.0 Monogram Geometry
+ * Mathematically derived from the user's authentic emblem:
+ * - 180° rotational symmetry around center (50, 69)
+ * - 45° angle precision cuts across all diagonal facets and slots
+ * - 3 architectural pillars: Left Foundation, Dynamic Center Bridge, Right Ascension
  */
+export const NOTARI_MONOGRAM_PATH =
+  "M0,0 L95,93 L95,66 L71,39 L72,0 L100,37 L100,138 L5,45 L5,72 L29,99 L28,138 L0,101 Z";
+
 export function NotariSymbol({
   className,
   size = 40,
   showGlow = false,
   animated = false,
+  variant = "brand",
+  showBadge = false,
 }: NotariSymbolProps) {
   const uniqueId = React.useId().replace(/:/g, "");
+
+  const numericSize = typeof size === "number" ? size : 40;
+  const computedHeight = typeof size === "number" ? Math.round(numericSize * 1.38) : undefined;
 
   return (
     <div
       className={cn(
-        "relative inline-flex items-center justify-center shrink-0 aspect-[100/115]",
-        showGlow && "filter drop-shadow-[0_4px_16px_rgba(65,105,225,0.35)]",
+        "relative inline-flex items-center justify-center shrink-0 select-none",
+        showBadge ? "aspect-square" : "aspect-[100/138]",
+        showBadge && "bg-[#151C35] rounded-2xl border border-[#4169E1]/30 p-2 shadow-lg shadow-[#151C35]/30",
+        showGlow && !showBadge && "filter drop-shadow-[0_4px_16px_rgba(65,105,225,0.4)]",
         className
       )}
       style={{
         width: typeof size === "number" ? `${size}px` : size,
-        height: typeof size === "number" ? `${Math.round(size * 1.15)}px` : undefined,
+        height: showBadge ? (typeof size === "number" ? `${size}px` : size) : computedHeight ? `${computedHeight}px` : undefined,
       }}
       aria-hidden="true"
     >
       <svg
-        viewBox="0 0 100 115"
+        viewBox={showBadge ? "-14 -14 128 166" : "-6 -6 112 150"}
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         className={cn(
@@ -47,144 +68,126 @@ export function NotariSymbol({
         )}
       >
         <defs>
-          {/* Outer Shield Gold Metallic Gradient */}
-          <linearGradient id={`goldRim-${uniqueId}`} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#FDE68A" />
-            <stop offset="25%" stopColor="#F59E0B" />
-            <stop offset="65%" stopColor="#D97706" />
-            <stop offset="100%" stopColor="#92400E" />
+          {/* Primary Brand Gradient: Electric Blue (#4169E1) -> Campus Teal (#20BFA9) */}
+          <linearGradient id={`brandGrad-${uniqueId}`} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#4169E1" />
+            <stop offset="35%" stopColor="#3B82F6" />
+            <stop offset="70%" stopColor="#20BFA9" />
+            <stop offset="100%" stopColor="#14B8A6" />
           </linearGradient>
 
-          {/* Inner Crest Midnight Navy Background */}
-          <linearGradient id={`shieldBg-${uniqueId}`} x1="50%" y1="0%" x2="50%" y2="100%">
-            <stop offset="0%" stopColor="#151C35" />
-            <stop offset="45%" stopColor="#1B264F" />
-            <stop offset="100%" stopColor="#0B1020" />
+          {/* Dynamic Architectural Sheen & Depth Layer */}
+          <linearGradient id={`sheenGrad-${uniqueId}`} x1="15%" y1="0%" x2="85%" y2="100%">
+            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.4" />
+            <stop offset="28%" stopColor="#FFFFFF" stopOpacity="0.1" />
+            <stop offset="60%" stopColor="#20BFA9" stopOpacity="0.25" />
+            <stop offset="100%" stopColor="#000000" stopOpacity="0.25" />
           </linearGradient>
 
-          {/* Electric Blue Luminous Sheen */}
-          <linearGradient id={`electricGlow-${uniqueId}`} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#4169E1" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="#20BFA9" stopOpacity="0.4" />
-          </linearGradient>
-
-          {/* Campus Teal Torch Gradient */}
-          <linearGradient id={`torchFlame-${uniqueId}`} x1="50%" y1="100%" x2="50%" y2="0%">
-            <stop offset="0%" stopColor="#F59E0B" />
-            <stop offset="45%" stopColor="#FBBF24" />
-            <stop offset="85%" stopColor="#20BFA9" />
-            <stop offset="100%" stopColor="#FFFFFF" />
-          </linearGradient>
-
-          {/* Book Pages Gradient */}
-          <linearGradient id={`bookPage-${uniqueId}`} x1="0%" y1="0%" x2="100%" y2="100%">
+          {/* Academic Radiance Apex Spark (Knowledge & Discovery at Great Ife) */}
+          <radialGradient id={`apexGold-${uniqueId}`} cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor="#FFFFFF" />
-            <stop offset="100%" stopColor="#E2E8F0" />
-          </linearGradient>
+            <stop offset="40%" stopColor="#FDE68A" />
+            <stop offset="80%" stopColor="#F59E0B" />
+            <stop offset="100%" stopColor="#F59E0B" stopOpacity="0" />
+          </radialGradient>
 
-          {/* Ife Bronze Head Gradient */}
-          <linearGradient id={`ifeBronze-${uniqueId}`} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#FDE68A" />
-            <stop offset="30%" stopColor="#F59E0B" />
-            <stop offset="70%" stopColor="#D97706" />
-            <stop offset="100%" stopColor="#B45309" />
-          </linearGradient>
+          {/* Ambient Lighting Glow */}
+          <filter id={`ambientGlow-${uniqueId}`} x="-25%" y="-25%" width="150%" height="150%">
+            <feDropShadow dx="0" dy="4" stdDeviation="10" floodColor="#4169E1" floodOpacity="0.5" />
+          </filter>
         </defs>
 
-        {/* 1. Shield Outer Drop/Base */}
-        <path
-          d="M50 4 L88 18 C88 56 74 92 50 112 C26 92 12 56 12 18 Z"
-          fill={`url(#shieldBg-${uniqueId})`}
-          stroke={`url(#goldRim-${uniqueId})`}
-          strokeWidth="3.5"
-          strokeLinejoin="round"
-        />
-
-        {/* 2. Inner Golden Fillet Inset Line */}
-        <path
-          d="M50 10 L82 22 C82 53 70 85 50 103 C30 85 18 53 18 22 Z"
-          fill="none"
-          stroke="#FBBF24"
-          strokeWidth="1"
-          strokeOpacity="0.5"
-          strokeDasharray="4 2"
-        />
-
-        {/* 3. Subtle University Starfield / Radiance */}
-        <circle cx="50" cy="35" r="26" fill={`url(#electricGlow-${uniqueId})`} opacity="0.15" />
-
-        {/* 4. Upper Academic Volume (Open Book of Knowledge) */}
-        <g id="academic-book">
-          {/* Left Leaf */}
+        {/* 1. Ambient Glow Layer (when showGlow is enabled) */}
+        {showGlow && (
           <path
-            d="M48 40 C36 36 26 38 22 41 C22 41 22 56 22 57 C26 54 36 52 48 56 Z"
-            fill={`url(#bookPage-${uniqueId})`}
-            stroke="#151C35"
-            strokeWidth="0.8"
+            d={NOTARI_MONOGRAM_PATH}
+            fill="#4169E1"
+            filter={`url(#ambientGlow-${uniqueId})`}
+            opacity="0.65"
           />
-          {/* Right Leaf */}
+        )}
+
+        {/* 2. Core Geometric N Monogram Silhouette */}
+        <g id="notari-monogram-core">
           <path
-            d="M52 40 C64 36 74 38 78 41 C78 41 78 56 78 57 C74 54 64 52 52 56 Z"
-            fill={`url(#bookPage-${uniqueId})`}
-            stroke="#151C35"
-            strokeWidth="0.8"
+            d={NOTARI_MONOGRAM_PATH}
+            fill={
+              variant === "brand"
+                ? `url(#brandGrad-${uniqueId})`
+                : variant === "white"
+                ? "#FFFFFF"
+                : "#151C35"
+            }
           />
-          {/* Page Lines (Left) */}
-          <path d="M26 46 C32 44 40 43 45 45" stroke="#94A3B8" strokeWidth="0.8" strokeLinecap="round" />
-          <path d="M26 50 C32 48 40 47 45 49" stroke="#94A3B8" strokeWidth="0.8" strokeLinecap="round" />
-          {/* Page Lines (Right) */}
-          <path d="M74 46 C68 44 60 43 55 45" stroke="#94A3B8" strokeWidth="0.8" strokeLinecap="round" />
-          <path d="M74 50 C68 48 60 47 55 49" stroke="#94A3B8" strokeWidth="0.8" strokeLinecap="round" />
-          {/* Central Book Spine */}
-          <path d="M50 39 V57" stroke={`url(#goldRim-${uniqueId})`} strokeWidth="1.6" strokeLinecap="round" />
         </g>
 
-        {/* 5. The Great Ife Torch of Knowledge & Enlightenment (surmounting book) */}
-        <g id="knowledge-torch">
-          <path
-            d="M50 20 C45 27 44 32 47 37 C48.5 35 51.5 35 53 37 C56 32 55 27 50 20 Z"
-            fill={`url(#torchFlame-${uniqueId})`}
-          />
-          <circle cx="50" cy="30" r="2.2" fill="#FFFFFF" />
-        </g>
+        {/* 3. Multi-Faceted Architectural Sheen & Depth Overlay */}
+        {variant === "brand" && (
+          <g id="notari-brand-facets" opacity="0.9">
+            {/* Top-to-bottom depth sheen */}
+            <path
+              d={NOTARI_MONOGRAM_PATH}
+              fill={`url(#sheenGrad-${uniqueId})`}
+            />
 
-        {/* 6. Central Charge: Obafemi Awolowo University Ori Olokun / Ife Bronze Crown & Emblem */}
-        <g id="ife-bronze-heritage">
-          {/* Beaded Royal Crown Crest */}
-          <path
-            d="M36 67 C42 62 58 62 64 67 L62 72 C56 69 44 69 38 72 Z"
-            fill={`url(#ifeBronze-${uniqueId})`}
-            stroke="#FDE68A"
-            strokeWidth="0.6"
-          />
-          {/* Crown Jewels / Plumes */}
-          <circle cx="43" cy="64" r="1.4" fill="#20BFA9" />
-          <circle cx="50" cy="62" r="1.8" fill="#FBBF24" />
-          <circle cx="57" cy="64" r="1.4" fill="#20BFA9" />
+            {/* Polished Chamfer Edges (45-degree light reflections) */}
+            <path
+              d="M0,0 L95,93"
+              stroke="#FFFFFF"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+              opacity="0.75"
+            />
+            <path
+              d="M5,45 L100,138"
+              stroke="#20BFA9"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+              opacity="0.75"
+            />
+            <path
+              d="M72,0 L100,37"
+              stroke="#FDE68A"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              opacity="0.85"
+            />
+            <path
+              d="M0,101 L28,138"
+              stroke="#38BDF8"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              opacity="0.7"
+            />
 
-          {/* Sculpted Head Silhouette */}
-          <path
-            d="M40 72 C40 85 46 91 50 92 C54 91 60 85 60 72 C55 70 45 70 40 72 Z"
-            fill={`url(#ifeBronze-${uniqueId})`}
-            stroke="#92400E"
-            strokeWidth="0.6"
-          />
+            {/* Academic Beacon: Glowing Gold Vertex Spark at Apex (72, 0) */}
+            <g id="academic-beacon">
+              <circle cx="72" cy="2" r="6" fill={`url(#apexGold-${uniqueId})`} />
+              <circle cx="72" cy="2" r="2.2" fill="#FFFFFF" />
+            </g>
+          </g>
+        )}
 
-          {/* Iconic Ife Linear Striations (Fine facial grooves of historic bronze) */}
-          <path d="M43 76 C47 77 53 77 57 76" stroke="#B45309" strokeWidth="0.6" strokeLinecap="round" opacity="0.75" />
-          <path d="M44 80 C47 81 53 81 56 80" stroke="#B45309" strokeWidth="0.6" strokeLinecap="round" opacity="0.75" />
-          <path d="M45 84 C48 85 52 85 55 84" stroke="#B45309" strokeWidth="0.6" strokeLinecap="round" opacity="0.75" />
-          <path d="M47 88 C48.5 89 51.5 89 53 88" stroke="#B45309" strokeWidth="0.6" strokeLinecap="round" opacity="0.75" />
-        </g>
-
-        {/* 7. Base Foundation Scroll & Great Ife Academic Stars */}
-        <g id="base-laurels">
-          <circle cx="50" cy="99" r="2.2" fill="#FBBF24" />
-          <circle cx="42" cy="96" r="1.6" fill="#20BFA9" />
-          <circle cx="58" cy="96" r="1.6" fill="#20BFA9" />
-          <circle cx="35" cy="91" r="1.2" fill="#FDE68A" />
-          <circle cx="65" cy="91" r="1.2" fill="#FDE68A" />
-        </g>
+        {/* Subtle Chamfer Highlight for White Variant */}
+        {variant === "white" && (
+          <g id="notari-white-facets" opacity="0.4">
+            <path
+              d="M0,0 L95,93"
+              stroke="#151C35"
+              strokeWidth="1.2"
+              strokeLinecap="round"
+              opacity="0.25"
+            />
+            <path
+              d="M5,45 L100,138"
+              stroke="#151C35"
+              strokeWidth="1.2"
+              strokeLinecap="round"
+              opacity="0.25"
+            />
+          </g>
+        )}
       </svg>
     </div>
   );

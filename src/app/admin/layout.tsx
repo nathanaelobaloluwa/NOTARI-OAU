@@ -72,9 +72,9 @@ export default function AdminLayout({
       .toUpperCase() || "AD";
 
   return (
-    <div className="min-h-screen bg-[#F5F7FC] flex">
+    <div className="min-h-screen bg-notari-bg flex">
       {/* Dark Navy Sidebar */}
-      <aside className="hidden xl:flex w-64 flex-col justify-between bg-[#0B132B] text-white p-5 sticky top-0 h-screen select-none shadow-xl z-40">
+      <aside className="hidden xl:flex w-64 flex-col justify-between bg-[#151C35] text-white p-5 sticky top-0 h-screen select-none shadow-xl z-40">
         <div className="space-y-6">
           {/* Logo */}
           <div className="px-2">

@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { OAU_FACULTIES } from "@/constants/oau";
-import { User, Mail, Lock, Building, Sparkles, AlertCircle, Info, Loader2 } from "lucide-react";
+import { User, Mail, Lock, Building, Sparkles, AlertCircle, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NotariLoader } from "@/components/shared/notari-loader";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -253,10 +254,7 @@ export default function RegisterPage() {
           className="w-full h-11 rounded-xl font-semibold shadow-md mt-2 flex items-center justify-center gap-2"
         >
           {isLoading ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin text-white" />
-              <span>Creating your account...</span>
-            </>
+            <NotariLoader size="sm" variant="white" text="Creating your account..." />
           ) : (
             "Complete Registration"
           )}

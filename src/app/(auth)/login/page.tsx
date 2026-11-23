@@ -7,8 +7,9 @@ import { signIn, getSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Mail, Lock, Eye, EyeOff, User, Sparkles, Shield, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, User, Sparkles, Shield, AlertCircle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NotariLoader } from "@/components/shared/notari-loader";
 
 type AuthRoleTab = "student" | "organizer" | "admin";
 
@@ -223,10 +224,7 @@ function LoginForm() {
           className="w-full h-11 rounded-xl font-semibold shadow-md mt-2 flex items-center justify-center gap-2"
         >
           {isLoading ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin text-white" />
-              <span>Signing you in...</span>
-            </>
+            <NotariLoader size="sm" variant="white" text="Signing you in..." />
           ) : (
             "Sign In"
           )}
@@ -296,7 +294,13 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<Card className="p-8 border-slate-200 shadow-lg rounded-2xl bg-white animate-pulse h-96" />}>
+    <Suspense
+      fallback={
+        <Card className="p-8 border-slate-200 shadow-lg rounded-2xl bg-white h-96 flex items-center justify-center">
+          <NotariLoader size="lg" text="Loading NOTARI..." />
+        </Card>
+      }
+    >
       <LoginForm />
     </Suspense>
   );

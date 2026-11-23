@@ -10,13 +10,13 @@ export default function AuthLayout({
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-12 bg-white">
       {/* Left Branding Side (Desktop) */}
-      <div className="hidden lg:flex lg:col-span-5 bg-gradient-to-b from-[#0B1120] via-[#0F172A] to-[#1E1B4B] p-12 text-white flex-col justify-between relative overflow-hidden">
+      <div className="hidden lg:flex lg:col-span-5 bg-gradient-to-b from-[#151C35] via-[#10172C] to-[#0D1224] p-12 text-white flex-col justify-between relative overflow-hidden">
         {/* Subtle decorative glow */}
-        <div className="absolute -top-24 -left-24 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-teal-500/20 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10">
-          <NotariLogo variant="auth" isDark />
+          <NotariLogo variant="auth" isDark size="lg" />
         </div>
 
         <div className="relative z-10 space-y-6">

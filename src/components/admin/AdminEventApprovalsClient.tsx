@@ -54,6 +54,7 @@ interface AdminEvent {
   startDate: string;
   endDate: string;
   flyerImage?: string;
+  flyerUrl?: string;
   targetAudience?: string;
   tags?: string[];
   contactEmail?: string;
@@ -459,18 +460,18 @@ export function AdminEventApprovalsClient() {
 
                     {/* Flyer Preview & Schedule Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {event.flyerImage && (
+                      {(event.flyerUrl || event.flyerImage) && (
                         <div className="space-y-1">
                           <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
                             Flyer Visual
                           </span>
                           <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-slate-200 border border-slate-200">
                             <Image
-                              src={event.flyerImage}
+                              src={event.flyerUrl || event.flyerImage || ""}
                               alt={event.title}
                               fill
                               className="object-cover"
-                              unoptimized={event.flyerImage.startsWith("http")}
+                              unoptimized={(event.flyerUrl || event.flyerImage || "").startsWith("http")}
                             />
                           </div>
                         </div>

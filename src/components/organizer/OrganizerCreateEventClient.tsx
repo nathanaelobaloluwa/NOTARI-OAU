@@ -27,6 +27,7 @@ import {
   Send,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { EventFlyerUploader } from "@/components/organizer/EventFlyerUploader";
 
 interface FormTicketTier {
   name: string;
@@ -722,58 +723,16 @@ export function OrganizerCreateEventClient() {
           <div className="space-y-1">
             <h3 className="text-base font-bold text-[#101C3A]">Publicity Flyer & Review</h3>
             <p className="text-xs text-slate-500">
-              Select an authentic campus banner or provide a custom flyer URL.
+              Upload a high-resolution flyer from your device (JPEG, PNG, or WebP up to 5 MB) or select an authentic Great Ife campus preset.
             </p>
           </div>
 
-          {/* Campus Photography Presets */}
-          <div className="space-y-2">
-            <label className="text-xs font-semibold text-slate-700">Choose Great Ife Banner Imagery</label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {OAU_CAMPUS_PRESETS.map((preset) => (
-                <button
-                  key={preset.url}
-                  type="button"
-                  onClick={() => setFlyerUrl(preset.url)}
-                  className={cn(
-                    "relative aspect-video rounded-xl overflow-hidden border-2 transition-all group text-left cursor-pointer",
-                    flyerUrl === preset.url
-                      ? "border-[#4F46E5] ring-2 ring-[#4F46E5]/20 shadow-sm"
-                      : "border-slate-200 hover:border-slate-300"
-                  )}
-                >
-                  <Image
-                    src={preset.url}
-                    alt={preset.label}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform"
-                    sizes="(max-width: 768px) 50vw, 25vw"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-2">
-                    <span className="text-[10px] font-bold text-white truncate leading-tight">
-                      {preset.label}
-                    </span>
-                  </div>
-                  {flyerUrl === preset.url && (
-                    <div className="absolute top-1.5 right-1.5 bg-[#4F46E5] text-white p-0.5 rounded-full">
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                    </div>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Custom Flyer URL */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700">Or Custom Flyer URL (Optional)</label>
-            <Input
-              placeholder="https://example.com/your-flyer.jpg"
-              value={flyerUrl}
-              onChange={(e) => setFlyerUrl(e.target.value)}
-              className="text-xs"
-            />
-          </div>
+          {/* Event Flyer Uploader Component */}
+          <EventFlyerUploader
+            value={flyerUrl}
+            onChange={(url) => setFlyerUrl(url)}
+            presets={OAU_CAMPUS_PRESETS}
+          />
 
           {/* Additional details: contact & tags */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">

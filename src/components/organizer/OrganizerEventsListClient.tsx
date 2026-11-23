@@ -41,6 +41,7 @@ interface OrganizerEvent {
   startDate: string;
   endDate: string;
   flyerUrl?: string;
+  flyerImage?: string;
   isFree: boolean;
   ticketTiers: TicketTier[];
   totalCapacity: number;
@@ -312,13 +313,14 @@ export function OrganizerEventsListClient() {
                 <div className="flex items-start gap-4 min-w-0">
                   {/* Thumbnail / Flyer */}
                   <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-slate-100 overflow-hidden relative shrink-0 border border-slate-200">
-                    {evt.flyerUrl ? (
+                    {evt.flyerUrl || evt.flyerImage ? (
                       <Image
-                        src={evt.flyerUrl}
+                        src={evt.flyerUrl || evt.flyerImage || ""}
                         alt={evt.title}
                         fill
                         className="object-cover"
                         sizes="(max-width: 768px) 64px, 80px"
+                        unoptimized={(evt.flyerUrl || evt.flyerImage || "").startsWith("http")}
                       />
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center text-slate-300 bg-gradient-to-br from-indigo-50 to-purple-50">

@@ -14,6 +14,7 @@ import {
   OAU_FACULTIES,
   EVENT_STATUS,
 } from "@/constants/oau";
+import { EventFlyerUploader } from "@/components/organizer/EventFlyerUploader";
 import {
   ArrowLeft,
   Calendar,
@@ -72,6 +73,7 @@ interface EventData {
   salesStartDate?: string;
   salesEndDate?: string;
   flyerImage?: string;
+  flyerUrl?: string;
   targetAudience?: string;
   tags?: string[];
   contactEmail?: string;
@@ -226,7 +228,7 @@ export function OrganizerEventDetailClient({ eventId }: { eventId: string }) {
     // Format datetime-local strings
     setEditStartDate(event.startDate ? new Date(event.startDate).toISOString().slice(0, 16) : "");
     setEditEndDate(event.endDate ? new Date(event.endDate).toISOString().slice(0, 16) : "");
-    setEditFlyerImage(event.flyerImage || "");
+    setEditFlyerImage(event.flyerImage || event.flyerUrl || "");
     setEditTargetAudience(event.targetAudience || "");
     setEditTags(event.tags ? event.tags.join(", ") : "");
     setEditContactEmail(event.contactEmail || "");
@@ -459,6 +461,7 @@ export function OrganizerEventDetailClient({ eventId }: { eventId: string }) {
   const isRejected = event.status === EVENT_STATUS.REJECTED;
   const isPublished = event.status === EVENT_STATUS.PUBLISHED;
   const isCancelled = event.status === EVENT_STATUS.CANCELLED;
+  const canEdit = !isCancelled;
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-12">
@@ -910,19 +913,30 @@ export function OrganizerEventDetailClient({ eventId }: { eventId: string }) {
         <div className="space-y-6">
           {/* Publicity Flyer */}
           <Card className="overflow-hidden border-slate-200/80 bg-white shadow-sm">
-            <div className="p-4 border-b border-slate-100">
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
               <h2 className="text-xs font-bold text-notari-dark uppercase tracking-wider">
                 Event Publicity Flyer
               </h2>
+              {canEdit && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={openEditModal}
+                  className="h-7 text-xs font-semibold text-[#4169E1] hover:text-[#4169E1] hover:bg-[#4169E1]/5 border-slate-200"
+                >
+                  <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+                  Update Flyer
+                </Button>
+              )}
             </div>
             <div className="relative aspect-[16/10] bg-slate-100 w-full overflow-hidden">
-              {event.flyerImage ? (
+              {event.flyerImage || event.flyerUrl ? (
                 <Image
-                  src={event.flyerImage}
+                  src={event.flyerImage || event.flyerUrl || ""}
                   alt={event.title}
                   fill
                   className="object-cover"
-                  unoptimized={event.flyerImage.startsWith("http")}
+                  unoptimized={(event.flyerImage || event.flyerUrl || "").startsWith("http")}
                 />
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 gap-1.5 p-4 text-center">
@@ -1259,31 +1273,14 @@ export function OrganizerEventDetailClient({ eventId }: { eventId: string }) {
                 </div>
               </div>
 
-              {/* Flyer Presets */}
+              {/* Flyer Presets & Direct Upload */}
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-700">Event Flyer Image</label>
-                <Input
+                <label className="text-xs font-semibold text-slate-700">Event Publicity Flyer</label>
+                <EventFlyerUploader
                   value={editFlyerImage}
-                  onChange={(e) => setEditFlyerImage(e.target.value)}
-                  placeholder="https://... or select campus preset below"
+                  onChange={setEditFlyerImage}
+                  presets={OAU_CAMPUS_PRESETS}
                 />
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {OAU_CAMPUS_PRESETS.map((p) => (
-                    <button
-                      key={p.url}
-                      type="button"
-                      onClick={() => setEditFlyerImage(p.url)}
-                      className={cn(
-                        "text-[10px] px-2.5 py-1 rounded-full border transition-all",
-                        editFlyerImage === p.url
-                          ? "bg-purple-600 text-white border-purple-600"
-                          : "bg-slate-50 text-slate-600 border-slate-200 hover:border-purple-300"
-                      )}
-                    >
-                      {p.label}
-                    </button>
-                  ))}
-                </div>
               </div>
 
               {/* Ticket Tiers Editor */}

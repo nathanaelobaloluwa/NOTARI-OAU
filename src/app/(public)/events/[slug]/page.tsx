@@ -134,13 +134,14 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
 
       {/* 2. Hero Cover Banner */}
       <div className="relative aspect-[16/9] sm:aspect-[21/9] w-full rounded-3xl overflow-hidden shadow-md bg-slate-100">
-        {event.flyerUrl ? (
+        {(event.flyerUrl || (event as any).flyerImage) ? (
           <Image
-            src={event.flyerUrl}
+            src={event.flyerUrl || (event as any).flyerImage}
             alt={event.title}
             fill
             className="object-cover"
             priority
+            unoptimized={(event.flyerUrl || (event as any).flyerImage || "").startsWith("http")}
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-indigo-700 via-indigo-800 to-purple-900 text-white p-6 text-center">

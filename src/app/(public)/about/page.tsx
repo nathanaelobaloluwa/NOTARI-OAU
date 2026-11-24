@@ -63,7 +63,11 @@ export default function AboutPage() {
             </Button>
           </Link>
           <Link href="/events">
-            <Button size="lg" variant="outline" className="rounded-xl px-8 text-white border-slate-700 hover:bg-slate-800">
+            <Button
+              size="lg"
+              variant="outline"
+              className="rounded-xl px-8 bg-transparent text-white border-slate-600 hover:bg-slate-800 hover:text-white hover:border-slate-500 focus-visible:ring-slate-400 focus-visible:ring-offset-slate-900 transition-colors"
+            >
               Browse Events
             </Button>
           </Link>

@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { OAU_FACULTIES } from "@/constants/oau";
+import { OAU_FACULTIES, formatFacultyLabel } from "@/constants/oau";
 import {
   ORGANIZATION_CATEGORIES,
   APPLICATION_STATUS,
@@ -618,7 +618,7 @@ export function OrganizerApplyClient() {
                     <option value="">Select Faculty</option>
                     {OAU_FACULTIES.map((fac) => (
                       <option key={fac} value={fac}>
-                        {fac}
+                        {formatFacultyLabel(fac)}
                       </option>
                     ))}
                   </select>
@@ -795,7 +795,7 @@ export function OrganizerApplyClient() {
                     <option value="">Cross-Campus / All Faculties</option>
                     {OAU_FACULTIES.map((fac) => (
                       <option key={fac} value={fac}>
-                        {fac}
+                        {formatFacultyLabel(fac)}
                       </option>
                     ))}
                   </select>

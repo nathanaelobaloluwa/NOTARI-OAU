@@ -4,7 +4,7 @@ import { createEventSchema, eventFilterSchema } from "@/validators/event";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { Event } from "@/models/Event";
 import { requireApprovedOrganizer } from "@/lib/auth/rbac";
-import { EVENT_STATUS } from "@/constants/oau";
+import { EVENT_STATUS, buildFacultyQueryRegex } from "@/constants/oau";
 
 /**
  * GET /api/events
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
 
     // 4. Faculty filter
     if (validated.faculty) {
-      mongoQuery.faculty = validated.faculty;
+      mongoQuery.faculty = buildFacultyQueryRegex(validated.faculty);
     }
 
     // 5. Free / Paid filter

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { EVENT_CATEGORIES, OAU_FACULTIES, OAU_VENUES } from "@/constants/oau";
+import { EVENT_CATEGORIES, OAU_FACULTIES, formatFacultyLabel, OAU_VENUES } from "@/constants/oau";
 import { ArrowLeft } from "lucide-react";
 
 export default function AdminCreateEventPage() {
@@ -117,7 +117,7 @@ export default function AdminCreateEventPage() {
                 <option value="">Campus-wide / All Faculties</option>
                 {OAU_FACULTIES.map((f) => (
                   <option key={f} value={f}>
-                    {f}
+                    {formatFacultyLabel(f)}
                   </option>
                 ))}
               </select>

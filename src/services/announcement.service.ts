@@ -9,6 +9,7 @@ import { User } from "@/models/User";
 import { Event } from "@/models/Event";
 import { Ticket } from "@/models/Ticket";
 import { USER_ROLES } from "@/constants/roles";
+import { buildFacultyQueryRegex } from "@/constants/oau";
 import { notificationService } from "./notification.service";
 import { reminderService } from "./reminder.service";
 import {
@@ -240,7 +241,7 @@ export class AnnouncementService {
       };
 
       if (audience.type === "faculty" && audience.faculty) {
-        userQuery.faculty = new RegExp(`^${audience.faculty.trim()}$`, "i");
+        userQuery.faculty = buildFacultyQueryRegex(audience.faculty);
       } else if (audience.type === "department" && audience.department) {
         userQuery.department = new RegExp(`^${audience.department.trim()}$`, "i");
       } else if (audience.type === "academic_level" && audience.level) {
@@ -512,7 +513,7 @@ export class AnnouncementService {
     if (student.faculty) {
       audienceFilters.push({
         "targetAudience.type": "faculty",
-        "targetAudience.faculty": new RegExp(`^${student.faculty.trim()}$`, "i"),
+        "targetAudience.faculty": buildFacultyQueryRegex(student.faculty),
       });
     }
 

@@ -11,7 +11,7 @@ import { connectToDatabase } from "@/lib/database/mongoose";
 import { Event } from "@/models/Event";
 import { Bookmark } from "@/models/Bookmark";
 import { USER_ROLES } from "@/constants/roles";
-import { EVENT_CATEGORIES, EVENT_STATUS, OAU_FACULTIES } from "@/constants/oau";
+import { EVENT_CATEGORIES, EVENT_STATUS, OAU_FACULTIES, formatFacultyLabel, buildFacultyQueryRegex } from "@/constants/oau";
 import { eventFilterSchema } from "@/validators/event";
 import {
   Search,
@@ -67,7 +67,7 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
 
   // 4. Faculty filter
   if (filters.faculty) {
-    mongoQuery.faculty = filters.faculty;
+    mongoQuery.faculty = buildFacultyQueryRegex(filters.faculty);
   }
 
   // 5. Free / Paid filter
@@ -194,7 +194,7 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
                 <option value="">All Faculties</option>
                 {OAU_FACULTIES.map((fac) => (
                   <option key={fac} value={fac}>
-                    {fac}
+                    {formatFacultyLabel(fac)}
                   </option>
                 ))}
               </select>

@@ -23,7 +23,7 @@ import {
   Bell,
 } from "lucide-react";
 import { SanitizedStudentProfile } from "@/lib/student/service";
-import { OAU_FACULTIES } from "@/constants/oau";
+import { OAU_FACULTIES, formatFacultyLabel } from "@/constants/oau";
 
 interface StudentSettingsClientProps {
   initialProfile: SanitizedStudentProfile;
@@ -325,7 +325,7 @@ export function StudentSettingsClient({ initialProfile }: StudentSettingsClientP
                       <option value="">Select your Faculty</option>
                       {OAU_FACULTIES.map((fac) => (
                         <option key={fac} value={fac}>
-                          Faculty of {fac}
+                          {formatFacultyLabel(fac)}
                         </option>
                       ))}
                     </select>

@@ -22,6 +22,7 @@ import {
   Bell,
 } from "lucide-react";
 import { ANNOUNCEMENT_CATEGORIES } from "@/models/Announcement";
+import { OAU_FACULTIES, formatFacultyLabel } from "@/constants/oau";
 
 interface TargetAudience {
   type: string;
@@ -86,21 +87,7 @@ const CATEGORY_NAMES: Record<string, string> = {
   scholarships_competitions: "Scholarships",
 };
 
-const OAU_FACULTIES = [
-  "Administration",
-  "Agriculture",
-  "Arts",
-  "Basic Medical Sciences",
-  "Clinical Sciences",
-  "Dentistry",
-  "Education",
-  "Environmental Design and Management",
-  "Law",
-  "Pharmacy",
-  "Science",
-  "Social Sciences",
-  "Technology",
-];
+
 
 const ACADEMIC_LEVELS = ["100", "200", "300", "400", "500", "Postgraduate"];
 
@@ -782,7 +769,7 @@ export function AdminAnnouncementsClient() {
                       <option value="">Choose a Faculty...</option>
                       {OAU_FACULTIES.map((f) => (
                         <option key={f} value={f}>
-                          {f}
+                          {formatFacultyLabel(f)}
                         </option>
                       ))}
                     </select>

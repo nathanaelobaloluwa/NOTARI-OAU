@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { OAU_FACULTIES } from "@/constants/oau";
+import { OAU_FACULTIES, formatFacultyLabel } from "@/constants/oau";
 import {
   ShieldCheck,
   CheckCircle2,
@@ -331,7 +331,7 @@ export function OrganizerProfileClient() {
                 <option value="">Select Faculty (or University-wide)</option>
                 {OAU_FACULTIES.map((fac) => (
                   <option key={fac} value={fac}>
-                    {fac}
+                    {formatFacultyLabel(fac)}
                   </option>
                 ))}
               </select>

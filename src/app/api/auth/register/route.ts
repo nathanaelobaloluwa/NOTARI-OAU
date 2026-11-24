@@ -5,6 +5,7 @@ import { User } from "@/models/User";
 import { registerSchema } from "@/validators/auth";
 import { apiSuccess, apiError, handleApiError } from "@/lib/utils/api-response";
 import { USER_ROLES } from "@/constants/roles";
+import { normalizeFaculty } from "@/constants/oau";
 
 /**
  * POST /api/auth/register
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
       password: hashedPassword,
       role: USER_ROLES.STUDENT,
       matricNumber: normalizedMatric,
-      faculty: validated.faculty?.trim() || undefined,
+      faculty: normalizeFaculty(validated.faculty),
       department: validated.department?.trim() || undefined,
       isVerified: false,
     });

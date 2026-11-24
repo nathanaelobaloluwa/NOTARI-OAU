@@ -12,6 +12,7 @@ import { StatusPill } from "@/components/shared/status-pill";
 import {
   EVENT_CATEGORIES,
   OAU_FACULTIES,
+  formatFacultyLabel,
   EVENT_STATUS,
 } from "@/constants/oau";
 import { EventFlyerUploader } from "@/components/organizer/EventFlyerUploader";
@@ -1237,7 +1238,7 @@ export function OrganizerEventDetailClient({ eventId }: { eventId: string }) {
                     <option value="">Campus-Wide / None</option>
                     {OAU_FACULTIES.map((f) => (
                       <option key={f} value={f}>
-                        {f}
+                        {formatFacultyLabel(f)}
                       </option>
                     ))}
                   </select>

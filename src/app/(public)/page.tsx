@@ -8,7 +8,7 @@ import { StatusPill } from "@/components/shared/status-pill";
 import { CampusHeroVisual } from "@/components/home/CampusHeroVisual";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { Event } from "@/models/Event";
-import { EVENT_STATUS, OAU_FACULTIES, EVENT_CATEGORIES } from "@/constants/oau";
+import { EVENT_STATUS, OAU_FACULTIES, EVENT_CATEGORIES, formatFacultyLabel } from "@/constants/oau";
 import {
   Search,
   Calendar,
@@ -85,7 +85,7 @@ export default async function HomePage() {
                       <option value="">All Faculties</option>
                       {OAU_FACULTIES.map((f) => (
                         <option key={f} value={f}>
-                          {f}
+                          {formatFacultyLabel(f)}
                         </option>
                       ))}
                     </select>

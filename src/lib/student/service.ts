@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { User, Booking, Ticket } from "@/models";
 import { USER_ROLES } from "@/constants/roles";
+import { normalizeFaculty } from "@/constants/oau";
 import {
   StudentProfileUpdateInput,
   ChangePasswordInput,
@@ -146,7 +147,7 @@ export async function updateStudentProfile(
     student.phone = data.phone.trim();
   }
   if (data.faculty !== undefined) {
-    student.faculty = data.faculty.trim();
+    student.faculty = normalizeFaculty(data.faculty) || data.faculty.trim();
   }
   if (data.department !== undefined) {
     student.department = data.department.trim();

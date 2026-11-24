@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizeFaculty } from "@/constants/oau";
 
 export const studentProfileUpdateSchema = z.object({
   name: z
@@ -12,7 +13,7 @@ export const studentProfileUpdateSchema = z.object({
     .refine((val) => !val || /^[0-9+() -]{8,20}$/.test(val), {
       message: "Please enter a valid phone number (e.g., 08012345678 or +234...)",
     }),
-  faculty: z.string().trim().optional(),
+  faculty: z.string().trim().optional().transform(normalizeFaculty),
   department: z.string().trim().optional(),
   level: z.string().trim().optional(),
   emailPreferences: z

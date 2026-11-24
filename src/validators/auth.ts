@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { USER_ROLES } from "@/constants/roles";
-import { OAU_FACULTIES } from "@/constants/oau";
+import { ALL_VALID_FACULTIES, normalizeFaculty } from "@/constants/oau";
 
 export const loginSchema = z.object({
   email: z
@@ -46,7 +46,7 @@ export const registerSchema = z.object({
         message: "Invalid matriculation number format (e.g., CSC/2021/042)",
       }
     ),
-  faculty: z.string().optional(),
+  faculty: z.string().optional().transform(normalizeFaculty),
   department: z.string().optional(),
 });
 
@@ -67,7 +67,7 @@ export const organizerApplicationSchema = z.object({
   description: z.string().min(20, "Provide a brief description (min 20 characters)"),
   contactEmail: z.string().email("Valid contact email is required"),
   contactPhone: z.string().min(10, "Valid phone number is required"),
-  faculty: z.enum(OAU_FACULTIES).optional(),
+  faculty: z.enum(ALL_VALID_FACULTIES).optional(),
 });
 
 export type OrganizerApplicationInput = z.infer<typeof organizerApplicationSchema>;

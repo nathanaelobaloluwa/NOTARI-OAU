@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { OAU_FACULTIES } from "@/constants/oau";
+import { OAU_FACULTIES, formatFacultyLabel } from "@/constants/oau";
 import { User, Mail, Lock, Building, Sparkles, AlertCircle, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotariLoader } from "@/components/shared/notari-loader";
@@ -184,7 +184,7 @@ export default function RegisterPage() {
                   <option value="">Select Faculty</option>
                   {OAU_FACULTIES.map((f) => (
                     <option key={f} value={f}>
-                      {f}
+                      {formatFacultyLabel(f)}
                     </option>
                   ))}
                 </select>

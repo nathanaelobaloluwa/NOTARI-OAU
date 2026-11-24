@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import {
   EVENT_CATEGORIES,
   OAU_FACULTIES,
+  formatFacultyLabel,
   OAU_VENUES,
   EVENT_STATUS,
 } from "@/constants/oau";
@@ -462,7 +463,7 @@ export function OrganizerCreateEventClient() {
                 <option value="">University-wide / All Faculties</option>
                 {OAU_FACULTIES.map((f) => (
                   <option key={f} value={f}>
-                    {f}
+                    {formatFacultyLabel(f)}
                   </option>
                 ))}
               </select>

@@ -7,6 +7,7 @@ export const OAU_FACULTIES = [
   "Dentistry",
   "Education",
   "Environmental Design and Management",
+  "Faculty of Computing Science and Engineering",
   "Law",
   "Pharmacy",
   "Science",
@@ -15,6 +16,50 @@ export const OAU_FACULTIES = [
 ] as const;
 
 export type OauFaculty = (typeof OAU_FACULTIES)[number];
+
+/**
+ * All recognized faculty names including shorthand aliases and canonical forms.
+ * Used for tolerant backend validation so that legacy records or variations
+ * ("Computing Science and Engineering" vs "Faculty of Computing Science and Engineering")
+ * validate and persist safely.
+ */
+export const ALL_VALID_FACULTIES = [
+  ...OAU_FACULTIES,
+  "Computing Science and Engineering",
+] as const;
+
+/**
+ * Normalizes faculty name into standard canonical format.
+ * Maps "Computing Science and Engineering" -> "Faculty of Computing Science and Engineering".
+ */
+export function normalizeFaculty(faculty?: string | null): string | undefined {
+  if (!faculty) return undefined;
+  const trimmed = faculty.trim();
+  if (!trimmed) return undefined;
+  if (/^(Faculty of )?Computing Science and Engineering$/i.test(trimmed)) {
+    return "Faculty of Computing Science and Engineering";
+  }
+  return trimmed;
+}
+
+/**
+ * Formats a faculty for display in UI dropdowns and labels.
+ * If already prefixed with "Faculty of ", returns as-is; otherwise adds "Faculty of ".
+ */
+export function formatFacultyLabel(faculty: string): string {
+  if (!faculty) return "";
+  return faculty.startsWith("Faculty of ") ? faculty : `Faculty of ${faculty}`;
+}
+
+/**
+ * Builds a regex pattern to match a faculty flexibly in MongoDB queries,
+ * matching both with and without the "Faculty of " prefix.
+ */
+export function buildFacultyQueryRegex(faculty: string): RegExp {
+  const clean = faculty.replace(/^Faculty of\s+/i, "").trim();
+  const escaped = clean.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`^(Faculty of\\s+)?${escaped}$`, "i");
+}
 
 export const EVENT_CATEGORIES = [
   "Academic & Educational",

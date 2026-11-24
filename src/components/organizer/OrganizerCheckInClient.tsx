@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import jsQR from "jsqr";
 import { TicketSecurityService } from "@/lib/tickets/qr";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -490,10 +489,29 @@ export function OrganizerCheckInClient() {
     alert(`Sync completed: ${successCount} confirmed admissions, ${conflictCount} conflicts resolved.`);
   };
 
+  // Lazy-loaded QR decoder module to optimize initial route bundle size
+  const jsQRDecoderRef = useRef<((
+    data: Uint8ClampedArray,
+    width: number,
+    height: number,
+    options?: { inversionAttempts?: "dontInvert" | "onlyInvert" | "attemptBoth" | "invertFirst" }
+  ) => { data: string } | null) | null>(null);
+
+  const getJsQRDecoder = useCallback(async () => {
+    if (!jsQRDecoderRef.current) {
+      const mod = await import("jsqr");
+      jsQRDecoderRef.current = (mod.default || mod) as unknown as NonNullable<typeof jsQRDecoderRef.current>;
+    }
+    return jsQRDecoderRef.current;
+  }, []);
+
   // Camera Management
   const startCamera = async () => {
     setCameraError(null);
     try {
+      // Pre-warm the dynamic QR decoder module while camera initializes
+      getJsQRDecoder().catch(() => {});
+
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
       }
@@ -589,7 +607,13 @@ export function OrganizerCheckInClient() {
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const code = jsQR(imageData.data, imageData.width, imageData.height, {
+      const decoder = jsQRDecoderRef.current;
+      if (!decoder) {
+        getJsQRDecoder().catch(() => {});
+        return;
+      }
+
+      const code = decoder(imageData.data, imageData.width, imageData.height, {
         inversionAttempts: "dontInvert",
       });
 
@@ -613,7 +637,7 @@ export function OrganizerCheckInClient() {
         scanIntervalRef.current = null;
       }
     };
-  }, [isCameraActive, isProcessingScan, lastScannedCode, processCheckIn]);
+  }, [isCameraActive, isProcessingScan, lastScannedCode, processCheckIn, getJsQRDecoder]);
 
   // Clean up stream on unmount
   useEffect(() => {

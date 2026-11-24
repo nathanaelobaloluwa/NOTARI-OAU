@@ -5,20 +5,37 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Mail, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { Mail, ArrowLeft, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setTimeout(() => {
+    setErrorMessage(null);
+
+    try {
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setErrorMessage(data.message || "Failed to process password reset. Please try again.");
+      } else {
+        setSubmitted(true);
+      }
+    } catch {
+      setErrorMessage("Network error. Please check your connection and try again.");
+    } finally {
       setIsLoading(false);
-      setSubmitted(true);
-    }, 600);
+    }
   };
 
   return (
@@ -51,11 +68,18 @@ export default function ForgotPasswordPage() {
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
+          {errorMessage && (
+            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-slate-700">Email Address</label>
             <Input
               type="email"
-              placeholder="you@oau.edu.ng"
+              placeholder="you@oauife.edu.ng"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               icon={<Mail className="w-4 h-4" />}
@@ -68,7 +92,14 @@ export default function ForgotPasswordPage() {
             disabled={isLoading}
             className="w-full h-11 rounded-xl font-semibold shadow-md mt-2"
           >
-            {isLoading ? "Sending link..." : "Send Reset Link"}
+            {isLoading ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Sending link...</span>
+              </span>
+            ) : (
+              "Send Reset Link"
+            )}
           </Button>
 
           <div className="text-center pt-4">

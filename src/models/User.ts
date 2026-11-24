@@ -14,6 +14,9 @@ export interface IUserDocument extends Document {
   level?: string;
   phone?: string;
   isVerified: boolean;
+  status?: "active" | "suspended";
+  passwordResetToken?: string;
+  passwordResetExpires?: Date;
   emailPreferences?: {
     eventReminders?: boolean;
     campusAnnouncements?: boolean;
@@ -54,6 +57,14 @@ const UserSchema = new Schema<IUserDocument>(
     level: { type: String, trim: true },
     phone: { type: String, trim: true },
     isVerified: { type: Boolean, default: false },
+    status: {
+      type: String,
+      enum: ["active", "suspended"],
+      default: "active",
+      index: true,
+    },
+    passwordResetToken: { type: String, select: false },
+    passwordResetExpires: { type: Date, select: false },
     emailPreferences: {
       eventReminders: { type: Boolean, default: true },
       campusAnnouncements: { type: Boolean, default: true },

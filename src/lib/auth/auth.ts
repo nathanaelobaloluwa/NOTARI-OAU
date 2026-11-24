@@ -33,6 +33,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             return null;
           }
 
+          // Guard against suspended accounts
+          if ((user as { status?: string }).status === "suspended") {
+            console.warn(`🔒 Access denied: account for ${normalizedEmail} is suspended.`);
+            return null;
+          }
+
           // Verify submitted password against stored bcrypt hash
           const isPasswordValid = await bcrypt.compare(password, user.password);
           if (!isPasswordValid) {

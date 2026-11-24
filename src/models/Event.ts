@@ -142,6 +142,7 @@ EventSchema.pre("save", function (next) {
 
 EventSchema.index({ organizerId: 1, createdAt: -1 });
 EventSchema.index({ status: 1, startDate: 1 });
+EventSchema.index({ status: 1, isFeatured: -1, startDate: 1 });
 
 export const Event: Model<IEventDocument> =
   mongoose.models.Event || mongoose.model<IEventDocument>("Event", EventSchema);

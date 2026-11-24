@@ -25,7 +25,7 @@ export default async function HomePage() {
   await connectToDatabase();
 
   const publishedEvents = await Event.find({ status: EVENT_STATUS.PUBLISHED })
-    .select("-rejectionReason")
+    .select("title slug startDate endDate venue faculty category flyerUrl isFree tickets isFeatured organizerName")
     .sort({ isFeatured: -1, startDate: 1 })
     .limit(5)
     .lean();

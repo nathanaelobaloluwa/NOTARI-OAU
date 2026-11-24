@@ -4,10 +4,12 @@ import Image from "next/image";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/shared/status-pill";
+import { connectToDatabase } from "@/lib/database/mongoose";
+import { Event } from "@/models/Event";
+import { Booking } from "@/models/Booking";
+import { OrganizerApplication } from "@/models/OrganizerApplication";
 import {
-  MOCK_EVENTS,
   MOCK_RECENT_ACTIVITY,
-  MOCK_ADMIN_METRICS,
 } from "@/lib/mock-data";
 import {
   Calendar,
@@ -30,16 +32,53 @@ import {
   Flame,
 } from "lucide-react";
 
-export default function AdminDashboardPage() {
-  const recentEvents = MOCK_EVENTS.slice(0, 5);
+export default async function AdminDashboardPage() {
+  await connectToDatabase();
 
-  const topPerformingEvents = [
-    { rank: 1, title: "OAU Tech Summit 2025", bookings: "350 bookings", revenue: "₦1,250,000", image: MOCK_EVENTS[0].image },
-    { rank: 2, title: "Creative Writing Workshop", bookings: "248 bookings", revenue: "₦620,000", image: MOCK_EVENTS[1].image },
-    { rank: 3, title: "Career Fair 2025", bookings: "196 bookings", revenue: "₦980,000", image: MOCK_EVENTS[4].image },
-    { rank: 4, title: "Mental Health Awareness", bookings: "142 bookings", revenue: "₦355,000", image: MOCK_EVENTS[3].image },
-    { rank: 5, title: "Robotics Workshop", bookings: "98 bookings", revenue: "₦420,000", image: MOCK_EVENTS[2].image },
-  ];
+  const [
+    totalEventsCount,
+    publishedEventsCount,
+    totalBookingsCount,
+    revenueAgg,
+    pendingApprovalsCount,
+    recentEventsDb,
+    topEventsDb,
+  ] = await Promise.all([
+    Event.countDocuments(),
+    Event.countDocuments({ status: "published" }),
+    Booking.countDocuments({ paymentStatus: "successful" }),
+    Booking.aggregate([
+      { $match: { paymentStatus: "successful" } },
+      { $group: { _id: null, total: { $sum: "$totalAmount" } } },
+    ]),
+    OrganizerApplication.countDocuments({ status: "pending" }),
+    Event.find().sort({ createdAt: -1 }).limit(5).lean(),
+    Event.find({ status: "published" }).sort({ isFeatured: -1, startDate: 1 }).limit(5).lean(),
+  ]);
+
+  const totalRevenue = revenueAgg[0]?.total || 0;
+
+  const recentEvents = recentEventsDb.map((evt) => {
+    const sDate = new Date(evt.startDate);
+    return {
+      id: evt._id.toString(),
+      title: evt.title,
+      organizer: evt.organizerName,
+      date: sDate.toLocaleDateString("en-NG", { month: "short", day: "numeric" }),
+      time: sDate.toLocaleTimeString("en-NG", { hour: "numeric", minute: "2-digit", hour12: true }),
+      status: evt.status,
+    };
+  });
+
+  const topPerformingEvents = topEventsDb.map((evt, idx) => {
+    const minPrice = evt.isFree ? 0 : Math.min(...(evt.ticketTiers || []).map((t: { price: number }) => t.price || 0));
+    return {
+      rank: idx + 1,
+      title: evt.title,
+      bookings: evt.isFeatured ? "Featured Summit" : "Published Event",
+      revenue: evt.isFree || minPrice === 0 ? "Free Access" : `From ₦${minPrice.toLocaleString()}`,
+    };
+  });
 
   return (
     <div className="space-y-8">
@@ -121,7 +160,7 @@ export default function AdminDashboardPage() {
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-100 text-[10px] font-bold text-blue-600">
-                    {MOCK_ADMIN_METRICS.pendingApprovals}
+                    {pendingApprovalsCount}
                   </span>
                   <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
                 </div>
@@ -164,16 +203,16 @@ export default function AdminDashboardPage() {
               </div>
               <div className="min-w-0">
                 <p className="text-[11px] sm:text-xs font-medium text-slate-500 truncate">Total Events</p>
-                <h3 className="text-lg sm:text-2xl font-extrabold text-[#101C3A] mt-0.5">48</h3>
+                <h3 className="text-lg sm:text-2xl font-extrabold text-[#101C3A] mt-0.5">{totalEventsCount}</h3>
               </div>
             </div>
             <div className="hidden sm:flex items-center gap-0.5 text-xs font-bold text-emerald-600">
               <TrendingUp className="w-3.5 h-3.5" />
-              <span>+12%</span>
+              <span>Campus</span>
             </div>
           </div>
           <div className="mt-2.5 sm:mt-3 pt-2 sm:pt-3 border-t border-slate-100 text-[10px] sm:text-[11px] text-slate-400">
-            vs. last 30 days
+            Total registered events
           </div>
         </Card>
 
@@ -186,16 +225,16 @@ export default function AdminDashboardPage() {
               </div>
               <div className="min-w-0">
                 <p className="text-[11px] sm:text-xs font-medium text-slate-500 truncate">Published</p>
-                <h3 className="text-lg sm:text-2xl font-extrabold text-[#101C3A] mt-0.5">36</h3>
+                <h3 className="text-lg sm:text-2xl font-extrabold text-[#101C3A] mt-0.5">{publishedEventsCount}</h3>
               </div>
             </div>
             <div className="hidden sm:flex items-center gap-0.5 text-xs font-bold text-emerald-600">
               <TrendingUp className="w-3.5 h-3.5" />
-              <span>+20%</span>
+              <span>Active</span>
             </div>
           </div>
           <div className="mt-2.5 sm:mt-3 pt-2 sm:pt-3 border-t border-slate-100 text-[10px] sm:text-[11px] text-slate-400">
-            vs. last 30 days
+            Live on student portal
           </div>
         </Card>
 
@@ -208,16 +247,16 @@ export default function AdminDashboardPage() {
               </div>
               <div className="min-w-0">
                 <p className="text-[11px] sm:text-xs font-medium text-slate-500 truncate">Bookings</p>
-                <h3 className="text-lg sm:text-2xl font-extrabold text-[#101C3A] mt-0.5">1,248</h3>
+                <h3 className="text-lg sm:text-2xl font-extrabold text-[#101C3A] mt-0.5">{totalBookingsCount.toLocaleString()}</h3>
               </div>
             </div>
             <div className="hidden sm:flex items-center gap-0.5 text-xs font-bold text-emerald-600">
               <TrendingUp className="w-3.5 h-3.5" />
-              <span>+48%</span>
+              <span>Confirmed</span>
             </div>
           </div>
           <div className="mt-2.5 sm:mt-3 pt-2 sm:pt-3 border-t border-slate-100 text-[10px] sm:text-[11px] text-slate-400">
-            vs. last 30 days
+            Successful order bookings
           </div>
         </Card>
 
@@ -230,12 +269,12 @@ export default function AdminDashboardPage() {
               </div>
               <div className="min-w-0">
                 <p className="text-[11px] sm:text-xs font-medium text-slate-500 truncate">Revenue</p>
-                <h3 className="text-base sm:text-2xl font-extrabold text-[#101C3A] mt-0.5 truncate">₦2,560,000</h3>
+                <h3 className="text-base sm:text-2xl font-extrabold text-[#101C3A] mt-0.5 truncate">₦{totalRevenue.toLocaleString()}</h3>
               </div>
             </div>
           </div>
           <div className="mt-2.5 sm:mt-3 pt-2 sm:pt-3 border-t border-slate-100 text-[10px] sm:text-[11px] text-slate-400">
-            vs. last 30 days
+            Gross paid admissions
           </div>
         </Card>
       </div>
@@ -418,7 +457,7 @@ export default function AdminDashboardPage() {
                 <h3 className="text-sm font-bold text-emerald-800">All Systems Operational</h3>
               </div>
               <p className="text-[10px] text-slate-400">
-                Last checked: May 4, 2025 • 10:24 AM
+                Real-time services health check active
               </p>
             </div>
 

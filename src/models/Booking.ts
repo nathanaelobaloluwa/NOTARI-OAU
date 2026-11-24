@@ -44,5 +44,11 @@ const BookingSchema = new Schema<IBookingDocument>(
   }
 );
 
+// High-performance compound indexes for user history, financial analytics, and order lookups
+BookingSchema.index({ userId: 1, createdAt: -1 });
+BookingSchema.index({ userId: 1, paymentStatus: 1, createdAt: -1 });
+BookingSchema.index({ eventId: 1, paymentStatus: 1 });
+BookingSchema.index({ organizerId: 1, paymentStatus: 1, createdAt: -1 });
+
 export const Booking: Model<IBookingDocument> =
   mongoose.models.Booking || mongoose.model<IBookingDocument>("Booking", BookingSchema);

@@ -175,6 +175,10 @@ AnnouncementSchema.index({ status: 1, isPinned: -1, publishedAt: -1 });
 AnnouncementSchema.index({ "targetAudience.type": 1, status: 1 });
 AnnouncementSchema.index({ "targetAudience.eventId": 1, status: 1 });
 AnnouncementSchema.index({ scheduledFor: 1, status: 1 });
+AnnouncementSchema.index({ status: 1, "targetAudience.type": 1, "targetAudience.faculty": 1 });
+AnnouncementSchema.index({ status: 1, "targetAudience.type": 1, "targetAudience.department": 1 });
+AnnouncementSchema.index({ status: 1, "targetAudience.type": 1, "targetAudience.level": 1 });
+AnnouncementSchema.index({ status: 1, expiresAt: 1, isPinned: -1, publishedAt: -1 });
 
 export const Announcement: Model<IAnnouncementDocument> =
   mongoose.models.Announcement ||

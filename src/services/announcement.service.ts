@@ -492,16 +492,18 @@ export class AnnouncementService {
   ): Promise<AnnouncementListResult> {
     await connectToDatabase();
 
-    const student = await User.findById(studentId).lean();
+    // High performance concurrent student metadata and ticket verification
+    const [student, activeTickets] = await Promise.all([
+      User.findById(studentId).select("faculty department level").lean(),
+      Ticket.find({
+        userId: new mongoose.Types.ObjectId(studentId),
+        isInvalidated: { $ne: true },
+      }).select("eventId").lean(),
+    ]);
+
     if (!student) {
       return { announcements: [], pagination: { total: 0, page: query.page, limit: query.limit, totalPages: 0 } };
     }
-
-    // Find all events for which the student holds an active confirmed ticket
-    const activeTickets = await Ticket.find({
-      userId: new mongoose.Types.ObjectId(studentId),
-      isInvalidated: { $ne: true },
-    }).select("eventId").lean();
 
     const eventIds = activeTickets.map((t) => t.eventId);
 
@@ -563,14 +565,17 @@ export class AnnouncementService {
       });
     }
 
-    const total = await Announcement.countDocuments(mongoFilter);
     const skip = (query.page - 1) * query.limit;
 
-    const docs = await Announcement.find(mongoFilter)
-      .sort({ isPinned: -1, publishedAt: -1 })
-      .skip(skip)
-      .limit(query.limit)
-      .lean();
+    // High performance concurrent count and paginated document retrieval
+    const [total, docs] = await Promise.all([
+      Announcement.countDocuments(mongoFilter),
+      Announcement.find(mongoFilter)
+        .sort({ isPinned: -1, publishedAt: -1 })
+        .skip(skip)
+        .limit(query.limit)
+        .lean(),
+    ]);
 
     const announcements = docs.map((doc) => {
       const isRead = doc.readBy

@@ -45,5 +45,10 @@ const TicketSchema = new Schema<ITicketDocument>(
   }
 );
 
+// High-performance compound indexes for check-in validation, attendee filtering, and student pass feeds
+TicketSchema.index({ userId: 1, isInvalidated: 1, eventId: 1 });
+TicketSchema.index({ userId: 1, isCheckedIn: 1 });
+TicketSchema.index({ eventId: 1, isCheckedIn: 1 });
+
 export const Ticket: Model<ITicketDocument> =
   mongoose.models.Ticket || mongoose.model<ITicketDocument>("Ticket", TicketSchema);

@@ -25,7 +25,7 @@ export default async function HomePage() {
   await connectToDatabase();
 
   const publishedEvents = await Event.find({ status: EVENT_STATUS.PUBLISHED })
-    .select("title slug startDate endDate venue faculty category flyerUrl isFree tickets isFeatured organizerName")
+    .select("title slug description startDate endDate venue faculty category flyerUrl isFree tickets isFeatured organizerName")
     .sort({ isFeatured: -1, startDate: 1 })
     .limit(5)
     .lean();
@@ -224,6 +224,7 @@ export default async function HomePage() {
                   fill
                   sizes="(max-width: 1024px) 100vw, 33vw"
                   className="object-cover opacity-20 group-hover:scale-105 transition-transform duration-700"
+                  unoptimized
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-indigo-950/80 to-indigo-900/70" />
 
@@ -370,6 +371,7 @@ export default async function HomePage() {
                 fill
                 sizes="(max-width: 768px) 100vw, 33vw"
                 className="object-cover group-hover:scale-105 transition-transform duration-500"
+                unoptimized
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
               <div className="absolute bottom-3 left-3 right-3 text-white">
@@ -400,6 +402,7 @@ export default async function HomePage() {
                 fill
                 sizes="(max-width: 768px) 100vw, 33vw"
                 className="object-cover group-hover:scale-105 transition-transform duration-500"
+                unoptimized
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
               <div className="absolute bottom-3 left-3 right-3 text-white">
@@ -430,6 +433,7 @@ export default async function HomePage() {
                 fill
                 sizes="(max-width: 768px) 100vw, 33vw"
                 className="object-cover group-hover:scale-105 transition-transform duration-500"
+                unoptimized
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
               <div className="absolute bottom-3 left-3 right-3 text-white">

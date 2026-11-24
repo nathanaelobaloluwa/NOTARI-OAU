@@ -68,6 +68,7 @@ export function CampusHeroVisual() {
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 42vw"
           className="object-cover object-center group-hover:scale-105 transition-transform duration-700 opacity-90 animate-in fade-in duration-500"
           priority
+          unoptimized
         />
         {/* Multilayered contrast gradient to ensure 100% text legibility */}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent" />

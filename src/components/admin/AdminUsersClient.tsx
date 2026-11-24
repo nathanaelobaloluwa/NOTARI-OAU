@@ -7,16 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import {
   Search,
   Users,
-  Shield,
-  ShieldAlert,
   CheckCircle2,
-  XCircle,
   Loader2,
   ChevronLeft,
   ChevronRight,
   RefreshCw,
   AlertCircle,
-  UserCheck,
 } from "lucide-react";
 import { USER_ROLES, ROLE_LABELS, UserRole } from "@/constants/roles";
 

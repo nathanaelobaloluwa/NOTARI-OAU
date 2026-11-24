@@ -6,7 +6,9 @@ import { StatusPill } from "@/components/shared/status-pill";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { Event } from "@/models/Event";
 import { EVENT_CATEGORIES, EVENT_STATUS } from "@/constants/oau";
-import { PlusCircle, Search, Calendar, MapPin, Eye, Edit } from "lucide-react";
+import { PlusCircle, Search, Calendar } from "lucide-react";
+
+export const dynamic = "force-dynamic";
 
 interface AdminEventsPageProps {
   searchParams: Promise<{

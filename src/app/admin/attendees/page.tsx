@@ -6,7 +6,9 @@ import { connectToDatabase } from "@/lib/database/mongoose";
 import { User } from "@/models/User";
 import { Ticket } from "@/models/Ticket";
 import { OAU_FACULTIES, formatFacultyLabel, buildFacultyQueryRegex } from "@/constants/oau";
-import { Search, Users, Ticket as TicketIcon, GraduationCap } from "lucide-react";
+import { Search, Users } from "lucide-react";
+
+export const dynamic = "force-dynamic";
 
 interface AdminAttendeesPageProps {
   searchParams: Promise<{

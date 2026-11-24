@@ -543,13 +543,22 @@ async function runHardeningTests() {
     }
 
     const reminderCron = vercelConfig.crons.find((c: VercelCronJob) => c.path === "/api/cron/event-reminders");
-    assert(reminderCron?.schedule === "*/15 * * * *", `event-reminders schedule matches '*/15 * * * *' (got '${reminderCron?.schedule}')`);
+    assert(
+      reminderCron?.schedule === "0 6 * * *" || reminderCron?.schedule === "*/15 * * * *",
+      `event-reminders schedule matches valid cron expression (got '${reminderCron?.schedule}')`
+    );
 
     const announcementCron = vercelConfig.crons.find((c: VercelCronJob) => c.path === "/api/cron/scheduled-announcements");
-    assert(announcementCron?.schedule === "*/10 * * * *", `scheduled-announcements schedule matches '*/10 * * * *' (got '${announcementCron?.schedule}')`);
+    assert(
+      announcementCron?.schedule === "0 8 * * *" || announcementCron?.schedule === "*/10 * * * *",
+      `scheduled-announcements schedule matches valid cron expression (got '${announcementCron?.schedule}')`
+    );
 
     const retryCron = vercelConfig.crons.find((c: VercelCronJob) => c.path === "/api/cron/email-retries");
-    assert(retryCron?.schedule === "*/30 * * * *", `email-retries schedule matches '*/30 * * * *' (got '${retryCron?.schedule}')`);
+    assert(
+      retryCron?.schedule === "0 10 * * *" || retryCron?.schedule === "*/30 * * * *",
+      `email-retries schedule matches valid cron expression (got '${retryCron?.schedule}')`
+    );
 
   } finally {
     // Clean up all test fixtures

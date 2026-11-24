@@ -108,19 +108,21 @@ The repository root includes `vercel.json` defining scheduled background trigger
   "crons": [
     {
       "path": "/api/cron/event-reminders",
-      "schedule": "*/15 * * * *"
+      "schedule": "0 6 * * *"
     },
     {
       "path": "/api/cron/scheduled-announcements",
-      "schedule": "*/10 * * * *"
+      "schedule": "0 8 * * *"
     },
     {
       "path": "/api/cron/email-retries",
-      "schedule": "*/30 * * * *"
+      "schedule": "0 10 * * *"
     }
   ]
 }
 ```
+
+> **Note on Plan Tiers**: Vercel Hobby accounts enforce a strict frequency limit: cron jobs may only run once per day (e.g. `0 6 * * *`). Upgrading to Vercel Pro enables high-frequency sub-daily expressions (e.g. `*/15 * * * *`). For sub-daily triggers on Hobby tier, an external ping service (e.g. Cron-job.org or GitHub Actions) can target the endpoints with `Authorization: Bearer <CRON_SECRET>`.
 
 Vercel automatically attaches the `Authorization: Bearer <CRON_SECRET>` header to cron requests when `CRON_SECRET` is set in project environment variables. The API endpoints employ constant-time cryptographic token verification (`crypto.timingSafeEqual`) to prevent timing attacks.
 

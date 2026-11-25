@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,13 +13,13 @@ import {
   Ticket as TicketIcon,
   Search,
   RotateCcw,
-  Compass,
   ArrowRight,
-  Sparkles,
   Copy,
   Check,
 } from "lucide-react";
 import { StudentHistoryItem, HistoryCounts } from "@/lib/student/service";
+import { EventFlyerImage } from "@/components/shared/event-flyer-image";
+import { NotariEmptyState } from "@/components/shared/notari-empty-state";
 
 interface StudentHistoryClientProps {
   initialItems: StudentHistoryItem[];
@@ -248,18 +247,13 @@ export function StudentHistoryClient({
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div className="flex items-start sm:items-center gap-4 min-w-0">
                     <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden bg-slate-100 shrink-0">
-                      {item.event?.flyerUrl ? (
-                        <Image
-                          src={item.event.flyerUrl}
-                          alt={item.event.title}
-                          fill
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-indigo-50 text-notari-primary font-bold text-base">
-                          {item.event?.category?.slice(0, 2).toUpperCase() || "EV"}
-                        </div>
-                      )}
+                      <EventFlyerImage
+                        src={item.event?.flyerUrl}
+                        alt={item.event?.title || "Event"}
+                        title={item.event?.title}
+                        category={item.event?.category}
+                        containerClassName="rounded-2xl"
+                      />
                     </div>
 
                     <div className="space-y-1 min-w-0">
@@ -352,62 +346,37 @@ export function StudentHistoryClient({
           })}
         </div>
       ) : (
-        /* Empty State */
-        <Card className="p-8 sm:p-12 border-slate-200/80 bg-white text-center space-y-4 rounded-2xl shadow-sm">
-          <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-notari-primary flex items-center justify-center mx-auto">
-            {activeTab === "attended" ? (
-              <CheckCircle2 className="w-7 h-7 text-emerald-600" />
-            ) : activeTab === "upcoming" ? (
-              <Calendar className="w-7 h-7 text-indigo-600" />
-            ) : (
-              <Sparkles className="w-7 h-7 text-notari-primary" />
-            )}
-          </div>
-
-          <div className="space-y-1.5 max-w-md mx-auto">
-            <h3 className="text-lg font-bold text-notari-dark">
-              {searchQuery
-                ? "No matching records found"
-                : activeTab === "attended"
-                ? "No verified attendances yet"
-                : activeTab === "upcoming"
-                ? "No upcoming events registered"
-                : activeTab === "past"
-                ? "No past event registrations"
-                : "No event booking history yet"}
-            </h3>
-            <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-              {searchQuery
-                ? "We couldn't find any history items matching your search. Try checking your spelling or clearing the query."
-                : activeTab === "attended"
-                ? "When event organizers scan and verify your digital QR ticket at the venue, your attendance status is automatically confirmed here."
-                : activeTab === "upcoming"
-                ? "You don't have any upcoming events on your schedule. Explore upcoming Great Ife symposiums, concerts, and hackathons."
-                : activeTab === "past"
-                ? "You haven't attended or registered for any past campus events on NOTARI 2.0."
-                : "You haven't registered for any campus events yet. Explore upcoming Great Ife events to reserve passes."}
-            </p>
-          </div>
-
-          <div className="pt-2 flex items-center justify-center gap-3">
-            {searchQuery ? (
-              <Button
-                variant="outline"
-                onClick={() => setSearchQuery("")}
-                className="rounded-xl text-xs font-semibold gap-2"
-              >
-                <span>Clear Search</span>
-              </Button>
-            ) : (
-              <Link href="/events">
-                <Button className="rounded-xl text-xs font-semibold gap-2 shadow-sm h-10 px-5">
-                  <Compass className="w-4 h-4" />
-                  <span>Explore Campus Events</span>
-                </Button>
-              </Link>
-            )}
-          </div>
-        </Card>
+        /* Branded Empty State */
+        <NotariEmptyState
+          variant={searchQuery ? "search" : activeTab === "attended" ? "generic" : activeTab === "upcoming" ? "upcoming" : activeTab === "past" ? "past" : "events"}
+          title={
+            searchQuery
+              ? "No matching records found"
+              : activeTab === "attended"
+              ? "No verified attendances yet"
+              : activeTab === "upcoming"
+              ? "No upcoming events registered"
+              : activeTab === "past"
+              ? "No past event registrations"
+              : "No event booking history yet"
+          }
+          description={
+            searchQuery
+              ? "We couldn't find any history items matching your search. Try checking your spelling or clearing the query."
+              : activeTab === "attended"
+              ? "When event organizers scan and verify your digital QR ticket at the venue, your attendance status is automatically confirmed here."
+              : activeTab === "upcoming"
+              ? "You don't have any upcoming events on your schedule. Explore upcoming Great Ife symposiums, concerts, and hackathons."
+              : activeTab === "past"
+              ? "You haven't attended or registered for any past campus events on NOTARI 2.0."
+              : "You haven't registered for any campus events yet. Explore upcoming Great Ife events to reserve passes."
+          }
+          action={
+            searchQuery
+              ? { label: "Clear Search", onClick: () => setSearchQuery("") }
+              : { label: "Explore Campus Events", href: "/events" }
+          }
+        />
       )}
     </div>
   );

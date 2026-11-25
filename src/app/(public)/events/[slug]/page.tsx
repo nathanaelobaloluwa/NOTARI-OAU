@@ -1,6 +1,5 @@
 import React from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { auth } from "@/lib/auth/auth";
 import { connectToDatabase } from "@/lib/database/mongoose";
@@ -13,13 +12,13 @@ import { Badge } from "@/components/ui/badge";
 import { StatusPill } from "@/components/shared/status-pill";
 import { EventBookingCard } from "@/components/events/EventBookingCard";
 import { BookmarkButton } from "@/components/events/BookmarkButton";
+import { EventFlyerImage } from "@/components/shared/event-flyer-image";
 import {
   ArrowLeft,
   Calendar,
   Clock,
   MapPin,
   User,
-  Sparkles,
   School,
 } from "lucide-react";
 
@@ -137,25 +136,17 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
         const flyerVisual = event.flyerUrl || (event as { flyerImage?: string }).flyerImage;
         return (
           <div className="relative aspect-[16/9] sm:aspect-[21/9] w-full rounded-3xl overflow-hidden shadow-md bg-slate-100">
-            {flyerVisual ? (
-              <Image
-                src={flyerVisual}
-                alt={event.title}
-                fill
-                className="object-cover"
-                priority
-                unoptimized={flyerVisual.startsWith("http")}
-              />
-            ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-indigo-700 via-indigo-800 to-purple-900 text-white p-6 text-center">
-                <Sparkles className="w-12 h-12 mb-3 text-indigo-300" />
-                <span className="text-sm font-bold tracking-widest uppercase text-indigo-200">{event.category}</span>
-                <h2 className="text-xl sm:text-3xl font-extrabold mt-1 max-w-2xl">{event.title}</h2>
-              </div>
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
+            <EventFlyerImage
+              src={flyerVisual}
+              alt={event.title}
+              title={event.title}
+              category={event.category}
+              priority
+              containerClassName="rounded-3xl"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent pointer-events-none" />
 
-            <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 flex items-center justify-between text-white">
+            <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 flex items-center justify-between text-white z-10">
               <Badge className="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white border-white/20 text-xs font-semibold px-3 py-1">
                 {event.category}
               </Badge>

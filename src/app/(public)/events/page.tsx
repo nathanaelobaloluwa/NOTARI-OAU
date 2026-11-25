@@ -1,12 +1,13 @@
 import React from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { auth } from "@/lib/auth/auth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { StatusPill } from "@/components/shared/status-pill";
 import { BookmarkButton } from "@/components/events/BookmarkButton";
+import { EventFlyerImage } from "@/components/shared/event-flyer-image";
+import { NotariEmptyState } from "@/components/shared/notari-empty-state";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { Event } from "@/models/Event";
 import { Bookmark } from "@/models/Bookmark";
@@ -292,20 +293,13 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
                 <div>
                   {/* Event Cover Image */}
                   <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
-                    {evt.flyerUrl || (evt as { flyerImage?: string }).flyerImage ? (
-                      <Image
-                        src={evt.flyerUrl || (evt as { flyerImage?: string }).flyerImage || ""}
-                        alt={evt.title}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        unoptimized={(evt.flyerUrl || (evt as { flyerImage?: string }).flyerImage || "").startsWith("http")}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-indigo-100 via-indigo-50 to-purple-100 text-notari-primary p-4 text-center">
-                        <Calendar className="w-8 h-8 mb-1 opacity-70" />
-                        <span className="text-xs font-bold uppercase tracking-wider">{evt.category}</span>
-                      </div>
-                    )}
+                    <EventFlyerImage
+                      src={evt.flyerUrl || (evt as { flyerImage?: string }).flyerImage}
+                      alt={evt.title}
+                      title={evt.title}
+                      category={evt.category}
+                      className="group-hover:scale-105 transition-transform duration-300"
+                    />
                     <div className="absolute top-3 left-3 flex flex-wrap items-center gap-1.5 z-10">
                       <Badge variant="secondary" className="text-[11px] shadow-sm font-semibold">
                         {evt.category}
@@ -369,38 +363,21 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
           })}
         </div>
       ) : (
-        /* Polished Empty State */
-        <Card className="p-8 sm:p-12 border-slate-200/80 bg-white text-center space-y-4 rounded-2xl">
-          <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-notari-primary flex items-center justify-center mx-auto">
-            <Calendar className="w-7 h-7" />
-          </div>
-          <div className="space-y-1.5 max-w-md mx-auto">
-            <h3 className="text-lg font-bold text-notari-dark">
-              {hasActiveFilters ? "No matching events found" : "No campus events published yet"}
-            </h3>
-            <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-              {hasActiveFilters
-                ? "We couldn't find any published events matching your selected criteria. Try adjusting your search term or clearing your category filters."
-                : "Upcoming Great Ife symposiums, tech summits, conferences, and student gatherings will appear here once approved and published."}
-            </p>
-          </div>
-          <div className="pt-2 flex items-center justify-center gap-3">
-            {hasActiveFilters ? (
-              <Link href="/events">
-                <Button className="rounded-xl text-xs font-semibold gap-2 shadow-sm">
-                  <RotateCcw className="w-4 h-4" />
-                  <span>Clear All Filters</span>
-                </Button>
-              </Link>
-            ) : (
-              <Link href="/student">
-                <Button variant="outline" className="rounded-xl text-xs font-semibold gap-2">
-                  <span>Go to Student Portal</span>
-                </Button>
-              </Link>
-            )}
-          </div>
-        </Card>
+        /* Polished Branded Empty State */
+        <NotariEmptyState
+          variant={hasActiveFilters ? "search" : "events"}
+          title={hasActiveFilters ? "No matching events found" : "No campus events published yet"}
+          description={
+            hasActiveFilters
+              ? "We couldn't find any published events matching your selected criteria. Try adjusting your search term or clearing your category filters."
+              : "Upcoming Great Ife symposiums, tech summits, conferences, and student gatherings will appear here once approved and published."
+          }
+          action={
+            hasActiveFilters
+              ? { label: "Clear All Filters", href: "/events" }
+              : { label: "Go to Student Portal", href: "/student" }
+          }
+        />
       )}
 
       {/* 5. Pagination Controls */}

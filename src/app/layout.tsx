@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SessionProvider } from "@/components/shared/session-provider";
+import { NetworkStatusProvider } from "@/components/shared/network-status-provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -45,7 +46,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="antialiased min-h-screen bg-notari-bg text-notari-dark font-sans">
-        <SessionProvider>{children}</SessionProvider>
+        <SessionProvider>
+          <NetworkStatusProvider>{children}</NetworkStatusProvider>
+        </SessionProvider>
       </body>
     </html>
   );

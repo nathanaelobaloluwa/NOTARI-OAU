@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/shared/status-pill";
 import { EVENT_CATEGORIES, EVENT_STATUS } from "@/constants/oau";
+import { EventFlyerImage } from "@/components/shared/event-flyer-image";
+import { NotariEmptyState } from "@/components/shared/notari-empty-state";
 import {
   PlusCircle,
   Calendar,
@@ -19,7 +20,6 @@ import {
   Ticket,
   Users,
   AlertCircle,
-  Sparkles,
 } from "lucide-react";
 
 interface TicketTier {
@@ -263,25 +263,19 @@ export function OrganizerEventsListClient() {
           <p className="text-xs text-slate-500 font-medium">Loading your events from MongoDB...</p>
         </div>
       ) : events.length === 0 ? (
-        <Card className="p-12 text-center border-dashed border-slate-300 bg-white space-y-4">
-          <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-[#4F46E5] flex items-center justify-center mx-auto">
-            <Calendar className="w-7 h-7" />
-          </div>
-          <div className="space-y-1 max-w-sm mx-auto">
-            <h3 className="text-base font-bold text-[#101C3A]">No events found</h3>
-            <p className="text-xs text-slate-500">
-              {searchQuery || statusFilter !== "all" || categoryFilter !== "all"
-                ? "No events match your current filter parameters. Try clearing your filters."
-                : "You haven't created any events yet. Get started by organizing your first Great Ife campus event!"}
-            </p>
-          </div>
-          <Link href="/organizer/events/create">
-            <Button className="rounded-xl px-5 py-2 text-xs font-semibold bg-[#4F46E5] hover:bg-indigo-700 gap-1.5 shadow-sm">
-              <PlusCircle className="w-4 h-4" />
-              <span>Create Your First Event</span>
-            </Button>
-          </Link>
-        </Card>
+        <NotariEmptyState
+          variant={searchQuery || statusFilter !== "all" || categoryFilter !== "all" ? "search" : "organizer-events"}
+          title={searchQuery || statusFilter !== "all" || categoryFilter !== "all" ? "No events found" : "No Events Created Yet"}
+          description={
+            searchQuery || statusFilter !== "all" || categoryFilter !== "all"
+              ? "No events match your current filter parameters. Try clearing your filters."
+              : "You haven't created any events yet. Get started by organizing your first Great Ife campus event!"
+          }
+          action={{
+            label: "Create Your First Event",
+            href: "/organizer/events/create",
+          }}
+        />
       ) : (
         <div className="space-y-4">
           {events.map((evt) => {
@@ -313,21 +307,13 @@ export function OrganizerEventsListClient() {
                 <div className="flex items-start gap-4 min-w-0">
                   {/* Thumbnail / Flyer */}
                   <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-slate-100 overflow-hidden relative shrink-0 border border-slate-200">
-                    {evt.flyerUrl || evt.flyerImage ? (
-                      <Image
-                        src={evt.flyerUrl || evt.flyerImage || ""}
-                        alt={evt.title}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 768px) 64px, 80px"
-                        unoptimized={(evt.flyerUrl || evt.flyerImage || "").startsWith("http")}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center text-slate-300 bg-gradient-to-br from-indigo-50 to-purple-50">
-                        <Sparkles className="w-6 h-6 text-indigo-300" />
-                        <span className="text-[9px] font-bold text-indigo-400 mt-1 uppercase">OAU</span>
-                      </div>
-                    )}
+                    <EventFlyerImage
+                      src={evt.flyerUrl || evt.flyerImage}
+                      alt={evt.title}
+                      title={evt.title}
+                      category={evt.category}
+                      containerClassName="rounded-xl"
+                    />
                   </div>
 
                   {/* Main Details */}

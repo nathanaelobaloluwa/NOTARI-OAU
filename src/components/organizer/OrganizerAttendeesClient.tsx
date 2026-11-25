@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { NotariEmptyState } from "@/components/shared/notari-empty-state";
 import {
   Users,
   CheckCircle2,
@@ -320,27 +321,26 @@ export function OrganizerAttendeesClient() {
             <span>Loading attendee records...</span>
           </div>
         ) : error ? (
-          <div className="py-16 text-center text-xs text-rose-600 space-y-2">
-            <p className="font-semibold">{error}</p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => fetchAttendees(pagination.page)}
-              className="text-xs rounded-xl"
-            >
-              Try Again
-            </Button>
-          </div>
+          <NotariEmptyState
+            variant="generic"
+            isError={true}
+            title="Failed to Load Attendees"
+            description={error}
+            onRetry={() => fetchAttendees(pagination.page)}
+            className="border-0 shadow-none py-12"
+          />
         ) : attendees.length === 0 ? (
-          <div className="py-16 text-center space-y-2 text-slate-400">
-            <Users className="w-10 h-10 mx-auto text-slate-300" />
-            <p className="text-sm font-bold text-slate-700">No attendees found</p>
-            <p className="text-xs text-slate-400">
-              {searchQuery
-                ? `No attendee matches "${searchQuery}".`
-                : "No student tickets have been registered for the selected filter."}
-            </p>
-          </div>
+          <NotariEmptyState
+            variant={searchQuery ? "search" : "attendees"}
+            title={searchQuery ? "No Matching Attendees" : "No Registered Attendees Yet"}
+            description={
+              searchQuery
+                ? `No attendee records match "${searchQuery}". Try searching by a different name or matriculation number.`
+                : "No student tickets have been registered for the selected filter."
+            }
+            action={searchQuery ? { label: "Clear Search", onClick: () => setSearchQuery("") } : undefined}
+            className="border-0 shadow-none py-12"
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">

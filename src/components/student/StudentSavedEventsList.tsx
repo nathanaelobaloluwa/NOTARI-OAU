@@ -2,21 +2,19 @@
 
 import React, { useState, useTransition } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { StatusPill } from "@/components/shared/status-pill";
+import { EventFlyerImage } from "@/components/shared/event-flyer-image";
+import { NotariEmptyState } from "@/components/shared/notari-empty-state";
 import {
   Calendar,
   MapPin,
   Trash2,
-  Bookmark,
   ArrowRight,
-  Compass,
   Loader2,
-  Sparkles,
 } from "lucide-react";
 
 export interface SavedEventItem {
@@ -80,28 +78,15 @@ export function StudentSavedEventsList({
 
   if (bookmarks.length === 0) {
     return (
-      <Card className="p-8 sm:p-12 border-slate-200/80 bg-white text-center space-y-4 rounded-2xl shadow-sm">
-        <div className="w-14 h-14 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mx-auto">
-          <Bookmark className="w-7 h-7" />
-        </div>
-        <div className="space-y-1.5 max-w-md mx-auto">
-          <h3 className="text-lg sm:text-xl font-bold text-notari-dark">
-            No saved events yet
-          </h3>
-          <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-            You haven&apos;t bookmarked any campus events yet. Explore upcoming Great Ife
-            symposiums, hackathons, concerts, and workshops to save events you want to attend.
-          </p>
-        </div>
-        <div className="pt-2 flex items-center justify-center">
-          <Link href="/events">
-            <Button className="rounded-xl text-xs font-semibold gap-2 shadow-sm h-10 px-5">
-              <Compass className="w-4 h-4" />
-              <span>Explore Campus Events</span>
-            </Button>
-          </Link>
-        </div>
-      </Card>
+      <NotariEmptyState
+        variant="bookmarks"
+        title="No Saved Events Yet"
+        description="You haven't bookmarked any campus events yet. Explore upcoming Great Ife symposiums, hackathons, concerts, and workshops to save events you want to attend."
+        action={{
+          label: "Explore Campus Events",
+          href: "/events",
+        }}
+      />
     );
   }
 
@@ -146,21 +131,13 @@ export function StudentSavedEventsList({
               <div>
                 {/* Event Flyer / Fallback */}
                 <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
-                  {item.flyerUrl ? (
-                    <Image
-                      src={item.flyerUrl}
-                      alt={item.title}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-purple-100 via-indigo-50 to-indigo-100 text-purple-700 p-4 text-center">
-                      <Sparkles className="w-8 h-8 mb-1 opacity-70" />
-                      <span className="text-xs font-bold uppercase tracking-wider">
-                        {item.category}
-                      </span>
-                    </div>
-                  )}
+                  <EventFlyerImage
+                    src={item.flyerUrl}
+                    alt={item.title}
+                    title={item.title}
+                    category={item.category}
+                    className="group-hover:scale-105 transition-transform duration-300"
+                  />
 
                   {/* Badges */}
                   <div className="absolute top-3 left-3 flex flex-wrap items-center gap-1.5 z-10">

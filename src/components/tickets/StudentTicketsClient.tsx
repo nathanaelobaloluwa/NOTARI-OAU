@@ -6,6 +6,7 @@ import QRCode from "qrcode";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/shared/status-pill";
+import { NotariEmptyState } from "@/components/shared/notari-empty-state";
 import {
   Calendar,
   MapPin,
@@ -214,33 +215,25 @@ export function StudentTicketsClient({ tickets, studentName }: StudentTicketsCli
 
       {/* Tickets List */}
       {filteredTickets.length === 0 ? (
-        <Card className="p-8 sm:p-12 text-center bg-white border-slate-200/80 rounded-2xl space-y-4">
-          <div className="w-14 h-14 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-notari-primary mx-auto">
-            <QrCode className="w-8 h-8" />
-          </div>
-          <div className="space-y-1.5 max-w-sm mx-auto">
-            <h3 className="text-base sm:text-lg font-bold text-notari-dark">
-              {tab === "upcoming"
-                ? "No Upcoming Passes"
-                : tab === "past"
-                ? "No Past Event Tickets"
-                : "No Tickets Found"}
-            </h3>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              {tab === "upcoming"
-                ? "You haven't registered for any upcoming events yet. Discover exciting campus events happening at OAU."
-                : "Your completed event attendance and past passes will appear here."}
-            </p>
-          </div>
-          <div className="pt-2">
-            <Link href="/events">
-              <Button className="rounded-xl text-xs font-semibold shadow-sm gap-2">
-                <Compass className="w-4 h-4" />
-                <span>Browse Campus Events</span>
-              </Button>
-            </Link>
-          </div>
-        </Card>
+        <NotariEmptyState
+          variant={tab === "past" ? "past" : "tickets"}
+          title={
+            tab === "upcoming"
+              ? "No Upcoming Passes"
+              : tab === "past"
+              ? "No Past Event Tickets"
+              : "No Tickets Found"
+          }
+          description={
+            tab === "upcoming"
+              ? "You haven't registered for any upcoming events yet. Discover exciting campus events happening at OAU."
+              : "Your completed event attendance and past passes will appear here."
+          }
+          action={{
+            label: "Browse Campus Events",
+            href: "/events",
+          }}
+        />
       ) : (
         <div className="space-y-4">
           {filteredTickets.map((tkt) => {

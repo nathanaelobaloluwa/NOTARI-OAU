@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { StatusPill } from "@/components/shared/status-pill";
 import { EVENT_STATUS } from "@/constants/oau";
+import { NotariEmptyState } from "@/components/shared/notari-empty-state";
 import {
   Check,
   X,
@@ -318,15 +319,16 @@ export function AdminEventApprovalsClient() {
           <p className="text-xs text-slate-500 font-medium">Fetching event submissions...</p>
         </div>
       ) : events.length === 0 ? (
-        <Card className="py-16 text-center p-6 bg-white border-dashed border-slate-200">
-          <Ticket className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-          <h3 className="text-base font-bold text-slate-800">No events found</h3>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-            {statusFilter === "pending_approval"
-              ? "No events are currently awaiting review in the approval queue."
-              : "No event submissions match your search or filter criteria."}
-          </p>
-        </Card>
+        <NotariEmptyState
+          variant={searchQuery ? "search" : "events"}
+          title={statusFilter === "pending_approval" ? "No Events in Approval Queue" : "No Events Found"}
+          description={
+            statusFilter === "pending_approval"
+              ? "All submitted organizer events have been reviewed. New submissions will appear here automatically."
+              : "No event submissions match your search or filter criteria. Try clearing search filters."
+          }
+          action={searchQuery ? { label: "Clear Search", onClick: () => setSearchQuery("") } : undefined}
+        />
       ) : (
         <div className="space-y-4">
           {events.map((event) => {

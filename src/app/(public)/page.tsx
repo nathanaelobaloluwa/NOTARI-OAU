@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StatusPill } from "@/components/shared/status-pill";
 import { CampusHeroVisual } from "@/components/home/CampusHeroVisual";
+import { EventFlyerImage } from "@/components/shared/event-flyer-image";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { Event } from "@/models/Event";
 import { EVENT_STATUS, OAU_FACULTIES, EVENT_CATEGORIES, formatFacultyLabel } from "@/constants/oau";
@@ -141,22 +142,16 @@ export default async function HomePage() {
             <div className="lg:col-span-8">
               <Card className="overflow-hidden border-slate-200/90 shadow-sm hover:shadow-lg transition-all group rounded-2xl">
                 <div className="grid grid-cols-1 md:grid-cols-12">
-                  <div className="md:col-span-6 relative aspect-[16/10] md:aspect-auto bg-slate-100">
-                    {featuredEvent.flyerUrl || (featuredEvent as { flyerImage?: string }).flyerImage ? (
-                      <Image
-                        src={featuredEvent.flyerUrl || (featuredEvent as { flyerImage?: string }).flyerImage || ""}
-                        alt={featuredEvent.title}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                        unoptimized={(featuredEvent.flyerUrl || (featuredEvent as { flyerImage?: string }).flyerImage || "").startsWith("http")}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center bg-indigo-50 text-notari-primary p-6 text-center">
-                        <Calendar className="w-10 h-10 mb-2 opacity-70" />
-                        <span className="text-xs font-bold uppercase">{featuredEvent.category}</span>
-                      </div>
-                    )}
-                    <div className="absolute top-4 left-4">
+                  <div className="md:col-span-6 relative aspect-[16/10] md:aspect-auto bg-slate-100 min-h-[240px]">
+                    <EventFlyerImage
+                      src={featuredEvent.flyerUrl || (featuredEvent as { flyerImage?: string }).flyerImage}
+                      alt={featuredEvent.title}
+                      title={featuredEvent.title}
+                      category={featuredEvent.category}
+                      priority
+                      className="group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute top-4 left-4 z-10">
                       <Badge className="bg-notari-primary text-white shadow">Featured</Badge>
                     </div>
                   </div>

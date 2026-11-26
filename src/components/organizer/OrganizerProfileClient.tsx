@@ -4,12 +4,14 @@ import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { OAU_FACULTIES, formatFacultyLabel } from "@/constants/oau";
+import { ProfilePhotoManager } from "@/components/shared/profile-photo-manager";
+import { UserAvatar } from "@/components/shared/user-avatar";
+import { useSession } from "next-auth/react";
 import {
   ShieldCheck,
   CheckCircle2,
   AlertTriangle,
   RefreshCw,
-  Sparkles,
   Calendar,
 } from "lucide-react";
 
@@ -40,6 +42,7 @@ interface ProfileData {
 }
 
 export function OrganizerProfileClient() {
+  const { data: session } = useSession();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -173,14 +176,6 @@ export function OrganizerProfileClient() {
     );
   }
 
-  const initials =
-    (profile.displayName || profile.organizationName || "CO")
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase() || "CO";
-
   return (
     <div className="space-y-6 max-w-3xl">
       {/* Header */}
@@ -208,13 +203,24 @@ export function OrganizerProfileClient() {
         </div>
       )}
 
+      {/* Profile Photo Manager */}
+      <ProfilePhotoManager
+        currentPhotoUrl={session?.user?.image}
+        userName={profile.displayName || profile.organizationName}
+        userRole="organizer"
+      />
+
       {/* Profile Overview Card */}
       <Card className="p-6 border-slate-200/80 bg-white space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-xl shrink-0">
-              {initials}
-            </div>
+            <UserAvatar
+              src={session?.user?.image}
+              name={profile.displayName || profile.organizationName}
+              size="lg"
+              variant="organizer"
+              className="w-14 h-14 sm:w-16 sm:h-16 text-xl"
+            />
             <div className="space-y-0.5 min-w-0">
               <h3 className="font-bold text-notari-dark text-lg sm:text-xl truncate">
                 {profile.displayName || profile.organizationName}
@@ -249,7 +255,7 @@ export function OrganizerProfileClient() {
         {/* Read-Only Administrative Info Banner */}
         <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/60 text-xs text-slate-500 space-y-1">
           <div className="flex items-center gap-1.5 font-semibold text-slate-700">
-            <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+            <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
             <span>Accreditation Verification</span>
           </div>
           <p className="leading-relaxed">

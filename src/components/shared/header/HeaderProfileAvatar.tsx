@@ -3,12 +3,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
+import { UserAvatar } from "@/components/shared/user-avatar";
 import {
   User,
   Ticket,
   Calendar,
   Bookmark,
-  Sparkles,
   Settings,
   LogOut,
   ShieldCheck,
@@ -54,7 +54,6 @@ export function HeaderProfileAvatar({
   const email = user?.email || "student@notari.oau.edu.ng";
   const role = user?.role || "student";
   const isOrganizer = Boolean(user?.isOrganizer || role === "organizer");
-  const initials = getInitials(name);
 
   // Close on click outside & Escape key
   useEffect(() => {
@@ -89,16 +88,6 @@ export function HeaderProfileAvatar({
     }
   };
 
-  const getAvatarStyles = () => {
-    if (variant === "organizer") {
-      return "bg-purple-100 text-purple-700 ring-2 ring-purple-200";
-    }
-    if (variant === "admin") {
-      return "bg-blue-600 text-white ring-2 ring-blue-500/20";
-    }
-    return "bg-indigo-100 text-notari-primary ring-2 ring-indigo-200";
-  };
-
   const getRoleBadge = () => {
     if (role === "admin") {
       return (
@@ -130,12 +119,18 @@ export function HeaderProfileAvatar({
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center font-extrabold text-xs transition-transform active:scale-95 cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-notari-primary/30 ${getAvatarStyles()}`}
+        className="rounded-full flex items-center justify-center transition-transform active:scale-95 cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-notari-primary/30"
         aria-label="User account menu"
         aria-expanded={isOpen}
         aria-haspopup="menu"
       >
-        {initials}
+        <UserAvatar
+          src={user?.image}
+          name={name}
+          size="sm"
+          variant={variant}
+          className="w-8 h-8 sm:w-9 sm:h-9"
+        />
       </button>
 
       {/* Account Dropdown Menu */}
@@ -148,11 +143,13 @@ export function HeaderProfileAvatar({
           {/* User Profile Card */}
           <div className="p-4 bg-slate-50/80 border-b border-slate-100 space-y-2">
             <div className="flex items-center gap-3">
-              <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${getAvatarStyles()}`}
-              >
-                {initials}
-              </div>
+              <UserAvatar
+                src={user?.image}
+                name={name}
+                size="md"
+                variant={variant}
+                className="w-10 h-10 shrink-0"
+              />
               <div className="min-w-0 flex-1">
                 <h4 className="text-xs font-bold text-notari-dark truncate">{name}</h4>
                 <p className="text-[11px] text-slate-500 truncate">{email}</p>
@@ -199,7 +196,7 @@ export function HeaderProfileAvatar({
                     onClick={() => setIsOpen(false)}
                     className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-purple-700 hover:bg-purple-50 font-semibold transition-colors"
                   >
-                    <Sparkles className="w-4 h-4 text-purple-600" />
+                    <Building className="w-4 h-4 text-purple-600" />
                     <span>Switch to Organizer Hub</span>
                   </Link>
                 ) : (

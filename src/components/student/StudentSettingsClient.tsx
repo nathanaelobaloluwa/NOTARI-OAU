@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 import { SanitizedStudentProfile } from "@/lib/student/service";
 import { OAU_FACULTIES, formatFacultyLabel } from "@/constants/oau";
+import { ProfilePhotoManager } from "@/components/shared/profile-photo-manager";
+import { UserAvatar } from "@/components/shared/user-avatar";
 
 interface StudentSettingsClientProps {
   initialProfile: SanitizedStudentProfile;
@@ -67,14 +69,6 @@ export function StudentSettingsClient({ initialProfile }: StudentSettingsClientP
   const [isSavingPrefs, setIsSavingPrefs] = useState(false);
   const [prefsSuccessMsg, setPrefsSuccessMsg] = useState<string | null>(null);
   const [prefsErrorMsg, setPrefsErrorMsg] = useState<string | null>(null);
-
-  const studentInitials =
-    name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase() || "ST";
 
   // Handle Profile Update
   const handleProfileSubmit = async (e: React.FormEvent) => {
@@ -208,12 +202,30 @@ export function StudentSettingsClient({ initialProfile }: StudentSettingsClientP
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Personal Information Form (7 cols) */}
         <div className="lg:col-span-7 space-y-6">
+          {/* Profile Photograph Upload & Management Section */}
+          <ProfilePhotoManager
+            currentPhotoUrl={profile.image || profile.profilePhotoUrl}
+            userName={profile.name}
+            userRole="student"
+            onPhotoUpdated={(newUrl) => {
+              setProfile((prev) => ({
+                ...prev,
+                image: newUrl || undefined,
+                profilePhotoUrl: newUrl || undefined,
+              }));
+            }}
+          />
+
           <Card className="p-5 sm:p-6 border-slate-200/80 shadow-sm bg-white space-y-6 rounded-2xl">
             {/* Avatar Snapshot Header */}
             <div className="flex items-center gap-4 pb-6 border-b border-slate-100">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-indigo-50 text-notari-primary border border-indigo-100 flex items-center justify-center font-bold text-lg sm:text-xl shrink-0">
-                {studentInitials}
-              </div>
+              <UserAvatar
+                src={profile.image || profile.profilePhotoUrl}
+                name={profile.name}
+                size="lg"
+                variant="student"
+                className="w-14 h-14 sm:w-16 sm:h-16 text-lg sm:text-xl"
+              />
               <div className="space-y-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="text-base sm:text-lg font-bold text-notari-dark truncate">

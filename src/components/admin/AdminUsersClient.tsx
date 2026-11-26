@@ -15,6 +15,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { USER_ROLES, ROLE_LABELS, UserRole } from "@/constants/roles";
+import { UserAvatar } from "@/components/shared/user-avatar";
 
 interface UserItem {
   _id: string;
@@ -26,6 +27,8 @@ interface UserItem {
   matricNumber?: string;
   faculty?: string;
   department?: string;
+  image?: string;
+  profilePhotoUrl?: string;
   createdAt: string;
 }
 
@@ -235,12 +238,22 @@ export function AdminUsersClient() {
                   return (
                     <tr key={u._id} className="hover:bg-slate-50/60">
                       <td className="py-3.5">
-                        <div className="font-bold text-[#101C3A]">{u.name}</div>
-                        {u.matricNumber ? (
-                          <span className="font-mono text-[11px] text-slate-500">{u.matricNumber}</span>
-                        ) : (
-                          <span className="text-[11px] text-slate-400 italic">No Matric No.</span>
-                        )}
+                        <div className="flex items-center gap-3">
+                          <UserAvatar
+                            src={u.image || u.profilePhotoUrl}
+                            name={u.name}
+                            size="sm"
+                            variant={u.role === USER_ROLES.ADMIN ? "admin" : u.role === USER_ROLES.ORGANIZER ? "organizer" : "student"}
+                          />
+                          <div className="min-w-0">
+                            <div className="font-bold text-[#101C3A]">{u.name}</div>
+                            {u.matricNumber ? (
+                              <span className="font-mono text-[11px] text-slate-500">{u.matricNumber}</span>
+                            ) : (
+                              <span className="text-[11px] text-slate-400 italic">No Matric No.</span>
+                            )}
+                          </div>
+                        </div>
                       </td>
                       <td className="py-3.5 text-slate-500 font-mono text-[11px]">{u.email}</td>
                       <td className="py-3.5 text-slate-600 max-w-[180px] truncate">

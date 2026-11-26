@@ -20,6 +20,8 @@ export interface SanitizedStudentProfile {
   id: string;
   name: string;
   email: string;
+  image?: string;
+  profilePhotoUrl?: string;
   matricNumber?: string;
   faculty?: string;
   department?: string;
@@ -97,6 +99,8 @@ export async function getStudentProfile(userId: string): Promise<StudentServiceR
     id: student._id.toString(),
     name: student.name,
     email: student.email,
+    image: (student as { image?: string; profilePhotoUrl?: string }).image || (student as { image?: string; profilePhotoUrl?: string }).profilePhotoUrl,
+    profilePhotoUrl: (student as { profilePhotoUrl?: string }).profilePhotoUrl,
     matricNumber: student.matricNumber,
     faculty: student.faculty || "",
     department: student.department || "",
@@ -174,6 +178,8 @@ export async function updateStudentProfile(
     id: student._id.toString(),
     name: student.name,
     email: student.email,
+    image: student.image || student.profilePhotoUrl,
+    profilePhotoUrl: student.profilePhotoUrl,
     matricNumber: student.matricNumber,
     faculty: student.faculty || "",
     department: student.department || "",

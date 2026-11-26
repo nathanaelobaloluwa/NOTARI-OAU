@@ -15,6 +15,17 @@ export interface FlyerUploadResult {
   provider: "cloudinary" | "local";
 }
 
+export interface ProfilePhotoUploadResult {
+  url: string;
+  secureUrl: string;
+  publicId: string;
+  format: string;
+  bytes: number;
+  width?: number;
+  height?: number;
+  provider: "cloudinary" | "local";
+}
+
 /**
  * Cloudinary Media Storage Boundary
  * Handles event flyers, banners, and organizer verification documents.
@@ -328,5 +339,233 @@ export class CloudinaryService {
       return `https://res.cloudinary.com/${this.cloudName}/image/upload/c_fill,w_${width},h_${height},f_auto,q_auto/${publicIdOrUrl}`;
     }
     return publicIdOrUrl;
+  }
+
+  /**
+   * Upload a user profile photograph to storage.
+   * Stored under dedicated folder: `notari/profiles/${userId}`
+   * Validates binary magic signatures (JPG, PNG, WebP) and 5MB max size.
+   */
+  public static async uploadProfilePhoto(
+    buffer: Buffer,
+    options: { userId: string }
+  ): Promise<ProfilePhotoUploadResult> {
+    if (!options?.userId) {
+      throw new Error("User identifier is required for profile photo upload.");
+    }
+
+    // 1. Validate magic bytes and file size
+    const validation = validateImageBuffer(buffer);
+    if (!validation.valid || !validation.detectedExt || !validation.detectedMime) {
+      throw new Error(validation.error || "Invalid image buffer.");
+    }
+
+    const { width, height } = extractImageDimensions(buffer);
+    const isProduction = (process.env.NODE_ENV || env.NODE_ENV) === "production";
+    const folder = `notari/profiles/${options.userId}`;
+
+    // 2. Production or configured Cloudinary upload
+    if (this.isConfigured()) {
+      try {
+        const cloudName = this.cloudName!;
+        const apiKey = this.apiKey!;
+        const apiSecret = this.apiSecret!;
+
+        const timestamp = Math.floor(Date.now() / 1000);
+        // Signed parameters
+        const paramsToSign = `folder=${folder}&timestamp=${timestamp}${apiSecret}`;
+        const signature = crypto.createHash("sha1").update(paramsToSign).digest("hex");
+
+        const formData = new FormData();
+        const base64Data = `data:${validation.detectedMime};base64,${buffer.toString("base64")}`;
+        formData.append("file", base64Data);
+        formData.append("api_key", apiKey);
+        formData.append("timestamp", String(timestamp));
+        formData.append("folder", folder);
+        formData.append("signature", signature);
+
+        const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
+        const response = await fetch(uploadUrl, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const errText = await response.text();
+          console.error("❌ Cloudinary profile photo upload error:", errText);
+          throw new Error(`Cloudinary upload failed with status ${response.status}: ${errText}`);
+        }
+
+        const data = await response.json();
+
+        // Optimized CDN URL with smart face crop
+        let secureUrl = data.secure_url || data.url;
+        if (secureUrl && secureUrl.includes("/upload/")) {
+          secureUrl = secureUrl.replace(
+            "/upload/",
+            "/upload/c_fill,g_face,w_400,h_400,q_auto,f_auto/"
+          );
+        }
+
+        return {
+          url: secureUrl,
+          secureUrl,
+          publicId: data.public_id,
+          format: data.format,
+          bytes: data.bytes,
+          width: data.width || width,
+          height: data.height || height,
+          provider: "cloudinary",
+        };
+      } catch (err) {
+        if (!isProduction) {
+          console.warn(
+            "⚠️ Cloudinary upload failed in non-production, falling back to local storage:",
+            (err as Error).message
+          );
+          return this.uploadProfilePhotoToLocalStorage(buffer, validation.detectedExt, options.userId);
+        }
+        throw err;
+      }
+    }
+
+    if (isProduction) {
+      throw new Error(
+        "Media storage is not configured for production. Please configure CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET."
+      );
+    }
+
+    return this.uploadProfilePhotoToLocalStorage(buffer, validation.detectedExt, options.userId);
+  }
+
+  private static async uploadProfilePhotoToLocalStorage(
+    buffer: Buffer,
+    ext: "jpg" | "png" | "webp",
+    userId: string
+  ): Promise<ProfilePhotoUploadResult> {
+    const uploadsDir = path.join(process.cwd(), "public", "uploads", "profiles");
+    await fs.mkdir(uploadsDir, { recursive: true });
+
+    const randomSuffix = crypto.randomBytes(8).toString("hex");
+    const filename = `profile_${userId}_${Date.now()}_${randomSuffix}.${ext}`;
+    const filePath = path.join(uploadsDir, filename);
+
+    await fs.writeFile(filePath, buffer);
+    const publicUrl = `/uploads/profiles/${filename}`;
+
+    return {
+      url: publicUrl,
+      secureUrl: publicUrl,
+      publicId: filename,
+      format: ext,
+      bytes: buffer.length,
+      provider: "local",
+    };
+  }
+
+  /**
+   * Safely delete a user profile photograph from Cloudinary or local disk
+   * Restricts deletions strictly to `notari/profiles/` namespace.
+   */
+  public static async deleteProfilePhoto(
+    publicIdOrUrl: string
+  ): Promise<{ success: boolean; error?: string }> {
+    if (!publicIdOrUrl) return { success: false, error: "No asset specified." };
+
+    // Path traversal guard
+    if (
+      publicIdOrUrl.includes("..") ||
+      publicIdOrUrl.includes("\0") ||
+      (publicIdOrUrl.includes("://") && !publicIdOrUrl.startsWith("https://res.cloudinary.com"))
+    ) {
+      return { success: false, error: "Invalid asset path: traversal detected." };
+    }
+
+    // Strict namespace guard: Asset MUST belong to notari/profiles/ or /uploads/profiles/
+    const isLocalProfile = publicIdOrUrl.startsWith("/uploads/profiles/");
+    const isCloudinaryProfile =
+      publicIdOrUrl.startsWith("notari/profiles/") ||
+      (publicIdOrUrl.includes("res.cloudinary.com") && publicIdOrUrl.includes("notari/profiles/"));
+
+    if (!isLocalProfile && !isCloudinaryProfile) {
+      return {
+        success: false,
+        error: "Security violation: only assets within notari/profiles/ can be managed.",
+      };
+    }
+
+    try {
+      // 1. Local storage cleanup
+      if (publicIdOrUrl.startsWith("/uploads/profiles/")) {
+        const basename = path.basename(publicIdOrUrl);
+        const filePath = path.join(process.cwd(), "public", "uploads", "profiles", basename);
+        try {
+          await fs.unlink(filePath);
+          return { success: true };
+        } catch (err: unknown) {
+          if ((err as { code?: string }).code === "ENOENT") {
+            return { success: true }; // Already deleted
+          }
+          throw err;
+        }
+      }
+
+      // 2. Cloudinary deletion
+      if (this.isConfigured()) {
+        const cloudName = this.cloudName!;
+        const apiKey = this.apiKey!;
+        const apiSecret = this.apiSecret!;
+
+        let publicId = publicIdOrUrl;
+        if (publicIdOrUrl.includes("res.cloudinary.com")) {
+          const match = publicIdOrUrl.match(/notari\/profiles\/[^.]+/);
+          if (match) {
+            publicId = match[0];
+          } else {
+            return {
+              success: false,
+              error: "Security violation: only assets within notari/profiles/ can be managed.",
+            };
+          }
+        }
+
+        // Strict guard: MUST start with "notari/profiles/"
+        if (!publicId.startsWith("notari/profiles/")) {
+          return {
+            success: false,
+            error: "Security violation: arbitrary asset deletion blocked.",
+          };
+        }
+
+        const timestamp = Math.floor(Date.now() / 1000);
+        const paramsToSign = `public_id=${publicId}&timestamp=${timestamp}${apiSecret}`;
+        const signature = crypto.createHash("sha1").update(paramsToSign).digest("hex");
+
+        const formData = new FormData();
+        formData.append("public_id", publicId);
+        formData.append("api_key", apiKey);
+        formData.append("timestamp", String(timestamp));
+        formData.append("signature", signature);
+
+        const destroyUrl = `https://api.cloudinary.com/v1_1/${cloudName}/image/destroy`;
+        const res = await fetch(destroyUrl, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!res.ok) {
+          const errText = await res.text();
+          console.warn("⚠️ Cloudinary destroy returned non-OK status:", errText);
+          return { success: false, error: errText };
+        }
+
+        return { success: true };
+      }
+
+      return { success: true };
+    } catch (err) {
+      console.warn("⚠️ Error deleting profile photo asset:", err);
+      return { success: false, error: (err as Error).message };
+    }
   }
 }

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { NotariEmptyState } from "@/components/shared/notari-empty-state";
+import { UserAvatar } from "@/components/shared/user-avatar";
 import {
   Users,
   CheckCircle2,
@@ -358,7 +359,12 @@ export function OrganizerAttendeesClient() {
               <tbody className="divide-y divide-slate-100">
                 {attendees.map((a) => (
                   <tr key={a.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="py-3.5 px-4 font-bold text-notari-dark">{a.attendeeName}</td>
+                    <td className="py-3.5 px-4 font-bold text-notari-dark">
+                      <div className="flex items-center gap-2.5">
+                        <UserAvatar name={a.attendeeName} size="xs" variant="student" />
+                        <span>{a.attendeeName}</span>
+                      </div>
+                    </td>
                     <td className="py-3.5 px-4 font-mono text-slate-500">{a.matricNumber || "—"}</td>
                     <td className="py-3.5 px-4 text-slate-600">{a.attendeeEmail}</td>
                     <td className="py-3.5 px-4 text-slate-700 font-medium max-w-[180px] truncate">

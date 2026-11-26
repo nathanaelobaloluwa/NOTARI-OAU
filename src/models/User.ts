@@ -6,6 +6,8 @@ export interface IUserDocument extends Document {
   email: string;
   password?: string;
   image?: string;
+  profilePhotoUrl?: string;
+  profilePhotoPublicId?: string;
   role: UserRole;
   isOrganizer?: boolean;
   matricNumber?: string;
@@ -31,6 +33,8 @@ const UserSchema = new Schema<IUserDocument>(
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, select: false },
     image: { type: String },
+    profilePhotoUrl: { type: String },
+    profilePhotoPublicId: { type: String },
     role: {
       type: String,
       enum: Object.values(USER_ROLES),

@@ -73,6 +73,7 @@ export async function POST(req: NextRequest) {
         message: result.message,
         cooldownRemaining: result.cooldownRemaining,
         expiresAt: result.expiresAt,
+        devOtpCode: result.devOtpCode,
       },
       { status: 200 }
     );

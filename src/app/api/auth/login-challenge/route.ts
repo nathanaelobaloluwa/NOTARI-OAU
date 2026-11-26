@@ -106,6 +106,7 @@ export async function POST(req: NextRequest) {
       email: OtpService.maskEmail(normalizedEmail),
       rawEmail: normalizedEmail,
       cooldownRemaining: otpResult.cooldownRemaining ?? 60,
+      devOtpCode: otpResult.devOtpCode,
       message: otpResult.message || "A 6-digit login verification code has been sent to your email.",
     });
   } catch (err: unknown) {

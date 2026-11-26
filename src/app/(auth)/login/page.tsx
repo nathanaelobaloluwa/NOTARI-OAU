@@ -46,6 +46,7 @@ function LoginForm() {
   // OTP Verification state
   const [challengeToken, setChallengeToken] = useState("");
   const [maskedEmail, setMaskedEmail] = useState("");
+  const [devOtpCode, setDevOtpCode] = useState<string | null>(null);
   const [digits, setDigits] = useState<string[]>(["", "", "", "", "", ""]);
   const [isResending, setIsResending] = useState(false);
   const [cooldown, setCooldown] = useState(60);
@@ -105,6 +106,7 @@ function LoginForm() {
       // Transition to Step 2: OTP Verification
       setChallengeToken(data.challengeToken);
       setMaskedEmail(data.email || normalizedEmail);
+      setDevOtpCode(data.devOtpCode || null);
       setCooldown(data.cooldownRemaining || 60);
       setDigits(["", "", "", "", "", ""]);
       setStep("otp");
@@ -502,6 +504,31 @@ function LoginForm() {
               <span className="font-semibold text-slate-700">{maskedEmail}</span>
             </p>
           </div>
+
+          {/* Dev OTP Helper */}
+          {devOtpCode && (
+            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200/80 text-amber-900 text-xs space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-[11px] uppercase tracking-wider text-amber-800">
+                  🛠️ Development Test Helper
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const chars = devOtpCode.slice(0, 6).split("");
+                    setDigits(chars);
+                    handleVerifyOtp(devOtpCode.slice(0, 6));
+                  }}
+                  className="text-[10px] font-bold text-notari-primary hover:underline cursor-pointer"
+                >
+                  Auto-fill & Sign In
+                </button>
+              </div>
+              <p className="text-[11px] text-amber-700">
+                Resend test code: <strong className="font-mono text-sm tracking-wider">{devOtpCode}</strong>
+              </p>
+            </div>
+          )}
 
           {/* Error Alert Banner */}
           {errorMessage && (

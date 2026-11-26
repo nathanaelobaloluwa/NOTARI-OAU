@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     const ipAddress = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
     const userAgent = request.headers.get("user-agent") || "unknown";
 
-    await OtpService.createAndSendOtp({
+    const otpResult = await OtpService.createAndSendOtp({
       userId: newUser._id,
       email: normalizedEmail,
       name: newUser.name,
@@ -86,6 +86,7 @@ export async function POST(request: NextRequest) {
         department: newUser.department,
         isVerified: false,
         requireVerification: true,
+        devOtpCode: otpResult.devOtpCode,
         createdAt: newUser.createdAt,
       },
       "Account registered! A 6-digit verification code has been sent to your email address.",

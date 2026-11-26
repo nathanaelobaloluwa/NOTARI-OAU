@@ -19,6 +19,7 @@ export interface IssueOtpResult {
   cooldownRemaining?: number;
   expiresAt?: Date;
   deliveryProvider?: string;
+  devOtpCode?: string;
 }
 
 export interface VerifyOtpResult {
@@ -151,12 +152,26 @@ export class OtpService {
       console.warn("⚠️ OTP email delivery notice:", delivery.error);
     }
 
+    // In development environments, log the OTP code to the console for frictionless testing
+    if (process.env.NODE_ENV !== "production") {
+      console.log("\n==================================================================");
+      console.log(`🔑 [NOTARI OTP CODE]: ${code}`);
+      console.log(`📧 Target Recipient:  ${normalizedEmail}`);
+      console.log(`🎯 Purpose:           ${params.purpose}`);
+      if (!delivery.success) {
+        console.log(`⚠️ Email notice:      ${delivery.error}`);
+        console.log(`💡 Note: Resend test domain only delivers to account owner (${delivery.error?.includes("ajekiigbenathanael") ? "ajekiigbenathanael@gmail.com" : "your Resend email"}).`);
+      }
+      console.log("==================================================================\n");
+    }
+
     return {
       success: true,
       message: `Verification code sent to ${this.maskEmail(normalizedEmail)}.`,
       cooldownRemaining: RESEND_COOLDOWN_SECONDS,
       expiresAt,
       deliveryProvider: delivery.provider,
+      devOtpCode: process.env.NODE_ENV !== "production" ? code : undefined,
     };
   }
 

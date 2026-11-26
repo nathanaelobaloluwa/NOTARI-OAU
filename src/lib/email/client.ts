@@ -147,6 +147,33 @@ export async function sendEmail(options: SendEmailOptions): Promise<SendEmailRes
     });
 
     if (error) {
+      // Auto-fallback for unverified domains to Resend's official testing domain
+      if (
+        error.message?.includes("is not verified") &&
+        !fromEmail.toLowerCase().includes("onboarding@resend.dev")
+      ) {
+        console.warn(
+          `⚠️ [RESEND_UNVERIFIED_DOMAIN]: "${fromEmail}" is unverified. Retrying delivery using "NOTARI OAU <onboarding@resend.dev>"...`
+        );
+        const retry = await client.emails.send({
+          from: "NOTARI OAU <onboarding@resend.dev>",
+          to: options.to,
+          subject: options.subject,
+          html: options.html,
+          text: options.text,
+          replyTo: options.replyTo,
+        });
+
+        if (!retry.error) {
+          console.log(`✅ [EMAIL_DELIVERED] Sent via onboarding@resend.dev to ${recipient}`);
+          return {
+            success: true,
+            id: retry.data?.id,
+            provider: "resend",
+          };
+        }
+      }
+
       console.error(`❌ Resend API Error [${options.subject}]:`, error.message);
       return {
         success: false,

@@ -60,7 +60,11 @@ export default function RegisterPage() {
         toast.success("Account created successfully!", {
           description: "We've sent a 6-digit verification code to your university email.",
         });
-        router.push(`/verify-email?email=${encodeURIComponent(payload.email)}`);
+        const query = new URLSearchParams({ email: payload.email });
+        if (data?.data?.devOtpCode) {
+          query.set("devOtp", data.data.devOtpCode);
+        }
+        router.push(`/verify-email?${query.toString()}`);
         return;
       }
 

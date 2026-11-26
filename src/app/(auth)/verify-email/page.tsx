@@ -12,8 +12,10 @@ function VerifyEmailForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const emailParam = searchParams.get("email") || "";
+  const devOtpParam = searchParams.get("devOtp") || "";
 
   const [email] = useState(emailParam);
+  const [devOtp, setDevOtp] = useState(devOtpParam);
   const [digits, setDigits] = useState<string[]>(["", "", "", "", "", ""]);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
@@ -192,6 +194,31 @@ function VerifyEmailForm() {
           </strong>
         </p>
       </div>
+
+      {/* Dev OTP Helper */}
+      {devOtp && (
+        <div className="mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200/80 text-amber-900 text-xs space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="font-bold text-[11px] uppercase tracking-wider text-amber-800">
+              🛠️ Development Test Helper
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                const chars = devOtp.slice(0, 6).split("");
+                setDigits(chars);
+                submitCode(devOtp.slice(0, 6));
+              }}
+              className="text-[10px] font-bold text-notari-primary hover:underline cursor-pointer"
+            >
+              Auto-fill & Verify
+            </button>
+          </div>
+          <p className="text-[11px] text-amber-700">
+            Resend test code: <strong className="font-mono text-sm tracking-wider">{devOtp}</strong>
+          </p>
+        </div>
+      )}
 
       {/* Alert Messages */}
       {successMessage && (

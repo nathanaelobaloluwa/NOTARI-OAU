@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Mail, ArrowLeft, Loader2, RefreshCw, CheckCircle2, AlertCircle } from "lucide-react";
@@ -122,14 +123,36 @@ function VerifyEmailForm() {
         return;
       }
 
-      setSuccessMessage("Email verified successfully! Redirecting to login...");
-      toast.success("Email verified successfully!", {
-        description: "Your university account is active. Please log in.",
+      setSuccessMessage("Email verified! Logging you into your NOTARI portal...");
+      toast.success("Email verified!", {
+        description: "Welcome to NOTARI! Logging you in...",
       });
+
+      // DIRECT AUTO-LOGIN: Authenticate session immediately with zero friction
+      if (data.autoLoginToken) {
+        const authRes = await signIn("credentials", {
+          email: data.email || email,
+          autoLoginToken: data.autoLoginToken,
+          redirect: false,
+        });
+
+        if (authRes && !authRes.error) {
+          const role = data.role || "student";
+          if (role === "admin") {
+            router.push("/admin");
+          } else if (role === "organizer") {
+            router.push("/organizer");
+          } else {
+            router.push("/student");
+          }
+          router.refresh();
+          return;
+        }
+      }
 
       setTimeout(() => {
         router.push("/login?verified=true");
-      }, 1500);
+      }, 1200);
     } catch {
       const msg = "Network error occurred while verifying code. Please check your connection.";
       setErrorMessage(msg);

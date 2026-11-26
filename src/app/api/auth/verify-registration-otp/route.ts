@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { OtpService } from "@/lib/auth/otp-service";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { User } from "@/models/User";
+import { createChallengeToken } from "@/lib/auth/challenge-token";
 
 export const dynamic = "force-dynamic";
 
@@ -58,10 +59,16 @@ export async function POST(req: NextRequest) {
     user.emailVerifiedAt = new Date();
     await user.save();
 
+    // Generate signed HMAC token for direct, passwordless auto-login upon verification
+    const autoLoginToken = createChallengeToken(user._id.toString(), normalizedEmail);
+
     return NextResponse.json(
       {
         success: true,
-        message: "Email address verified successfully! You can now log in to NOTARI.",
+        message: "Email address verified successfully! Logging you in...",
+        autoLoginToken,
+        email: normalizedEmail,
+        role: user.role,
       },
       { status: 200 }
     );

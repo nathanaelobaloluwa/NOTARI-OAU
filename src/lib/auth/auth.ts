@@ -31,11 +31,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "Password", type: "password" },
         challengeToken: { label: "Challenge Token", type: "text" },
         otpCode: { label: "OTP Code", type: "text" },
+        autoLoginToken: { label: "Auto Login Token", type: "text" },
       },
       async authorize(credentials, req) {
         if (!credentials) return null;
 
         const email = String(credentials.email || "").toLowerCase().trim();
+        const autoLoginToken = credentials.autoLoginToken
+          ? String(credentials.autoLoginToken).trim()
+          : undefined;
         const otpCode = credentials.otpCode ? String(credentials.otpCode).trim() : undefined;
         const challengeToken = credentials.challengeToken
           ? String(credentials.challengeToken).trim()
@@ -44,6 +48,62 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         try {
           await connectToDatabase();
+
+          // 0. Direct auto-login upon verified registration OTP
+          if (autoLoginToken) {
+            const tokenCheck = verifyChallengeToken(autoLoginToken);
+            if (!tokenCheck.valid || !tokenCheck.email) {
+              console.warn("🔒 Auto-login token invalid or expired during authorize.");
+              return null;
+            }
+
+            const targetEmail = tokenCheck.email.toLowerCase().trim();
+            const user = await User.findOne({ email: targetEmail });
+            if (!user || user.status === "suspended" || !user.isVerified) {
+              console.warn(`🔒 Auto-login rejected for ${targetEmail}: account suspended or unverified.`);
+              return null;
+            }
+
+            // Record login activity
+            const userAgent =
+              (req as { headers?: { get?: (k: string) => string | null } })?.headers?.get?.(
+                "user-agent"
+              ) || "unknown";
+            const ipAddress =
+              (req as { headers?: { get?: (k: string) => string | null } })?.headers
+                ?.get?.("x-forwarded-for")
+                ?.split(",")[0]
+                ?.trim() || "unknown";
+            const device = parseDevice(userAgent);
+
+            user.lastLoginAt = new Date();
+            user.recentLogins = user.recentLogins || [];
+            user.recentLogins.unshift({
+              timestamp: new Date(),
+              ipAddress,
+              userAgent: userAgent.slice(0, 200),
+              device,
+            });
+            user.recentLogins = user.recentLogins.slice(0, 10);
+            await user.save();
+
+            const rawImg = user.image || user.profilePhotoUrl;
+            const servedImage =
+              rawImg && !rawImg.startsWith("data:")
+                ? rawImg
+                : rawImg
+                ? `/api/user/profile-photo?userId=${user._id.toString()}`
+                : undefined;
+
+            return {
+              id: user._id.toString(),
+              name: user.name,
+              email: user.email,
+              role: user.role,
+              isOrganizer: Boolean(user.isOrganizer || user.role === "organizer"),
+              image: servedImage,
+            };
+          }
 
           // 1. Two-Factor Authentication via OTP code + challengeToken
           if (challengeToken && otpCode) {

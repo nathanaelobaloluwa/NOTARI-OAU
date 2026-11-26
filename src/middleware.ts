@@ -11,6 +11,11 @@ export const { auth: middleware } = NextAuth(authConfig);
 export const config = {
   matcher: [
     /*
+     * Match public landing & visitor pages to intercept authenticated users
+     */
+    "/",
+    "/about",
+    /*
      * Match all protected dashboard route patterns and authentication pages
      */
     "/student/:path*",

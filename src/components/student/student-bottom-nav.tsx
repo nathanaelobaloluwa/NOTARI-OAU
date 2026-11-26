@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Calendar, Ticket, Bookmark, User } from "lucide-react";
+import { LayoutDashboard, Compass, Ticket, Bookmark, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const STUDENT_BOTTOM_NAV_ITEMS = [
@@ -14,13 +14,13 @@ const STUDENT_BOTTOM_NAV_ITEMS = [
     exact: true,
   },
   {
-    name: "My Events",
-    href: "/student/my-events",
-    icon: Calendar,
+    name: "Explore",
+    href: "/events",
+    icon: Compass,
     exact: false,
   },
   {
-    name: "My Tickets",
+    name: "Tickets",
     href: "/student/tickets",
     icon: Ticket,
     exact: false,

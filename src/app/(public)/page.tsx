@@ -1,6 +1,8 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth/auth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,20 +11,36 @@ import { CampusHeroVisual } from "@/components/home/CampusHeroVisual";
 import { EventFlyerImage } from "@/components/shared/event-flyer-image";
 import { connectToDatabase } from "@/lib/database/mongoose";
 import { Event } from "@/models/Event";
+import { USER_ROLES } from "@/constants/roles";
 import { EVENT_STATUS, OAU_FACULTIES, EVENT_CATEGORIES, formatFacultyLabel } from "@/constants/oau";
 import {
   Search,
   Calendar,
   MapPin,
   ArrowRight,
-  Sparkles,
   ChevronRight,
   Compass,
+  School,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
+  const session = await auth();
+  if (session?.user) {
+    const role = (session.user as { role?: string })?.role;
+    const isOrganizer = Boolean(
+      (session.user as { isOrganizer?: boolean })?.isOrganizer || role === USER_ROLES.ORGANIZER
+    );
+    if (role === USER_ROLES.ADMIN) {
+      redirect("/admin");
+    } else if (isOrganizer) {
+      redirect("/organizer");
+    } else {
+      redirect("/student");
+    }
+  }
+
   await connectToDatabase();
 
   const publishedEvents = await Event.find({ status: EVENT_STATUS.PUBLISHED })
@@ -46,7 +64,7 @@ export default async function HomePage() {
             {/* Left Column: Headlines & Search Form */}
             <div className="lg:col-span-7 space-y-6">
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-xs font-semibold tracking-wider uppercase text-indigo-300">
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <School className="w-3.5 h-3.5 text-indigo-300" />
                 <span>Obafemi Awolowo University</span>
               </div>
 

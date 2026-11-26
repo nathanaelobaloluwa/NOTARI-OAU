@@ -62,11 +62,14 @@ export const authConfig: NextAuthConfig = {
         return true;
       }
 
-      // 4. Redirect logged-in users away from auth pages to their respective dashboards
-      if (isLoggedIn && (pathname === "/login" || pathname === "/register")) {
+      // 4. Redirect logged-in users away from visitor-only & auth pages to their respective dashboards
+      if (
+        isLoggedIn &&
+        (pathname === "/" || pathname === "/about" || pathname === "/login" || pathname === "/register")
+      ) {
         if (role === USER_ROLES.ADMIN) {
           return Response.redirect(new URL("/admin", nextUrl));
-        } else if (role === USER_ROLES.ORGANIZER) {
+        } else if (isOrganizer) {
           return Response.redirect(new URL("/organizer", nextUrl));
         } else {
           return Response.redirect(new URL("/student", nextUrl));
@@ -75,11 +78,20 @@ export const authConfig: NextAuthConfig = {
 
       return true;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session: updateData }) {
       if (user) {
         token.id = user.id;
         token.role = (user as { role?: string }).role || USER_ROLES.STUDENT;
         token.isOrganizer = Boolean((user as { isOrganizer?: boolean }).isOrganizer);
+        token.picture = (user as { image?: string }).image || (user as { profilePhotoUrl?: string }).profilePhotoUrl;
+      }
+      if (trigger === "update" && updateData) {
+        if (updateData.image !== undefined) {
+          token.picture = updateData.image;
+        }
+        if (updateData.name) {
+          token.name = updateData.name;
+        }
       }
       return token;
     },
@@ -88,6 +100,11 @@ export const authConfig: NextAuthConfig = {
         session.user.id = (token.id as string) || (token.sub as string);
         (session.user as { role?: string }).role = (token.role as string) || USER_ROLES.STUDENT;
         (session.user as { isOrganizer?: boolean }).isOrganizer = Boolean(token.isOrganizer);
+        if (token.picture) {
+          session.user.image = token.picture as string;
+        } else if (token.picture === null) {
+          session.user.image = undefined;
+        }
       }
       return session;
     },

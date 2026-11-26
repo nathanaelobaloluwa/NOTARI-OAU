@@ -1,10 +1,28 @@
 import React from "react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth/auth";
+import { USER_ROLES } from "@/constants/roles";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Shield, Ticket, Users } from "lucide-react";
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const session = await auth();
+  if (session?.user) {
+    const role = (session.user as { role?: string })?.role;
+    const isOrganizer = Boolean(
+      (session.user as { isOrganizer?: boolean })?.isOrganizer || role === USER_ROLES.ORGANIZER
+    );
+    if (role === USER_ROLES.ADMIN) {
+      redirect("/admin");
+    } else if (isOrganizer) {
+      redirect("/organizer");
+    } else {
+      redirect("/student");
+    }
+  }
+
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-16 space-y-16">
       <div className="text-center space-y-4 max-w-3xl mx-auto">

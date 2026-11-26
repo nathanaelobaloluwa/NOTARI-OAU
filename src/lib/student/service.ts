@@ -100,8 +100,16 @@ export async function getStudentProfile(userId: string): Promise<StudentServiceR
     id: student._id.toString(),
     name: student.name,
     email: student.email,
-    image: (student as { image?: string; profilePhotoUrl?: string }).image || (student as { image?: string; profilePhotoUrl?: string }).profilePhotoUrl,
-    profilePhotoUrl: (student as { profilePhotoUrl?: string }).profilePhotoUrl,
+    image:
+      (student as { image?: string }).image && !(student as { image?: string }).image?.startsWith("data:")
+        ? (student as { image?: string }).image
+        : (student as { profilePhotoUrl?: string }).profilePhotoUrl
+        ? `/api/user/profile-photo?userId=${student._id.toString()}`
+        : undefined,
+    profilePhotoUrl:
+      (student as { profilePhotoUrl?: string }).profilePhotoUrl?.startsWith("data:")
+        ? `/api/user/profile-photo?userId=${student._id.toString()}`
+        : (student as { profilePhotoUrl?: string }).profilePhotoUrl,
     matricNumber: student.matricNumber,
     faculty: student.faculty || "",
     department: student.department || "",
@@ -184,8 +192,16 @@ export async function updateStudentProfile(
     id: student._id.toString(),
     name: student.name,
     email: student.email,
-    image: student.image || student.profilePhotoUrl,
-    profilePhotoUrl: student.profilePhotoUrl,
+    image:
+      student.image && !student.image.startsWith("data:")
+        ? student.image
+        : student.profilePhotoUrl
+        ? `/api/user/profile-photo?userId=${student._id.toString()}`
+        : undefined,
+    profilePhotoUrl:
+      student.profilePhotoUrl && student.profilePhotoUrl.startsWith("data:")
+        ? `/api/user/profile-photo?userId=${student._id.toString()}`
+        : student.profilePhotoUrl,
     matricNumber: student.matricNumber,
     faculty: student.faculty || "",
     department: student.department || "",

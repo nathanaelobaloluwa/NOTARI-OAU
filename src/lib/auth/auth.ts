@@ -45,6 +45,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             return null;
           }
 
+          const rawImg = user.image || user.profilePhotoUrl;
+          const servedImage =
+            rawImg && !rawImg.startsWith("data:")
+              ? rawImg
+              : rawImg
+              ? `/api/user/profile-photo?userId=${user._id.toString()}`
+              : undefined;
+
           // Return genuine authenticated user payload derived strictly from MongoDB
           return {
             id: user._id.toString(),
@@ -52,7 +60,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             email: user.email,
             role: user.role,
             isOrganizer: Boolean(user.isOrganizer || user.role === "organizer"),
-            image: user.profilePhotoUrl || user.image,
+            image: servedImage,
           };
         } catch (error) {
           console.error("❌ Authentication authorization error:", error);

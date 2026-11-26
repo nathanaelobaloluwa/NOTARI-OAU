@@ -65,9 +65,15 @@ export async function POST(req: NextRequest) {
     });
 
     // 3. Atomically persist new photo to MongoDB
+    // For inline data URIs, save the binary data URI in profilePhotoUrl,
+    // but assign a clean, lightweight endpoint URL to user.image to prevent NextAuth JWT cookie overflow:
+    const servedUrl = uploadResult.secureUrl.startsWith("data:")
+      ? `/api/user/profile-photo?userId=${user._id.toString()}&v=${Date.now()}`
+      : uploadResult.secureUrl;
+
     user.profilePhotoUrl = uploadResult.secureUrl;
     user.profilePhotoPublicId = uploadResult.publicId;
-    user.image = uploadResult.secureUrl;
+    user.image = servedUrl;
     await user.save();
 
     // 4. Safely delete old asset ONLY AFTER database update has succeeded
@@ -83,7 +89,7 @@ export async function POST(req: NextRequest) {
       {
         success: true,
         message: "Profile photograph updated successfully.",
-        photoUrl: uploadResult.secureUrl,
+        photoUrl: servedUrl,
         publicId: uploadResult.publicId,
       },
       { status: 200 }
@@ -159,5 +165,63 @@ export async function DELETE() {
       },
       { status: 500 }
     );
+  }
+}
+
+/**
+ * GET /api/user/profile-photo
+ * Streams the active user's profile photograph binary directly.
+ * Resolves by query param ?userId=... or by current authenticated session.
+ */
+export async function GET(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get("userId");
+
+    await connectToDatabase();
+    let user = null;
+
+    if (userId) {
+      user = await User.findById(userId);
+    } else {
+      const session = await auth();
+      if (session?.user?.id) {
+        user = await User.findById(session.user.id);
+      }
+    }
+
+    if (!user) {
+      return new NextResponse(null, { status: 404 });
+    }
+
+    const photo = user.profilePhotoUrl || user.image;
+    if (!photo) {
+      return new NextResponse(null, { status: 404 });
+    }
+
+    // 1. If it's an external Cloudinary CDN URL, redirect directly
+    if (photo.startsWith("http://") || photo.startsWith("https://")) {
+      return NextResponse.redirect(new URL(photo));
+    }
+
+    // 2. If it's an inline Data URI (stored in MongoDB), extract binary buffer and stream
+    if (photo.startsWith("data:")) {
+      const matches = photo.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
+      if (matches && matches.length === 3) {
+        const mimeType = matches[1];
+        const buffer = Buffer.from(matches[2], "base64");
+        return new NextResponse(buffer, {
+          headers: {
+            "Content-Type": mimeType,
+            "Cache-Control": "public, max-age=86400, stale-while-revalidate=43200",
+          },
+        });
+      }
+    }
+
+    return new NextResponse(null, { status: 404 });
+  } catch (err) {
+    console.warn("⚠️ Error streaming profile photograph:", err);
+    return new NextResponse(null, { status: 500 });
   }
 }

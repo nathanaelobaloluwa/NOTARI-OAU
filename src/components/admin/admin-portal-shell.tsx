@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
@@ -61,6 +61,25 @@ export function AdminPortalShell({
   const { data: session } = useSession();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const [liveAvatar, setLiveAvatar] = useState<string | null | undefined>(
+    session?.user?.image
+  );
+
+  useEffect(() => {
+    if (session?.user?.image) {
+      setLiveAvatar(session.user.image);
+    }
+  }, [session?.user?.image]);
+
+  useEffect(() => {
+    function handlePhotoUpdate(e: Event) {
+      const customEvent = e as CustomEvent<{ photoUrl: string | null }>;
+      setLiveAvatar(customEvent.detail?.photoUrl);
+    }
+    window.addEventListener("notari:profile-photo-updated", handlePhotoUpdate);
+    return () => window.removeEventListener("notari:profile-photo-updated", handlePhotoUpdate);
+  }, []);
+
   const adminName = session?.user?.name || "Admin";
 
   return (
@@ -114,7 +133,7 @@ export function AdminPortalShell({
           <div className="flex items-center justify-between px-2">
             <div className="flex items-center gap-3">
               <UserAvatar
-                src={session?.user?.image}
+                src={liveAvatar || session?.user?.image}
                 name={adminName}
                 size="sm"
                 variant="admin"
@@ -168,7 +187,7 @@ export function AdminPortalShell({
                 email: session?.user?.email,
                 role: "admin",
                 isOrganizer: false,
-                image: session?.user?.image,
+                image: liveAvatar || session?.user?.image,
               }}
               variant="admin"
             />

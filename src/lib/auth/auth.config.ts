@@ -87,7 +87,12 @@ export const authConfig: NextAuthConfig = {
       }
       if (trigger === "update" && updateData) {
         if (updateData.image !== undefined) {
-          token.picture = updateData.image;
+          // Never store huge base64 data URIs directly in JWT cookie (prevents 4KB browser cookie overflow)
+          if (typeof updateData.image === "string" && updateData.image.startsWith("data:")) {
+            token.picture = `/api/user/profile-photo?v=${Date.now()}`;
+          } else {
+            token.picture = updateData.image;
+          }
         }
         if (updateData.name) {
           token.name = updateData.name;

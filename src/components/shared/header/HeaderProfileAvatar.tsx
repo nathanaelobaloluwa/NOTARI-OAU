@@ -59,7 +59,24 @@ export function HeaderProfileAvatar({
       (clientSession?.user as { isOrganizer?: boolean })?.isOrganizer ||
       role === "organizer"
   );
-  const activeImage = user?.image || clientSession?.user?.image;
+  const [liveImage, setLiveImage] = useState<string | null | undefined>(
+    user?.image || clientSession?.user?.image
+  );
+
+  useEffect(() => {
+    setLiveImage(user?.image || clientSession?.user?.image);
+  }, [user?.image, clientSession?.user?.image]);
+
+  useEffect(() => {
+    function handleUpdate(e: Event) {
+      const custom = e as CustomEvent<{ photoUrl: string | null }>;
+      setLiveImage(custom.detail?.photoUrl);
+    }
+    window.addEventListener("notari:profile-photo-updated", handleUpdate);
+    return () => window.removeEventListener("notari:profile-photo-updated", handleUpdate);
+  }, []);
+
+  const activeImage = liveImage || user?.image || clientSession?.user?.image;
 
   // Destination for profile/settings link
   const profileHref =

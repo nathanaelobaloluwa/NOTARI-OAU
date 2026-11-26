@@ -81,6 +81,15 @@ export function ProfilePhotoManager({
       setPreviewUrl(null);
       setSuccessMessage("Profile photograph updated successfully.");
 
+      // Propagate immediately to browser window for zero-latency header & sidebar avatar updates
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("notari:profile-photo-updated", {
+            detail: { photoUrl: newUrl },
+          })
+        );
+      }
+
       // Propagate immediately to active session
       if (updateSession) {
         await updateSession({ image: newUrl });
@@ -127,6 +136,14 @@ export function ProfilePhotoManager({
       setPhotoUrl(null);
       setPreviewUrl(null);
       setSuccessMessage("Profile photograph removed. Using initials avatar.");
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("notari:profile-photo-updated", {
+            detail: { photoUrl: null },
+          })
+        );
+      }
 
       // Propagate to session
       if (updateSession) {

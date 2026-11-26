@@ -90,7 +90,7 @@ export function UserAvatar({
           className
         )}
       >
-        {isBlob ? (
+        {isBlob || src.startsWith("/api/") ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={src}

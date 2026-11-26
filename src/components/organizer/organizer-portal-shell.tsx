@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
@@ -44,6 +44,25 @@ export function OrganizerPortalShell({
 }) {
   const pathname = usePathname();
   const { data: session } = useSession();
+
+  const [liveAvatar, setLiveAvatar] = useState<string | null | undefined>(
+    session?.user?.image
+  );
+
+  useEffect(() => {
+    if (session?.user?.image) {
+      setLiveAvatar(session.user.image);
+    }
+  }, [session?.user?.image]);
+
+  useEffect(() => {
+    function handlePhotoUpdate(e: Event) {
+      const customEvent = e as CustomEvent<{ photoUrl: string | null }>;
+      setLiveAvatar(customEvent.detail?.photoUrl);
+    }
+    window.addEventListener("notari:profile-photo-updated", handlePhotoUpdate);
+    return () => window.removeEventListener("notari:profile-photo-updated", handlePhotoUpdate);
+  }, []);
 
   const orgName = session?.user?.name || "Campus Org";
 
@@ -90,7 +109,7 @@ export function OrganizerPortalShell({
         <div className="pt-4 border-t border-slate-100 space-y-3">
           <div className="flex items-center gap-3 px-2">
             <UserAvatar
-              src={session?.user?.image}
+              src={liveAvatar || session?.user?.image}
               name={orgName}
               size="md"
               variant="organizer"
@@ -141,7 +160,7 @@ export function OrganizerPortalShell({
                 email: session?.user?.email,
                 role: "organizer",
                 isOrganizer: true,
-                image: session?.user?.image,
+                image: liveAvatar || session?.user?.image,
               }}
               variant="organizer"
             />

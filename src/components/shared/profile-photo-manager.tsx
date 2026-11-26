@@ -6,6 +6,7 @@ import { UserAvatar } from "@/components/shared/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Trash2, Upload, Loader2, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
+import { toast } from "@/lib/toast";
 
 interface ProfilePhotoManagerProps {
   currentPhotoUrl?: string | null;
@@ -80,6 +81,9 @@ export function ProfilePhotoManager({
       setPhotoUrl(newUrl);
       setPreviewUrl(null);
       setSuccessMessage("Profile photograph updated successfully.");
+      toast.success("Profile photograph updated", {
+        description: "Your new photograph is now visible across your portals and tickets.",
+      });
 
       // Propagate immediately to browser window for zero-latency header & sidebar avatar updates
       if (typeof window !== "undefined") {
@@ -100,13 +104,13 @@ export function ProfilePhotoManager({
       }
     } catch (err) {
       const rawMessage = (err as Error).message || "";
+      let userFriendlyMsg = rawMessage || "Failed to upload profile photograph. Please try again.";
       if (rawMessage.includes("Invalid cloud_name") || rawMessage.includes("Cloudinary upload failed")) {
-        setErrorMessage(
-          "Cloudinary credentials need verification. Please check your CLOUDINARY_CLOUD_NAME in your environment settings."
-        );
-      } else {
-        setErrorMessage(rawMessage || "Failed to upload profile photograph. Please try again.");
+        userFriendlyMsg =
+          "Cloudinary credentials need verification. Please check your CLOUDINARY_CLOUD_NAME in your environment settings.";
       }
+      setErrorMessage(userFriendlyMsg);
+      toast.error("Upload failed", { description: userFriendlyMsg });
       setPreviewUrl(null);
     } finally {
       setIsUploading(false);
@@ -136,6 +140,9 @@ export function ProfilePhotoManager({
       setPhotoUrl(null);
       setPreviewUrl(null);
       setSuccessMessage("Profile photograph removed. Using initials avatar.");
+      toast.info("Profile photograph removed", {
+        description: "Your official university initials avatar is now active.",
+      });
 
       if (typeof window !== "undefined") {
         window.dispatchEvent(

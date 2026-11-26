@@ -29,6 +29,13 @@ export interface SanitizedStudentProfile {
   phone?: string;
   role: string;
   isVerified: boolean;
+  lastLoginAt?: string;
+  recentLogins?: Array<{
+    timestamp: string;
+    ipAddress?: string;
+    userAgent?: string;
+    device?: string;
+  }>;
   emailPreferences?: {
     eventReminders: boolean;
     campusAnnouncements: boolean;
@@ -104,8 +111,8 @@ export async function getStudentProfile(userId: string): Promise<StudentServiceR
       (student as { image?: string }).image && !(student as { image?: string }).image?.startsWith("data:")
         ? (student as { image?: string }).image
         : (student as { profilePhotoUrl?: string }).profilePhotoUrl
-        ? `/api/user/profile-photo?userId=${student._id.toString()}`
-        : undefined,
+          ? `/api/user/profile-photo?userId=${student._id.toString()}`
+          : undefined,
     profilePhotoUrl:
       (student as { profilePhotoUrl?: string }).profilePhotoUrl?.startsWith("data:")
         ? `/api/user/profile-photo?userId=${student._id.toString()}`
@@ -117,6 +124,16 @@ export async function getStudentProfile(userId: string): Promise<StudentServiceR
     phone: student.phone || "",
     role: student.role,
     isVerified: Boolean(student.isVerified),
+    lastLoginAt: student.lastLoginAt ? new Date(student.lastLoginAt).toISOString() : undefined,
+    recentLogins: (
+      (student as { recentLogins?: Array<{ timestamp?: Date; ipAddress?: string; userAgent?: string; device?: string }> })
+        .recentLogins || []
+    ).map((l) => ({
+      timestamp: l.timestamp ? new Date(l.timestamp).toISOString() : new Date().toISOString(),
+      ipAddress: l.ipAddress || "Unknown",
+      userAgent: l.userAgent || "Unknown",
+      device: l.device || "Web Browser",
+    })),
     emailPreferences: {
       eventReminders: student.emailPreferences?.eventReminders ?? true,
       campusAnnouncements: student.emailPreferences?.campusAnnouncements ?? true,
@@ -196,8 +213,8 @@ export async function updateStudentProfile(
       student.image && !student.image.startsWith("data:")
         ? student.image
         : student.profilePhotoUrl
-        ? `/api/user/profile-photo?userId=${student._id.toString()}`
-        : undefined,
+          ? `/api/user/profile-photo?userId=${student._id.toString()}`
+          : undefined,
     profilePhotoUrl:
       student.profilePhotoUrl && student.profilePhotoUrl.startsWith("data:")
         ? `/api/user/profile-photo?userId=${student._id.toString()}`
@@ -209,6 +226,16 @@ export async function updateStudentProfile(
     phone: student.phone || "",
     role: student.role,
     isVerified: Boolean(student.isVerified),
+    lastLoginAt: student.lastLoginAt ? new Date(student.lastLoginAt).toISOString() : undefined,
+    recentLogins: (
+      (student as { recentLogins?: Array<{ timestamp?: Date; ipAddress?: string; userAgent?: string; device?: string }> })
+        .recentLogins || []
+    ).map((l) => ({
+      timestamp: l.timestamp ? new Date(l.timestamp).toISOString() : new Date().toISOString(),
+      ipAddress: l.ipAddress || "Unknown",
+      userAgent: l.userAgent || "Unknown",
+      device: l.device || "Web Browser",
+    })),
     emailPreferences: {
       eventReminders: student.emailPreferences?.eventReminders ?? true,
       campusAnnouncements: student.emailPreferences?.campusAnnouncements ?? true,
@@ -349,8 +376,8 @@ export async function getStudentHistory(
     const eventEndDate = evt?.endDate
       ? new Date(evt.endDate)
       : evt?.startDate
-      ? new Date(evt.startDate)
-      : new Date(0);
+        ? new Date(evt.startDate)
+        : new Date(0);
 
     const isPast = eventEndDate < now;
     const isUpcoming = !isPast;
@@ -378,16 +405,16 @@ export async function getStudentHistory(
       bookedAt: b.createdAt ? new Date(b.createdAt).toISOString() : new Date().toISOString(),
       event: evt && evt.title
         ? {
-            id: evt._id.toString(),
-            title: evt.title,
-            slug: evt.slug,
-            venue: evt.venue,
-            startDate: evt.startDate ? new Date(evt.startDate).toISOString() : "",
-            endDate: evt.endDate ? new Date(evt.endDate).toISOString() : "",
-            flyerUrl: evt.flyerUrl,
-            category: evt.category,
-            organizerName: evt.organizerName,
-          }
+          id: evt._id.toString(),
+          title: evt.title,
+          slug: evt.slug,
+          venue: evt.venue,
+          startDate: evt.startDate ? new Date(evt.startDate).toISOString() : "",
+          endDate: evt.endDate ? new Date(evt.endDate).toISOString() : "",
+          flyerUrl: evt.flyerUrl,
+          category: evt.category,
+          organizerName: evt.organizerName,
+        }
         : null,
       tickets: bTickets.map((t) => ({
         id: t._id.toString(),

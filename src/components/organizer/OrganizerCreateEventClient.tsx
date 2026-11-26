@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EventFlyerUploader } from "@/components/organizer/EventFlyerUploader";
+import { toast } from "@/lib/toast";
 
 interface FormTicketTier {
   name: string;
@@ -185,7 +186,9 @@ export function OrganizerCreateEventClient() {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        setErrorMessage(data.message || "Failed to create event.");
+        const errorMsg = data.message || "Failed to create event.";
+        setErrorMessage(errorMsg);
+        toast.error("Failed to create event", { description: errorMsg });
         if (data.errors) {
           setFieldErrors(data.errors);
         }
@@ -193,9 +196,23 @@ export function OrganizerCreateEventClient() {
         return;
       }
 
+      toast.success(
+        submitStatus === EVENT_STATUS.DRAFT
+          ? "Event draft saved!"
+          : "Event submitted for approval!",
+        {
+          description:
+            submitStatus === EVENT_STATUS.DRAFT
+              ? "You can continue editing from your organizer dashboard."
+              : "Campus administrators have been notified for review.",
+        }
+      );
+
       router.push("/organizer/events");
     } catch {
-      setErrorMessage("An unexpected network error occurred. Please try again.");
+      const netMsg = "An unexpected network error occurred. Please try again.";
+      setErrorMessage(netMsg);
+      toast.error("Network error", { description: netMsg });
       setSubmitting(false);
     }
   };

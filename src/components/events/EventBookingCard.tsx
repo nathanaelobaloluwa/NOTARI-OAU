@@ -19,6 +19,7 @@ import {
   CreditCard,
   Lock,
 } from "lucide-react";
+import { toast } from "@/lib/toast";
 
 export interface SerializedTicketTier {
   id: string;
@@ -160,7 +161,9 @@ export function EventBookingCard({
         const result = await response.json();
 
         if (!response.ok || !result.success) {
-          setErrorMessage(result.message || "Failed to complete registration. Please try again.");
+          const errMsg = result.message || "Failed to complete registration. Please try again.";
+          setErrorMessage(errMsg);
+          toast.error("Registration failed", { description: errMsg });
           setIsSubmitting(false);
           return;
         }
@@ -171,6 +174,9 @@ export function EventBookingCard({
           ticketCodes: result.data.tickets.map((t: { ticketCode: string }) => t.ticketCode),
           tierName: selectedTier.name,
           quantity,
+        });
+        toast.success("Ticket reserved successfully!", {
+          description: `Booking reference: ${result.data.bookingReference}`,
         });
         setIsSubmitting(false);
         router.refresh();
@@ -189,19 +195,26 @@ export function EventBookingCard({
         const result = await response.json();
 
         if (!response.ok || !result.success) {
-          setErrorMessage(
-            result.message || "Failed to initialize payment checkout. Please try again."
-          );
+          const payErr =
+            result.message || "Failed to initialize payment checkout. Please try again.";
+          setErrorMessage(payErr);
+          toast.error("Checkout failed", { description: payErr });
           setIsSubmitting(false);
           return;
         }
 
         const authUrl = result.data?.authorizationUrl;
         if (!authUrl) {
-          setErrorMessage("Paystack authorization URL was not received. Please try again.");
+          const urlErr = "Paystack authorization URL was not received. Please try again.";
+          setErrorMessage(urlErr);
+          toast.error("Payment error", { description: urlErr });
           setIsSubmitting(false);
           return;
         }
+
+        toast.info("Redirecting to Paystack checkout...", {
+          description: "Complete your transaction securely to receive your tickets.",
+        });
 
         // Redirect to Paystack secure checkout
         window.location.href = authUrl;

@@ -23,7 +23,9 @@ import {
   Bell,
   Laptop,
   Send,
+  ShieldCheck,
 } from "lucide-react";
+import { toast } from "@/lib/toast";
 import { SanitizedStudentProfile } from "@/lib/student/service";
 import { OAU_FACULTIES, formatFacultyLabel } from "@/constants/oau";
 import { ProfilePhotoManager } from "@/components/shared/profile-photo-manager";
@@ -136,14 +138,19 @@ export function StudentSettingsClient({ initialProfile }: StudentSettingsClientP
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        setProfileErrorMsg(data.message || "Failed to update profile. Check your input.");
+        const errMsg = data.message || "Failed to update profile. Check your input.";
+        setProfileErrorMsg(errMsg);
+        toast.error("Profile update failed", { description: errMsg });
       } else {
         setProfile(data.data);
         setProfileSuccessMsg("Your profile information has been saved successfully!");
+        toast.success("Profile saved", { description: "Your university profile details have been updated." });
         router.refresh();
       }
     } catch {
-      setProfileErrorMsg("Network error occurred while saving profile changes.");
+      const netErr = "Network error occurred while saving profile changes.";
+      setProfileErrorMsg(netErr);
+      toast.error("Network error", { description: netErr });
     } finally {
       setIsSavingProfile(false);
     }
@@ -157,13 +164,17 @@ export function StudentSettingsClient({ initialProfile }: StudentSettingsClientP
     setPasswordErrorMsg(null);
 
     if (newPassword !== confirmPassword) {
-      setPasswordErrorMsg("New password and confirmation password do not match.");
+      const matchErr = "New password and confirmation password do not match.";
+      setPasswordErrorMsg(matchErr);
+      toast.warning("Password mismatch", { description: matchErr });
       setIsSavingPassword(false);
       return;
     }
 
     if (newPassword.length < 8) {
-      setPasswordErrorMsg("New password must be at least 8 characters long.");
+      const lenErr = "New password must be at least 8 characters long.";
+      setPasswordErrorMsg(lenErr);
+      toast.warning("Weak password", { description: lenErr });
       setIsSavingPassword(false);
       return;
     }
@@ -182,15 +193,20 @@ export function StudentSettingsClient({ initialProfile }: StudentSettingsClientP
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        setPasswordErrorMsg(data.message || "Failed to update password.");
+        const passErr = data.message || "Failed to update password.";
+        setPasswordErrorMsg(passErr);
+        toast.error("Password update failed", { description: passErr });
       } else {
         setPasswordSuccessMsg("Password changed successfully! Keep your credentials safe.");
+        toast.success("Password updated", { description: "Your security credentials have been updated." });
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
       }
     } catch {
-      setPasswordErrorMsg("Network error occurred while changing password.");
+      const passNetErr = "Network error occurred while changing password.";
+      setPasswordErrorMsg(passNetErr);
+      toast.error("Network error", { description: passNetErr });
     } finally {
       setIsSavingPassword(false);
     }
@@ -219,14 +235,21 @@ export function StudentSettingsClient({ initialProfile }: StudentSettingsClientP
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        setPrefsErrorMsg(data.message || "Failed to update notification preferences.");
+        const prefErr = data.message || "Failed to update notification preferences.";
+        setPrefsErrorMsg(prefErr);
+        toast.error("Preferences failed", { description: prefErr });
       } else {
         setProfile(data.data);
         setPrefsSuccessMsg("Notification preferences updated successfully!");
+        toast.success("Preferences updated", {
+          description: "Your notification and email alert settings have been saved.",
+        });
         router.refresh();
       }
     } catch {
-      setPrefsErrorMsg("Network error occurred while saving notification preferences.");
+      const prefNetErr = "Network error occurred while saving notification preferences.";
+      setPrefsErrorMsg(prefNetErr);
+      toast.error("Network error", { description: prefNetErr });
     } finally {
       setIsSavingPrefs(false);
     }
@@ -704,6 +727,71 @@ export function StudentSettingsClient({ initialProfile }: StudentSettingsClientP
                 </Button>
               </div>
             </form>
+          </Card>
+
+          {/* Security & Recent Login Activity */}
+          <Card className="p-5 sm:p-6 border-slate-200/80 shadow-sm bg-white space-y-4 rounded-2xl">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold text-notari-dark uppercase tracking-wider flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-notari-primary" />
+                <span>Security & Recent Activity</span>
+              </h3>
+              <Badge variant="outline" className="text-[10px] font-semibold text-blue-700 bg-blue-50 border-blue-200">
+                2FA Protected
+              </Badge>
+            </div>
+
+            <p className="text-[11px] text-slate-500 leading-relaxed">
+              Every sign-in to your university account is protected with 6-digit email OTP verification. Audit your recent session history below.
+            </p>
+
+            <div className="space-y-2.5 pt-1">
+              {profile.recentLogins && profile.recentLogins.length > 0 ? (
+                profile.recentLogins.slice(0, 5).map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between p-3 rounded-xl bg-slate-50/80 border border-slate-200/60 text-xs"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-notari-primary shrink-0">
+                        <Laptop className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="font-semibold text-slate-800 flex items-center gap-1.5">
+                          <span>{item.device || "Web Browser"}</span>
+                          {idx === 0 && (
+                            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800">
+                              Active
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[10px] text-slate-400">
+                          {new Date(item.timestamp).toLocaleString("en-GB", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] font-mono text-slate-500 bg-white px-2 py-1 rounded border border-slate-200">
+                        {item.ipAddress === "unknown" || !item.ipAddress ? "Campus Network" : item.ipAddress}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/60 text-center space-y-1">
+                  <p className="text-xs font-semibold text-slate-700">Current Session Authenticated</p>
+                  <p className="text-[11px] text-slate-400">
+                    Your session is active and verified with university two-factor security.
+                  </p>
+                </div>
+              )}
+            </div>
           </Card>
         </div>
       </div>

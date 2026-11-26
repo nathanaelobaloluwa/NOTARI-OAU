@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SessionProvider } from "@/components/shared/session-provider";
 import { NetworkStatusProvider } from "@/components/shared/network-status-provider";
+import { Toaster } from "@/components/shared/toast/toaster";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -47,7 +48,10 @@ export default function RootLayout({
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="antialiased min-h-screen bg-notari-bg text-notari-dark font-sans">
         <SessionProvider>
-          <NetworkStatusProvider>{children}</NetworkStatusProvider>
+          <NetworkStatusProvider>
+            {children}
+            <Toaster />
+          </NetworkStatusProvider>
         </SessionProvider>
       </body>
     </html>

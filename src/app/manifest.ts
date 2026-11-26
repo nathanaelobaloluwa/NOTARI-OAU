@@ -12,6 +12,18 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#151C35",
     icons: [
       {
+        src: "/icons/notari-notification-icon.png",
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/icons/icon-512x512.png",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
         src: "/icon",
         sizes: "192x192",
         type: "image/png",

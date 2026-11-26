@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,11 +21,19 @@ import {
   Eye,
   EyeOff,
   Bell,
+  Laptop,
+  Send,
 } from "lucide-react";
 import { SanitizedStudentProfile } from "@/lib/student/service";
 import { OAU_FACULTIES, formatFacultyLabel } from "@/constants/oau";
 import { ProfilePhotoManager } from "@/components/shared/profile-photo-manager";
 import { UserAvatar } from "@/components/shared/user-avatar";
+import {
+  getNotificationPermission,
+  requestBrowserNotificationPermission,
+  showBrowserNotification,
+  NotificationPermissionState,
+} from "@/lib/notifications/browser-notification";
 
 interface StudentSettingsClientProps {
   initialProfile: SanitizedStudentProfile;
@@ -59,16 +67,52 @@ export function StudentSettingsClient({ initialProfile }: StudentSettingsClientP
   const [passwordSuccessMsg, setPasswordSuccessMsg] = useState<string | null>(null);
   const [passwordErrorMsg, setPasswordErrorMsg] = useState<string | null>(null);
 
-  // Preferences state
+  // Preferences state (defaulted to true for all registered users)
   const [eventReminders, setEventReminders] = useState(
     initialProfile.emailPreferences?.eventReminders ?? true
   );
   const [campusAnnouncements, setCampusAnnouncements] = useState(
     initialProfile.emailPreferences?.campusAnnouncements ?? true
   );
+  const [browserNotifications, setBrowserNotifications] = useState(
+    initialProfile.emailPreferences?.browserNotifications ?? true
+  );
+  const [permissionState, setPermissionState] = useState<NotificationPermissionState>("default");
+  const [isTestingNotification, setIsTestingNotification] = useState(false);
   const [isSavingPrefs, setIsSavingPrefs] = useState(false);
   const [prefsSuccessMsg, setPrefsSuccessMsg] = useState<string | null>(null);
   const [prefsErrorMsg, setPrefsErrorMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    setPermissionState(getNotificationPermission());
+  }, []);
+
+  const handleEnableBrowserNotifications = async () => {
+    const status = await requestBrowserNotificationPermission();
+    setPermissionState(status);
+    if (status === "granted") {
+      setBrowserNotifications(true);
+      showBrowserNotification({
+        title: "NOTARI 2.0 Notifications Enabled",
+        body: "Real-time campus event alerts are now active with your official NOTARI brand emblem.",
+        url: "/student/settings",
+      });
+    }
+  };
+
+  const handleTestNotification = () => {
+    if (permissionState !== "granted") {
+      handleEnableBrowserNotifications();
+      return;
+    }
+    setIsTestingNotification(true);
+    showBrowserNotification({
+      title: "NOTARI 2.0 Campus Alert",
+      body: "Desktop notification test successful! Branded with the authentic NOTARI geometric emblem.",
+      url: "/student",
+    });
+    setTimeout(() => setIsTestingNotification(false), 1200);
+  };
 
   // Handle Profile Update
   const handleProfileSubmit = async (e: React.FormEvent) => {
@@ -168,6 +212,7 @@ export function StudentSettingsClient({ initialProfile }: StudentSettingsClientP
           emailPreferences: {
             eventReminders,
             campusAnnouncements,
+            browserNotifications,
           },
         }),
       });
@@ -496,10 +541,19 @@ export function StudentSettingsClient({ initialProfile }: StudentSettingsClientP
 
           {/* Notification Preferences */}
           <Card className="p-5 sm:p-6 border-slate-200/80 shadow-sm bg-white space-y-4 rounded-2xl">
-            <h3 className="text-xs font-bold text-notari-dark uppercase tracking-wider flex items-center gap-2">
-              <Bell className="w-4 h-4 text-notari-primary" />
-              <span>Email Notification Preferences</span>
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold text-notari-dark uppercase tracking-wider flex items-center gap-2">
+                <Bell className="w-4 h-4 text-notari-primary" />
+                <span>Notification & Alert Preferences</span>
+              </h3>
+              <Badge variant="outline" className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 border-emerald-200">
+                Default: Enabled
+              </Badge>
+            </div>
+
+            <p className="text-[11px] text-slate-500">
+              Registered students receive event reminders and announcements by default. You can adjust your preferences below at any time.
+            </p>
 
             {/* Preferences Success / Error Alerts */}
             {prefsSuccessMsg && (
@@ -516,25 +570,68 @@ export function StudentSettingsClient({ initialProfile }: StudentSettingsClientP
             )}
 
             <form onSubmit={handlePreferencesSubmit} className="space-y-3 pt-1 text-xs">
-              {/* Mandatory / Essential Transactional Emails */}
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 opacity-90">
-                <div className="space-y-0.5 pr-2">
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-semibold text-slate-800 block">Transactional Emails</span>
-                    <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200/80 px-1.5 py-0.2 rounded flex items-center gap-0.5">
-                      <Lock className="w-2.5 h-2.5" /> Essential
+              {/* Desktop / Browser Push Notifications */}
+              <div className="p-3 rounded-xl bg-slate-50/80 border border-slate-200/80 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5 pr-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-slate-800 flex items-center gap-1.5">
+                        <Laptop className="w-3.5 h-3.5 text-indigo-600" />
+                        <span>Desktop & Browser Alerts</span>
+                      </span>
+                      {permissionState === "granted" ? (
+                        <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-full">
+                          Branded Icon Active
+                        </span>
+                      ) : permissionState === "denied" ? (
+                        <span className="text-[9px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded-full">
+                          Blocked in Browser
+                        </span>
+                      ) : (
+                        <span className="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full">
+                          Permission Needed
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[11px] text-slate-500 block">
+                      Displays desktop alerts with the official NOTARI geometric logo instead of the default Chrome icon.
                     </span>
                   </div>
-                  <span className="text-[11px] text-slate-500 block">
-                    Ticket passes, payment receipts, and refund updates are mandatory per university policy.
-                  </span>
+                  <input
+                    type="checkbox"
+                    checked={browserNotifications}
+                    onChange={(e) => setBrowserNotifications(e.target.checked)}
+                    className="rounded text-notari-primary focus:ring-notari-primary w-4 h-4 cursor-pointer shrink-0"
+                  />
                 </div>
-                <input
-                  type="checkbox"
-                  checked={true}
-                  disabled
-                  className="rounded text-notari-primary focus:ring-notari-primary w-4 h-4 cursor-not-allowed opacity-60"
-                />
+
+                {/* Desktop Notification Actions: Request Permission or Send Test */}
+                <div className="pt-1 flex items-center gap-2">
+                  {permissionState === "granted" ? (
+                    <button
+                      type="button"
+                      onClick={handleTestNotification}
+                      disabled={isTestingNotification}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-notari-primary hover:border-notari-primary/30 text-[11px] font-medium transition-colors shadow-2xs cursor-pointer"
+                    >
+                      <Send className="w-3 h-3 text-indigo-600" />
+                      <span>{isTestingNotification ? "Sending Test..." : "Test Desktop Alert"}</span>
+                    </button>
+                  ) : permissionState === "denied" ? (
+                    <span className="text-[10px] text-slate-500 italic">
+                      To unblock: Click the site settings icon in your Chrome address bar and set Notifications to &quot;Allow&quot;.
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleEnableBrowserNotifications}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-notari-primary text-white hover:bg-notari-primary/90 text-[11px] font-medium transition-colors shadow-2xs cursor-pointer"
+                    >
+                      <Bell className="w-3 h-3" />
+                      <span>Enable Desktop Notifications</span>
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Event Reminders */}
@@ -568,6 +665,27 @@ export function StudentSettingsClient({ initialProfile }: StudentSettingsClientP
                   className="rounded text-notari-primary focus:ring-notari-primary w-4 h-4 cursor-pointer"
                 />
               </label>
+
+              {/* Mandatory / Essential Transactional Emails */}
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 opacity-90">
+                <div className="space-y-0.5 pr-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-semibold text-slate-800 block">Transactional Emails</span>
+                    <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200/80 px-1.5 py-0.2 rounded flex items-center gap-0.5">
+                      <Lock className="w-2.5 h-2.5" /> Essential
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-slate-500 block">
+                    Ticket passes, payment receipts, and refund updates are mandatory per university policy.
+                  </span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={true}
+                  disabled
+                  className="rounded text-notari-primary focus:ring-notari-primary w-4 h-4 cursor-not-allowed opacity-60"
+                />
+              </div>
 
               <div className="pt-2">
                 <Button

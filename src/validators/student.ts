@@ -20,6 +20,15 @@ export const studentProfileUpdateSchema = z.object({
     .object({
       eventReminders: z.boolean().optional(),
       campusAnnouncements: z.boolean().optional(),
+      browserNotifications: z.boolean().optional(),
+    })
+    .optional(),
+  notificationPreferences: z
+    .object({
+      eventReminders: z.boolean().optional(),
+      campusAnnouncements: z.boolean().optional(),
+      browserNotifications: z.boolean().optional(),
+      ticketUpdates: z.boolean().optional(),
     })
     .optional(),
 });

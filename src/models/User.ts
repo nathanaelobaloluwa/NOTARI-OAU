@@ -22,6 +22,13 @@ export interface IUserDocument extends Document {
   emailPreferences?: {
     eventReminders?: boolean;
     campusAnnouncements?: boolean;
+    browserNotifications?: boolean;
+  };
+  notificationPreferences?: {
+    eventReminders?: boolean;
+    campusAnnouncements?: boolean;
+    browserNotifications?: boolean;
+    ticketUpdates?: boolean;
   };
   createdAt: Date;
   updatedAt: Date;
@@ -72,6 +79,13 @@ const UserSchema = new Schema<IUserDocument>(
     emailPreferences: {
       eventReminders: { type: Boolean, default: true },
       campusAnnouncements: { type: Boolean, default: true },
+      browserNotifications: { type: Boolean, default: true },
+    },
+    notificationPreferences: {
+      eventReminders: { type: Boolean, default: true },
+      campusAnnouncements: { type: Boolean, default: true },
+      browserNotifications: { type: Boolean, default: true },
+      ticketUpdates: { type: Boolean, default: true },
     },
   },
   {

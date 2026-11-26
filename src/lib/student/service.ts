@@ -32,6 +32,7 @@ export interface SanitizedStudentProfile {
   emailPreferences?: {
     eventReminders: boolean;
     campusAnnouncements: boolean;
+    browserNotifications?: boolean;
   };
   createdAt: string;
 }
@@ -111,6 +112,7 @@ export async function getStudentProfile(userId: string): Promise<StudentServiceR
     emailPreferences: {
       eventReminders: student.emailPreferences?.eventReminders ?? true,
       campusAnnouncements: student.emailPreferences?.campusAnnouncements ?? true,
+      browserNotifications: student.emailPreferences?.browserNotifications ?? true,
     },
     createdAt: student.createdAt ? new Date(student.createdAt).toISOString() : new Date().toISOString(),
   };
@@ -169,6 +171,10 @@ export async function updateStudentProfile(
         data.emailPreferences.campusAnnouncements !== undefined
           ? data.emailPreferences.campusAnnouncements
           : (student.emailPreferences?.campusAnnouncements ?? true),
+      browserNotifications:
+        data.emailPreferences.browserNotifications !== undefined
+          ? data.emailPreferences.browserNotifications
+          : (student.emailPreferences?.browserNotifications ?? true),
     };
   }
 
@@ -190,6 +196,7 @@ export async function updateStudentProfile(
     emailPreferences: {
       eventReminders: student.emailPreferences?.eventReminders ?? true,
       campusAnnouncements: student.emailPreferences?.campusAnnouncements ?? true,
+      browserNotifications: student.emailPreferences?.browserNotifications ?? true,
     },
     createdAt: student.createdAt ? new Date(student.createdAt).toISOString() : new Date().toISOString(),
   };

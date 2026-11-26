@@ -52,7 +52,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             email: user.email,
             role: user.role,
             isOrganizer: Boolean(user.isOrganizer || user.role === "organizer"),
-            image: user.image,
+            image: user.profilePhotoUrl || user.image,
           };
         } catch (error) {
           console.error("❌ Authentication authorization error:", error);

@@ -90,7 +90,14 @@ export function ProfilePhotoManager({
         onPhotoUpdated(newUrl);
       }
     } catch (err) {
-      setErrorMessage((err as Error).message);
+      const rawMessage = (err as Error).message || "";
+      if (rawMessage.includes("Invalid cloud_name") || rawMessage.includes("Cloudinary upload failed")) {
+        setErrorMessage(
+          "Cloudinary credentials need verification. Please check your CLOUDINARY_CLOUD_NAME in your environment settings."
+        );
+      } else {
+        setErrorMessage(rawMessage || "Failed to upload profile photograph. Please try again.");
+      }
       setPreviewUrl(null);
     } finally {
       setIsUploading(false);

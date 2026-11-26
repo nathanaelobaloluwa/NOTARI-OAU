@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { UserAvatar } from "@/components/shared/user-avatar";
 import {
   User,
@@ -46,14 +46,28 @@ export function HeaderProfileAvatar({
   variant = "student",
   className = "",
 }: HeaderProfileAvatarProps) {
+  const { data: clientSession } = useSession();
   const [isOpen, setIsOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
-  const name = user?.name || "Student User";
-  const email = user?.email || "student@notari.oau.edu.ng";
-  const role = user?.role || "student";
-  const isOrganizer = Boolean(user?.isOrganizer || role === "organizer");
+  const name = user?.name || clientSession?.user?.name || "Student User";
+  const email = user?.email || clientSession?.user?.email || "student@notari.oau.edu.ng";
+  const role = user?.role || (clientSession?.user as { role?: string })?.role || "student";
+  const isOrganizer = Boolean(
+    user?.isOrganizer ||
+      (clientSession?.user as { isOrganizer?: boolean })?.isOrganizer ||
+      role === "organizer"
+  );
+  const activeImage = user?.image || clientSession?.user?.image;
+
+  // Destination for profile/settings link
+  const profileHref =
+    role === "admin"
+      ? "/admin/settings"
+      : role === "organizer" || isOrganizer
+      ? "/organizer/profile"
+      : "/student/settings";
 
   // Close on click outside & Escape key
   useEffect(() => {
@@ -125,7 +139,7 @@ export function HeaderProfileAvatar({
         aria-haspopup="menu"
       >
         <UserAvatar
-          src={user?.image}
+          src={activeImage}
           name={name}
           size="sm"
           variant={variant}
@@ -140,23 +154,34 @@ export function HeaderProfileAvatar({
           aria-label="User account options"
           className="absolute right-0 top-full mt-2 w-72 rounded-2xl bg-white border border-slate-200/90 shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150"
         >
-          {/* User Profile Card */}
-          <div className="p-4 bg-slate-50/80 border-b border-slate-100 space-y-2">
+          {/* User Profile Card - Clickable Link to Profile/Settings */}
+          <Link
+            href={profileHref}
+            onClick={() => setIsOpen(false)}
+            className="p-4 bg-slate-50/80 hover:bg-slate-100/90 transition-colors border-b border-slate-100 block space-y-2 cursor-pointer group"
+          >
             <div className="flex items-center gap-3">
               <UserAvatar
-                src={user?.image}
+                src={activeImage}
                 name={name}
                 size="md"
                 variant={variant}
-                className="w-10 h-10 shrink-0"
+                className="w-10 h-10 shrink-0 group-hover:ring-2 group-hover:ring-notari-primary/30 transition-all"
               />
               <div className="min-w-0 flex-1">
-                <h4 className="text-xs font-bold text-notari-dark truncate">{name}</h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-notari-dark group-hover:text-notari-primary transition-colors truncate">
+                    {name}
+                  </h4>
+                  <span className="text-[10px] text-slate-400 group-hover:text-notari-primary transition-colors font-medium">
+                    Profile &rarr;
+                  </span>
+                </div>
                 <p className="text-[11px] text-slate-500 truncate">{email}</p>
               </div>
             </div>
             <div className="pt-1">{getRoleBadge()}</div>
-          </div>
+          </Link>
 
           {/* Role-Specific Navigation Menu Items */}
           <div className="p-2 space-y-0.5 text-xs">

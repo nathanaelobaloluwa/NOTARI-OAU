@@ -252,6 +252,49 @@ async function runTests() {
     assert(studentShell.includes("LogOut"), "Must preserve Logout icon");
   });
 
+  console.log("\n▶ 6. Branded Notification System & Default Opt-In Audit");
+
+  await it("Static branded notification icon files exist in public/icons/", () => {
+    const iconPath = path.join(process.cwd(), "public/icons/notari-notification-icon.png");
+    const badgePath = path.join(process.cwd(), "public/icons/badge-72x72.png");
+    const icon192Path = path.join(process.cwd(), "public/icons/icon-192x192.png");
+    assert(fs.existsSync(iconPath), "Must provide notari-notification-icon.png for desktop notifications");
+    assert(fs.existsSync(badgePath), "Must provide badge-72x72.png for tray badge");
+    assert(fs.existsSync(icon192Path), "Must provide icon-192x192.png for PWA manifest");
+  });
+
+  await it("Browser notification module explicitly specifies NOTARI brand icon (replaces Chrome default)", () => {
+    const notifyModule = fs.readFileSync(
+      path.join(process.cwd(), "src/lib/notifications/browser-notification.ts"),
+      "utf8"
+    );
+    assert(
+      notifyModule.includes("/icons/notari-notification-icon.png"),
+      "Browser notification must explicitly set icon to NOTARI brand emblem"
+    );
+    assert(
+      notifyModule.includes("/icons/badge-72x72.png"),
+      "Browser notification must set badge to NOTARI badge"
+    );
+  });
+
+  await it("HeaderProfileAvatar links user card directly to settings/profile and uses live session image", () => {
+    const headerAvatar = fs.readFileSync(
+      path.join(process.cwd(), "src/components/shared/header/HeaderProfileAvatar.tsx"),
+      "utf8"
+    );
+    assert(headerAvatar.includes("Link"), "User profile card must be a Next.js Link");
+    assert(headerAvatar.includes("profileHref"), "User profile card must dynamically navigate to profile");
+    assert(headerAvatar.includes("useSession"), "Header avatar must subscribe to dynamic session updates");
+  });
+
+  await it("Registered students have notifications enabled by default in User schema and student service", () => {
+    const userModel = fs.readFileSync(path.join(process.cwd(), "src/models/User.ts"), "utf8");
+    assert(userModel.includes("eventReminders: { type: Boolean, default: true }"), "Event reminders must default to true");
+    assert(userModel.includes("campusAnnouncements: { type: Boolean, default: true }"), "Campus announcements must default to true");
+    assert(userModel.includes("browserNotifications: { type: Boolean, default: true }"), "Browser notifications must default to true");
+  });
+
   console.log("\n===============================================================================");
   console.log(`📊 TEST SUITE SUMMARY: ${passedCount} / ${totalCount} passed (100%)`);
   console.log("===============================================================================");

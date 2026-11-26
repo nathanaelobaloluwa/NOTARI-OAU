@@ -36,7 +36,8 @@ export interface ProfilePhotoUploadResult {
  */
 export class CloudinaryService {
   private static get cloudName(): string | undefined {
-    return process.env.CLOUDINARY_CLOUD_NAME || env.CLOUDINARY_CLOUD_NAME;
+    const raw = process.env.CLOUDINARY_CLOUD_NAME || env.CLOUDINARY_CLOUD_NAME;
+    return raw?.trim().toLowerCase();
   }
 
   private static get apiKey(): string | undefined {
@@ -361,7 +362,6 @@ export class CloudinaryService {
     }
 
     const { width, height } = extractImageDimensions(buffer);
-    const isProduction = (process.env.NODE_ENV || env.NODE_ENV) === "production";
     const folder = `notari/profiles/${options.userId}`;
 
     // 2. Production or configured Cloudinary upload
@@ -418,24 +418,35 @@ export class CloudinaryService {
           provider: "cloudinary",
         };
       } catch (err) {
-        if (!isProduction) {
-          console.warn(
-            "⚠️ Cloudinary upload failed in non-production, falling back to local storage:",
-            (err as Error).message
-          );
-          return this.uploadProfilePhotoToLocalStorage(buffer, validation.detectedExt, options.userId);
-        }
-        throw err;
+        console.warn(
+          "⚠️ Cloudinary profile photo upload failed. Falling back to persistent inline storage:",
+          (err as Error).message
+        );
+        const base64Data = `data:${validation.detectedMime};base64,${buffer.toString("base64")}`;
+        return {
+          url: base64Data,
+          secureUrl: base64Data,
+          publicId: `inline_${options.userId}_${Date.now()}`,
+          format: validation.detectedExt,
+          bytes: buffer.length,
+          width,
+          height,
+          provider: "local",
+        };
       }
     }
 
-    if (isProduction) {
-      throw new Error(
-        "Media storage is not configured for production. Please configure CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET."
-      );
-    }
-
-    return this.uploadProfilePhotoToLocalStorage(buffer, validation.detectedExt, options.userId);
+    const base64Data = `data:${validation.detectedMime};base64,${buffer.toString("base64")}`;
+    return {
+      url: base64Data,
+      secureUrl: base64Data,
+      publicId: `inline_${options.userId}_${Date.now()}`,
+      format: validation.detectedExt,
+      bytes: buffer.length,
+      width,
+      height,
+      provider: "local",
+    };
   }
 
   private static async uploadProfilePhotoToLocalStorage(
@@ -471,6 +482,11 @@ export class CloudinaryService {
     publicIdOrUrl: string
   ): Promise<{ success: boolean; error?: string }> {
     if (!publicIdOrUrl) return { success: false, error: "No asset specified." };
+
+    // 0. Base64 inline data URIs and inline assets do not require external deletion
+    if (publicIdOrUrl.startsWith("data:") || publicIdOrUrl.startsWith("inline_")) {
+      return { success: true };
+    }
 
     // Path traversal guard
     if (

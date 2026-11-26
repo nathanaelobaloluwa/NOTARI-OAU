@@ -21,7 +21,6 @@ import {
   Ticket,
   AlertTriangle,
   RefreshCw,
-  Sparkles,
   Info,
   Send,
 } from "lucide-react";
@@ -564,7 +563,7 @@ export function OrganizerCreateEventClient() {
                   : "text-slate-500 hover:text-slate-700"
               )}
             >
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <Ticket className="w-3.5 h-3.5 text-emerald-600" />
               <span>100% Free Admission</span>
             </button>
             <button

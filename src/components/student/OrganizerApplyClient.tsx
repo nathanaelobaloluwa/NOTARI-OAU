@@ -21,7 +21,7 @@ import {
   AlertTriangle,
   XCircle,
   ArrowRight,
-  Sparkles,
+  ShieldCheck,
   Send,
   RefreshCw,
   ChevronLeft,
@@ -255,7 +255,7 @@ export function OrganizerApplyClient() {
             </div>
             <div className="space-y-1">
               <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
-                <Sparkles className="w-3 h-3" />
+                <ShieldCheck className="w-3 h-3" />
                 <span>Accreditation Active</span>
               </div>
               <h2 className="text-xl sm:text-2xl font-bold text-notari-dark">

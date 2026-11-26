@@ -16,7 +16,6 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  Sparkles,
   Pin,
   Mail,
   Bell,
@@ -307,7 +306,7 @@ export function AdminAnnouncementsClient() {
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-5 right-5 z-50 bg-[#1A2644] text-white px-4 py-3 rounded-xl shadow-xl border border-indigo-500/30 text-sm flex items-center gap-2 animate-in fade-in">
-          <Sparkles className="w-4 h-4 text-indigo-400 shrink-0" />
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <span>{toastMessage}</span>
         </div>
       )}

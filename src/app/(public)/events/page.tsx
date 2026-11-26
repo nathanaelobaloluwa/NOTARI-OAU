@@ -21,7 +21,7 @@ import {
   ArrowRight,
   Filter,
   RotateCcw,
-  Sparkles,
+  Compass,
 } from "lucide-react";
 
 interface EventsPageProps {
@@ -142,7 +142,7 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
       {/* 1. Page Header */}
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-xs font-bold text-notari-primary uppercase tracking-wider">
-          <Sparkles className="w-4 h-4" />
+          <Compass className="w-4 h-4" />
           <span>Great Ife Campus Events</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-notari-dark tracking-tight">

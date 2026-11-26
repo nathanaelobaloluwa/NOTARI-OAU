@@ -14,7 +14,7 @@ import {
   RefreshCcw,
   Megaphone,
   Loader2,
-  Sparkles,
+  ArrowRight,
 } from "lucide-react";
 
 export interface NotificationItem {
@@ -286,7 +286,7 @@ export function HeaderNotificationBell({
                         }}
                         className="inline-flex items-center gap-1 text-[11px] font-semibold text-notari-primary hover:underline mt-1.5"
                       >
-                        <Sparkles className="w-3 h-3 text-amber-500" />
+                        <ArrowRight className="w-3 h-3 text-notari-primary" />
                         <span>View details</span>
                       </Link>
                     )}

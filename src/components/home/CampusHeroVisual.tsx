@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { Sparkles, MapPin } from "lucide-react";
+import { Compass, MapPin } from "lucide-react";
 
 export const OAU_CAMPUS_PHOTOGRAPHS = [
   {
@@ -102,7 +102,7 @@ export function CampusHeroVisual() {
       <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-7 space-y-1.5 z-20">
         <div className="flex items-center justify-between gap-2">
           <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            <Compass className="w-3.5 h-3.5 text-amber-400 shrink-0" />
             <span>{current.tag}</span>
           </span>
           <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] text-slate-300 font-medium bg-white/10 px-2 py-0.5 rounded-md backdrop-blur-sm">

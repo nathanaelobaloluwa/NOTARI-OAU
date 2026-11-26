@@ -11,7 +11,6 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
-  Sparkles,
   ArrowRight,
   Plus,
   Minus,
@@ -426,7 +425,7 @@ export function EventBookingCard({
               </>
             ) : (
               <>
-                <Sparkles className="w-4 h-4" />
+                <CheckCircle2 className="w-4 h-4" />
                 <span>Confirm Free Registration</span>
               </>
             )}

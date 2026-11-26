@@ -9,7 +9,7 @@ import { USER_ROLES } from "@/constants/roles";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/shared/status-pill";
-import { Calendar, MapPin, Compass, Ticket, Sparkles } from "lucide-react";
+import { Calendar, MapPin, Compass, Ticket } from "lucide-react";
 
 export default async function StudentMyEventsPage() {
   const session = await auth();
@@ -176,7 +176,7 @@ export default async function StudentMyEventsPage() {
                       />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-indigo-700 to-purple-800 flex items-center justify-center text-white">
-                        <Sparkles className="w-6 h-6 text-indigo-300" />
+                        <Calendar className="w-6 h-6 text-indigo-300" />
                       </div>
                     )}
                   </div>

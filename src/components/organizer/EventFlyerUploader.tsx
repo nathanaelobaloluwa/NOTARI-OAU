@@ -9,7 +9,6 @@ import {
   Trash2,
   RefreshCw,
   Image as ImageIcon,
-  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -208,7 +207,7 @@ export function EventFlyerUploader({
                 : "text-slate-500 hover:text-slate-800"
             )}
           >
-            <Sparkles className="w-3.5 h-3.5 text-[#20BFA9]" />
+            <ImageIcon className="w-3.5 h-3.5 text-[#20BFA9]" />
             Great Ife Campus Presets
           </button>
         </div>

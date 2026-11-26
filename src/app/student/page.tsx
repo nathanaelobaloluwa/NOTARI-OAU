@@ -18,7 +18,7 @@ import {
   User as UserIcon,
   Clock,
   ChevronRight,
-  Sparkles,
+  Building,
   School,
   GraduationCap,
   Mail,
@@ -476,7 +476,7 @@ export default async function StudentDashboardPage() {
             <Card className="p-5 border-purple-200 bg-gradient-to-br from-purple-50 via-white to-purple-50/50 shadow-xs space-y-3 rounded-2xl">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full flex items-center gap-1">
-                  <Sparkles className="w-3 h-3 text-purple-600" />
+                  <Building className="w-3 h-3 text-purple-600" />
                   <span>Accredited Organizer</span>
                 </span>
                 <span className="text-xs text-emerald-600 font-semibold">Active</span>
@@ -505,7 +505,7 @@ export default async function StudentDashboardPage() {
             <Card className="p-5 border-indigo-100 bg-gradient-to-br from-indigo-50/70 via-white to-indigo-50/30 shadow-xs space-y-3 rounded-2xl">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full flex items-center gap-1">
-                  <Sparkles className="w-3 h-3 text-amber-500" />
+                  <Building className="w-3 h-3 text-indigo-600" />
                   <span>Great Ife Organizers</span>
                 </span>
                 <span className="text-[11px] text-indigo-600 font-medium">Free Application</span>
@@ -552,7 +552,7 @@ export default async function StudentDashboardPage() {
           ) : (
             <Card className="p-6 bg-gradient-to-br from-indigo-700 via-indigo-800 to-purple-900 text-white border-0 shadow-md space-y-3 rounded-2xl">
               <div className="flex items-center gap-2 text-indigo-200 text-xs font-semibold uppercase tracking-wider">
-                <Sparkles className="w-4 h-4" />
+                <Compass className="w-4 h-4" />
                 <span>Campus Experience</span>
               </div>
               <h4 className="text-lg font-bold leading-snug">

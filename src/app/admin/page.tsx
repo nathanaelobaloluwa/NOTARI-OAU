@@ -28,7 +28,7 @@ import {
   HardDrive,
   Cpu,
   Clock,
-  Sparkles,
+  Activity,
   Flame,
 } from "lucide-react";
 
@@ -126,7 +126,7 @@ export default async function AdminDashboardPage() {
         <div className="lg:col-span-3">
           <Card className="h-full p-4 border-slate-200/80 bg-white shadow-xs flex flex-col justify-between space-y-3">
             <div className="flex items-center gap-1.5 text-xs font-bold text-[#101C3A]">
-              <Sparkles className="w-4 h-4 text-blue-600" />
+              <Activity className="w-4 h-4 text-blue-600" />
               <span>Quick Actions</span>
             </div>
 
@@ -580,7 +580,7 @@ export default async function AdminDashboardPage() {
               {MOCK_RECENT_ACTIVITY.map((act) => (
                 <div key={act.id} className="flex items-start gap-3 text-xs">
                   <div className="w-7 h-7 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 mt-0.5">
-                    <Sparkles className="w-3.5 h-3.5" />
+                    <Activity className="w-3.5 h-3.5" />
                   </div>
                   <div className="space-y-0.5 flex-1 min-w-0">
                     <p className="font-semibold text-notari-dark leading-tight">{act.title}</p>

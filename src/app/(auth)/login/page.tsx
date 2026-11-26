@@ -7,7 +7,7 @@ import { signIn, getSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Mail, Lock, Eye, EyeOff, User, Sparkles, Shield, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, User, Building, Shield, AlertCircle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotariLoader } from "@/components/shared/notari-loader";
 
@@ -127,7 +127,7 @@ function LoginForm() {
               : "text-slate-600 hover:text-notari-dark"
           )}
         >
-          <Sparkles className="w-3.5 h-3.5" />
+          <Building className="w-3.5 h-3.5" />
           <span>Organizer</span>
         </button>
 

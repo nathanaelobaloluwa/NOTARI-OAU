@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { OAU_FACULTIES, formatFacultyLabel } from "@/constants/oau";
-import { User, Mail, Lock, Building, Sparkles, AlertCircle, Info } from "lucide-react";
+import { User, Mail, Lock, Building, AlertCircle, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotariLoader } from "@/components/shared/notari-loader";
 
@@ -115,7 +115,7 @@ export default function RegisterPage() {
               : "text-slate-600 hover:text-notari-dark"
           )}
         >
-          <Sparkles className="w-3.5 h-3.5" />
+          <Building className="w-3.5 h-3.5" />
           <span>Campus Organizer</span>
         </button>
       </div>

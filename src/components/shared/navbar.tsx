@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { NotariLogo } from "./notari-logo";
 import { Button } from "@/components/ui/button";
-import { Menu, X, User, Shield, Sparkles, LogOut } from "lucide-react";
+import { Menu, X, User, Shield, Building, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
@@ -78,7 +78,7 @@ export function Navbar() {
             <>
               <Link href="/organizer">
                 <Button variant="ghost" size="sm" className="text-slate-600 hover:text-notari-primary gap-1.5">
-                  <Sparkles className="w-4 h-4 text-purple-600" />
+                  <Building className="w-4 h-4 text-purple-600" />
                   <span>Organizer Portal</span>
                 </Button>
               </Link>

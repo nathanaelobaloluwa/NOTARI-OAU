@@ -87,9 +87,12 @@ export async function POST(request: NextRequest) {
         isVerified: false,
         requireVerification: true,
         devOtpCode: otpResult.devOtpCode,
+        deliveryError: otpResult.deliveryError,
         createdAt: newUser.createdAt,
       },
-      "Account registered! A 6-digit verification code has been sent to your email address.",
+      otpResult.deliveryError
+        ? `Account registered! Notice: ${otpResult.deliveryError}`
+        : "Account registered! A 6-digit verification code has been sent to your email address.",
       201
     );
   } catch (error: unknown) {

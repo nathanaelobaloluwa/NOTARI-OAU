@@ -58,11 +58,16 @@ export default function RegisterPage() {
       // Check if registration requires OTP email verification
       if (data?.data?.requireVerification) {
         toast.success("Account created successfully!", {
-          description: "We've sent a 6-digit verification code to your university email.",
+          description: data?.data?.deliveryError
+            ? "Account created. Please check verification instructions."
+            : "We've sent a 6-digit verification code to your university email.",
         });
         const query = new URLSearchParams({ email: payload.email });
         if (data?.data?.devOtpCode) {
           query.set("devOtp", data.data.devOtpCode);
+        }
+        if (data?.data?.deliveryError) {
+          query.set("deliveryNotice", data.data.deliveryError);
         }
         router.push(`/verify-email?${query.toString()}`);
         return;

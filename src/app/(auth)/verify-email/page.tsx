@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Mail, ArrowLeft, Loader2, RefreshCw, CheckCircle2, AlertCircle } from "lucide-react";
+import { Mail, ArrowLeft, Loader2, RefreshCw, CheckCircle2, AlertCircle, Info } from "lucide-react";
 import { toast } from "@/lib/toast";
 
 function VerifyEmailForm() {
@@ -14,9 +14,11 @@ function VerifyEmailForm() {
   const searchParams = useSearchParams();
   const emailParam = searchParams.get("email") || "";
   const devOtpParam = searchParams.get("devOtp") || "";
+  const deliveryNoticeParam = searchParams.get("deliveryNotice") || "";
 
   const [email] = useState(emailParam);
   const [devOtp, setDevOtp] = useState(devOtpParam);
+  const [deliveryNotice] = useState(deliveryNoticeParam);
   const [digits, setDigits] = useState<string[]>(["", "", "", "", "", ""]);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
@@ -217,6 +219,21 @@ function VerifyEmailForm() {
           </strong>
         </p>
       </div>
+
+      {/* Delivery Notice */}
+      {deliveryNotice && (
+        <div className="mb-4 p-3 rounded-xl bg-blue-50 border border-blue-200/80 text-blue-900 text-xs space-y-1">
+          <div className="font-semibold text-blue-950 flex items-center gap-1.5">
+            <Info className="w-4 h-4 text-blue-600 shrink-0" />
+            <span>Email Delivery Notice</span>
+          </div>
+          <p className="text-[11px] text-blue-800 leading-relaxed">
+            {deliveryNotice.includes("You can only send testing emails")
+              ? "Resend test tier restriction: In unverified test mode, Resend can only deliver to the account owner (ajekiigbenathanael@gmail.com). To deliver to other emails, verify a domain on resend.com/domains."
+              : deliveryNotice}
+          </p>
+        </div>
+      )}
 
       {/* Dev OTP Helper */}
       {devOtp && (

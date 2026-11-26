@@ -20,6 +20,7 @@ export interface IssueOtpResult {
   expiresAt?: Date;
   deliveryProvider?: string;
   devOtpCode?: string;
+  deliveryError?: string;
 }
 
 export interface VerifyOtpResult {
@@ -167,10 +168,13 @@ export class OtpService {
 
     return {
       success: true,
-      message: `Verification code sent to ${this.maskEmail(normalizedEmail)}.`,
+      message: delivery.success
+        ? `Verification code sent to ${this.maskEmail(normalizedEmail)}.`
+        : `Email delivery notice: ${delivery.error}`,
       cooldownRemaining: RESEND_COOLDOWN_SECONDS,
       expiresAt,
       deliveryProvider: delivery.provider,
+      deliveryError: !delivery.success ? delivery.error : undefined,
       devOtpCode: process.env.NODE_ENV !== "production" ? code : undefined,
     };
   }

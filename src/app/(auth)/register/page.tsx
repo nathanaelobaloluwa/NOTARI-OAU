@@ -10,6 +10,7 @@ import { OAU_FACULTIES, formatFacultyLabel } from "@/constants/oau";
 import { User, Mail, Lock, Building, AlertCircle, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotariLoader } from "@/components/shared/notari-loader";
+import { toast } from "@/lib/toast";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -46,18 +47,31 @@ export default function RegisterPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setErrorMessage(
-          data?.message || (data?.errors && typeof data.errors === "string" ? data.errors : "Registration failed. Please check your inputs.")
-        );
+        const errorMsg =
+          data?.message || (data?.errors && typeof data.errors === "string" ? data.errors : "Registration failed. Please check your inputs.");
+        setErrorMessage(errorMsg);
+        toast.error("Registration could not be completed", { description: errorMsg });
         setIsLoading(false);
         return;
       }
 
-      // Successful registration: Redirect to login with confirmation
+      // Check if registration requires OTP email verification
+      if (data?.data?.requireVerification) {
+        toast.success("Account created successfully!", {
+          description: "We've sent a 6-digit verification code to your university email.",
+        });
+        router.push(`/verify-email?email=${encodeURIComponent(payload.email)}`);
+        return;
+      }
+
+      // Fallback: Direct redirect to login with confirmation
+      toast.success("Account registered successfully! Please log in.");
       router.push("/login?registered=true");
     } catch (err) {
       console.error("Registration error:", err);
-      setErrorMessage("Network error during registration. Please verify your connection.");
+      const networkMsg = "Network error during registration. Please verify your connection.";
+      setErrorMessage(networkMsg);
+      toast.error("Registration failed", { description: networkMsg });
       setIsLoading(false);
     }
   };

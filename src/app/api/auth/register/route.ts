@@ -6,6 +6,7 @@ import { registerSchema } from "@/validators/auth";
 import { apiSuccess, apiError, handleApiError } from "@/lib/utils/api-response";
 import { USER_ROLES } from "@/constants/roles";
 import { normalizeFaculty } from "@/constants/oau";
+import { OtpService } from "@/lib/auth/otp-service";
 
 /**
  * POST /api/auth/register
@@ -60,7 +61,20 @@ export async function POST(request: NextRequest) {
       isVerified: false,
     });
 
-    // 5. Return sanitized user data (password is excluded)
+    // 5. Generate and dispatch secure 6-digit registration OTP
+    const ipAddress = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const userAgent = request.headers.get("user-agent") || "unknown";
+
+    await OtpService.createAndSendOtp({
+      userId: newUser._id,
+      email: normalizedEmail,
+      name: newUser.name,
+      purpose: "registration",
+      ipAddress,
+      userAgent,
+    });
+
+    // 6. Return response instructing user to verify their email
     return apiSuccess(
       {
         id: newUser._id.toString(),
@@ -70,10 +84,11 @@ export async function POST(request: NextRequest) {
         matricNumber: newUser.matricNumber,
         faculty: newUser.faculty,
         department: newUser.department,
-        isVerified: newUser.isVerified,
+        isVerified: false,
+        requireVerification: true,
         createdAt: newUser.createdAt,
       },
-      "Account registered successfully. You can now log in.",
+      "Account registered! A 6-digit verification code has been sent to your email address.",
       201
     );
   } catch (error: unknown) {

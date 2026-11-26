@@ -16,9 +16,17 @@ export interface IUserDocument extends Document {
   level?: string;
   phone?: string;
   isVerified: boolean;
+  emailVerifiedAt?: Date;
   status?: "active" | "suspended";
   passwordResetToken?: string;
   passwordResetExpires?: Date;
+  lastLoginAt?: Date;
+  recentLogins?: Array<{
+    timestamp: Date;
+    ipAddress?: string;
+    userAgent?: string;
+    device?: string;
+  }>;
   emailPreferences?: {
     eventReminders?: boolean;
     campusAnnouncements?: boolean;
@@ -68,6 +76,16 @@ const UserSchema = new Schema<IUserDocument>(
     level: { type: String, trim: true },
     phone: { type: String, trim: true },
     isVerified: { type: Boolean, default: false },
+    emailVerifiedAt: { type: Date },
+    lastLoginAt: { type: Date },
+    recentLogins: [
+      {
+        timestamp: { type: Date, default: Date.now },
+        ipAddress: { type: String, trim: true },
+        userAgent: { type: String, trim: true },
+        device: { type: String, trim: true },
+      },
+    ],
     status: {
       type: String,
       enum: ["active", "suspended"],

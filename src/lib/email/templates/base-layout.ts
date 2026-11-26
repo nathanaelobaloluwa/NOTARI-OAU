@@ -292,3 +292,6 @@ export function renderPlainText(options: PlainTextOptions): string {
 
   return lines.join("\n");
 }
+
+export const renderBaseEmailLayout = renderEmailLayout;
+

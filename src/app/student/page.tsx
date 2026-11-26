@@ -112,8 +112,8 @@ export default async function StudentDashboardPage() {
       const eventEndDate = evt.endDate
         ? new Date(evt.endDate)
         : evt.startDate
-        ? new Date(evt.startDate)
-        : new Date(0);
+          ? new Date(evt.startDate)
+          : new Date(0);
 
       if (eventEndDate >= now) {
         const evtId = evt._id ? evt._id.toString() : "";
@@ -331,10 +331,10 @@ export default async function StudentDashboardPage() {
               {upcomingEventsList.slice(0, 3).map((evt) => {
                 const eventDateFormatted = evt.startDate
                   ? new Date(evt.startDate).toLocaleDateString("en-NG", {
-                      weekday: "short",
-                      month: "short",
-                      day: "numeric",
-                    })
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                  })
                   : "Date TBA";
 
                 return (

@@ -280,8 +280,8 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
             const lowestPrice = evt.isFree
               ? 0
               : evt.ticketTiers && evt.ticketTiers.length > 0
-              ? Math.min(...evt.ticketTiers.map((t) => t.price))
-              : 0;
+                ? Math.min(...evt.ticketTiers.map((t) => t.price))
+                : 0;
 
             const priceDisplay = evt.isFree || lowestPrice === 0 ? "Free" : `₦${lowestPrice.toLocaleString()}`;
 
